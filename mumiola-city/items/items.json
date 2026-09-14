@@ -1,0 +1,1054 @@
+{
+  "_readme": "Diccionario fuente de items de MumiolaCity. Es la base sobre la que se construira la base de datos de items en Godot (res://data/items/*.tres). Actualizar este archivo y docs/items/lista_items.md juntos cada vez que se agregue, elimine o modifique un item. Categorias: materia_prima (recolectada del mundo) | intermedio (crafteada, pero a su vez insumo de otra receta, ej. Harina, Plastico) | utensilio (taza/plato: objeto durable con capacidad de contenedor) | consumible | equipable | decorativo. Campo plantable (solo semillas): describe que ese item se puede plantar para, tras tiempo_crecimiento_seg, obtener produce_id - es un mecanismo de cultivo con demora, distinto de una receta de crafteo instantaneo. Campo contenedor (solo utensilios): tipo/capacidad - que tipo de contenido puede portar. Campo familia (solo utensilios): agrupa variantes intercambiables (ej. las 3 tazas comparten familia taza) para que una receta pueda pedir cualquier item de esa familia en vez de listar cada id. Un insumo de receta puede venir como {id, cantidad} (item exacto) o como {familia, cantidad} (cualquier item de esa familia); el flag opcional consume:false en un insumo indica que ese item es requerido para craftear pero NO se destruye (ej. la Taza que recibe el Cafe). Campo es_liquido / es_solido (solo consumibles): marca que ese consumible requiere ir servido en un item con contenedor.tipo == liquido (es_liquido) o == solido (es_solido) para poder consumirse/venderse. IMPORTANTE: este archivo modela TIPOS de item, no instancias. Si una Taza o un Plato especificos estan vacios o servidos es un dato de una futura base de guardado/inventario (que instancia contiene que item), no de este diccionario - aqui solo se declara que el utensilio PUEDE contener algo. Campos de arte: icono es el id/ruta del icono de inventario/UI de todos los items; sprite_mundo es el id/ruta del sprite isometrico colocado en la sala, solo poblado para decorativos (null en el resto). Deliberadamente NO se incluyen campos de escena (.tscn), animaciones ni durabilidad. CONVENCION DE TEXTO: id, categoria, familia y los nombres de habilidad son identificadores ASCII sin tildes y no se muestran nunca al jugador; nombre, descripcion y fuente son campos de presentacion y llevan ortografia completa con tildes. ESQUEMA DE MODIFICADORES: efecto (consumibles) y bono (equipables) comparten exactamente la misma forma {tipo, habilidad_afectada, magnitud, duracion_seg, estacable}, para que un unico sistema los aplique; tipo velocidad usa habilidad_afectada, tipo restaurar_energia la deja en null. El campo habilidad_origen existe solo en materia prima (de donde se recolecta): para un item crafteado la fuente unica es receta.habilidad, y duplicarla solo invitaba a que se desincronizaran. CONTENEDORES E INSTANCIAS: un consumible marcado es_liquido o es_solido NO existe suelto en el inventario. Craftearlo ocupa una instancia concreta de utensilio de la familia pedida (contenido_id), y esa instancia queda servida hasta que alguien la consume, momento en que vuelve a estar vacia. Por eso todo item con contenedor es apilable:false con stack_maximo 1: una taza vacia y una taza servida son objetos distintos y no comparten stack. Llevar veinte cafes encima exige tener veinte tazas, que es lo que hace que Cocina dependa de verdad de Carpinteria y Manufactura. El precio de venta de un utensilio servido es valor_base del utensilio mas valor_base del contenido. REGLA DE PRECIOS (v0.4): el valor_base de todo item crafteado se deriva de sus insumos, no se elige a mano. coste = suma de valor_base por cantidad de los insumos que si se consumen (para un insumo por familia se usa el miembro mas barato); margen = max(redondear(coste * 0.4), 3); valor_base = coste + margen * prima, con prima 3 para equipable y decorativo (bienes durables que se compran una vez y son el sumidero de Ducados del GDD 5) y prima 1 para el resto. Solo se eligen a mano los valor_base de la materia prima. Al agregar una receta nueva hay que recalcular con esta regla en vez de inventar un numero, o vuelven a aparecer recetas que destruyen valor. COSMETICOS: una prenda es categoria equipable con slot (tocado, torso, piernas) y sin campo bono; un equipable sin bono es puramente cosmetico y solo cambia la capa correspondiente del avatar.",
+  "_version": "0.4-mvp",
+  "items": [
+    {
+      "id": "trigo",
+      "nombre": "Trigo",
+      "descripcion": "Grano básico cosechado en la parcela de agricultura. Insumo de Cocina (se muele para obtener Harina).",
+      "categoria": "materia_prima",
+      "habilidad_origen": "Agricultura",
+      "peso": 0.1,
+      "apilable": true,
+      "stack_maximo": 99,
+      "valor_base": 2,
+      "fuente": "parcela de agricultura",
+      "icono": "icon_trigo",
+      "sprite_mundo": null
+    },
+    {
+      "id": "semilla_manzana",
+      "nombre": "Semilla de manzana",
+      "descripcion": "Semilla recuperada de una Manzana. Se planta en la parcela para cultivar un manzano propio.",
+      "categoria": "materia_prima",
+      "habilidad_origen": "Agricultura",
+      "peso": 0.02,
+      "apilable": true,
+      "stack_maximo": 99,
+      "valor_base": 2,
+      "fuente": "se obtiene, en baja proporción, al cosechar Manzana",
+      "plantable": {
+        "produce_id": "manzana",
+        "habilidad": "Agricultura",
+        "tiempo_crecimiento_seg": 900,
+        "xp_otorgada": 8
+      },
+      "icono": "icon_semilla_manzana",
+      "sprite_mundo": null
+    },
+    {
+      "id": "manzana",
+      "nombre": "Manzana",
+      "descripcion": "Fruta cosechada de un manzano cultivado a partir de Semilla de manzana. Insumo de Cocina.",
+      "categoria": "materia_prima",
+      "habilidad_origen": "Agricultura",
+      "peso": 0.2,
+      "apilable": true,
+      "stack_maximo": 99,
+      "valor_base": 3,
+      "fuente": "manzano cultivado en la parcela (crece a partir de Semilla de manzana)",
+      "icono": "icon_manzana",
+      "sprite_mundo": null
+    },
+    {
+      "id": "semilla_cafe",
+      "nombre": "Semilla de café",
+      "descripcion": "Semilla de café. Se planta en la parcela para cultivar un cafeto propio.",
+      "categoria": "materia_prima",
+      "habilidad_origen": "Agricultura",
+      "peso": 0.015,
+      "apilable": true,
+      "stack_maximo": 99,
+      "valor_base": 3,
+      "fuente": "se obtiene, en baja proporción, al cosechar Granos de café",
+      "plantable": {
+        "produce_id": "granos_cafe",
+        "habilidad": "Agricultura",
+        "tiempo_crecimiento_seg": 1100,
+        "xp_otorgada": 10
+      },
+      "icono": "icon_semilla_cafe",
+      "sprite_mundo": null
+    },
+    {
+      "id": "granos_cafe",
+      "nombre": "Granos de café",
+      "descripcion": "Granos de café recién cosechados de un cafeto. Insumo de Cocina para preparar Café.",
+      "categoria": "materia_prima",
+      "habilidad_origen": "Agricultura",
+      "peso": 0.12,
+      "apilable": true,
+      "stack_maximo": 99,
+      "valor_base": 4,
+      "fuente": "cafeto cultivado en la parcela (crece a partir de Semilla de café)",
+      "icono": "icon_granos_cafe",
+      "sprite_mundo": null
+    },
+    {
+      "id": "mineral_hierro",
+      "nombre": "Mineral de hierro",
+      "descripcion": "Roca con alto contenido de hierro extraída en la mina pública. Insumo de Manufactura.",
+      "categoria": "materia_prima",
+      "habilidad_origen": "Mineria",
+      "peso": 2.0,
+      "apilable": true,
+      "stack_maximo": 99,
+      "valor_base": 5,
+      "fuente": "mina pública",
+      "icono": "icon_mineral_hierro",
+      "sprite_mundo": null
+    },
+    {
+      "id": "piedra",
+      "nombre": "Piedra",
+      "descripcion": "Bloque de piedra extraído en la mina pública. Insumo de Carpintería.",
+      "categoria": "materia_prima",
+      "habilidad_origen": "Mineria",
+      "peso": 3.0,
+      "apilable": true,
+      "stack_maximo": 99,
+      "valor_base": 1,
+      "fuente": "mina pública",
+      "icono": "icon_piedra",
+      "sprite_mundo": null
+    },
+    {
+      "id": "madera",
+      "nombre": "Madera",
+      "descripcion": "Tronco cortado en el bosque gestionado de la ciudad. Insumo de Carpintería y Manufactura.",
+      "categoria": "materia_prima",
+      "habilidad_origen": "Silvicultura",
+      "peso": 1.5,
+      "apilable": true,
+      "stack_maximo": 99,
+      "valor_base": 2,
+      "fuente": "bosque gestionado de la ciudad",
+      "icono": "icon_madera",
+      "sprite_mundo": null
+    },
+    {
+      "id": "resina",
+      "nombre": "Resina",
+      "descripcion": "Savia espesa extraída de los árboles de la ciudad, sin talarlos. Insumo de Manufactura para producir Plástico.",
+      "categoria": "materia_prima",
+      "habilidad_origen": "Silvicultura",
+      "peso": 0.8,
+      "apilable": true,
+      "stack_maximo": 99,
+      "valor_base": 3,
+      "fuente": "se extrae de los árboles del bosque gestionado de la ciudad",
+      "icono": "icon_resina",
+      "sprite_mundo": null
+    },
+    {
+      "id": "leche",
+      "nombre": "Leche",
+      "descripcion": "Botella de leche obtenida en el corral propio.",
+      "categoria": "materia_prima",
+      "habilidad_origen": "Ganaderia",
+      "peso": 1.0,
+      "apilable": true,
+      "stack_maximo": 99,
+      "valor_base": 3,
+      "fuente": "corral propio (Ganadería)",
+      "icono": "icon_leche",
+      "sprite_mundo": null
+    },
+    {
+      "id": "huevo",
+      "nombre": "Huevo",
+      "descripcion": "Huevo recogido en el corral propio.",
+      "categoria": "materia_prima",
+      "habilidad_origen": "Ganaderia",
+      "peso": 0.06,
+      "apilable": true,
+      "stack_maximo": 99,
+      "valor_base": 1,
+      "fuente": "corral propio (Ganadería)",
+      "icono": "icon_huevo",
+      "sprite_mundo": null
+    },
+    {
+      "id": "pescado",
+      "nombre": "Pescado",
+      "descripcion": "Pescado fresco sacado del muelle de la ciudad. Insumo de Cocina.",
+      "categoria": "materia_prima",
+      "habilidad_origen": "Pesca",
+      "peso": 0.8,
+      "apilable": true,
+      "stack_maximo": 99,
+      "valor_base": 4,
+      "fuente": "muelle de la ciudad",
+      "icono": "icon_pescado",
+      "sprite_mundo": null
+    },
+    {
+      "id": "marisco",
+      "nombre": "Marisco",
+      "descripcion": "Marisco recogido en el río de la ciudad. Insumo de Cocina.",
+      "categoria": "materia_prima",
+      "habilidad_origen": "Pesca",
+      "peso": 0.5,
+      "apilable": true,
+      "stack_maximo": 99,
+      "valor_base": 6,
+      "fuente": "río de la ciudad",
+      "icono": "icon_marisco",
+      "sprite_mundo": null
+    },
+    {
+      "id": "lana",
+      "nombre": "Lana",
+      "descripcion": "Vellón esquilado en el corral propio. Insumo de Costura para hilar.",
+      "categoria": "materia_prima",
+      "habilidad_origen": "Ganaderia",
+      "peso": 0.7,
+      "apilable": true,
+      "stack_maximo": 99,
+      "valor_base": 3,
+      "fuente": "corral propio (Ganaderia)",
+      "icono": "icon_lana",
+      "sprite_mundo": null
+    },
+    {
+      "id": "fibra_vegetal",
+      "nombre": "Fibra vegetal",
+      "descripcion": "Fibra obtenida del sotobosque gestionado, sin talar ningún árbol. Insumo de Costura para tejer.",
+      "categoria": "materia_prima",
+      "habilidad_origen": "Silvicultura",
+      "peso": 0.3,
+      "apilable": true,
+      "stack_maximo": 99,
+      "valor_base": 2,
+      "fuente": "bosque gestionado de la ciudad",
+      "icono": "icon_fibra_vegetal",
+      "sprite_mundo": null
+    },
+    {
+      "id": "harina",
+      "nombre": "Harina",
+      "descripcion": "Trigo molido. Insumo base de Cocina para hornear Pan.",
+      "categoria": "intermedio",
+      "peso": 0.5,
+      "apilable": true,
+      "stack_maximo": 99,
+      "valor_base": 9,
+      "receta": {
+        "insumos": [
+          {
+            "id": "trigo",
+            "cantidad": 3
+          }
+        ],
+        "habilidad": "Cocina",
+        "xp_otorgada": 5,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 4
+      },
+      "icono": "icon_harina",
+      "sprite_mundo": null
+    },
+    {
+      "id": "plastico",
+      "nombre": "Plástico",
+      "descripcion": "Bioplástico moldeable obtenido al procesar Resina. Insumo de Manufactura para utensilios y piezas.",
+      "categoria": "intermedio",
+      "peso": 0.6,
+      "apilable": true,
+      "stack_maximo": 99,
+      "valor_base": 13,
+      "receta": {
+        "insumos": [
+          {
+            "id": "resina",
+            "cantidad": 3
+          }
+        ],
+        "habilidad": "Manufactura",
+        "xp_otorgada": 10,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 5
+      },
+      "icono": "icon_plastico",
+      "sprite_mundo": null
+    },
+    {
+      "id": "hilo_lana",
+      "nombre": "Hilo de lana",
+      "descripcion": "Lana hilada, lista para tejer. Insumo de Costura para prendas de abrigo.",
+      "categoria": "intermedio",
+      "peso": 0.3,
+      "apilable": true,
+      "stack_maximo": 99,
+      "valor_base": 13,
+      "receta": {
+        "insumos": [
+          {
+            "id": "lana",
+            "cantidad": 3
+          }
+        ],
+        "habilidad": "Costura",
+        "xp_otorgada": 5,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 4
+      },
+      "icono": "icon_hilo_lana",
+      "sprite_mundo": null
+    },
+    {
+      "id": "tela_fibra",
+      "nombre": "Tela de fibra",
+      "descripcion": "Fibra vegetal tejida en tela. Insumo de Costura para prendas livianas.",
+      "categoria": "intermedio",
+      "peso": 0.4,
+      "apilable": true,
+      "stack_maximo": 99,
+      "valor_base": 9,
+      "receta": {
+        "insumos": [
+          {
+            "id": "fibra_vegetal",
+            "cantidad": 3
+          }
+        ],
+        "habilidad": "Costura",
+        "xp_otorgada": 5,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 4
+      },
+      "icono": "icon_tela_fibra",
+      "sprite_mundo": null
+    },
+    {
+      "id": "taza_madera",
+      "nombre": "Taza de madera",
+      "descripcion": "Taza tallada en madera. Contenedor de líquidos: puede estar vacía o servida con una bebida como Café.",
+      "categoria": "utensilio",
+      "peso": 0.25,
+      "apilable": false,
+      "stack_maximo": 1,
+      "valor_base": 5,
+      "receta": {
+        "insumos": [
+          {
+            "id": "madera",
+            "cantidad": 1
+          }
+        ],
+        "habilidad": "Carpinteria",
+        "xp_otorgada": 5,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 3
+      },
+      "familia": "taza",
+      "contenedor": {
+        "tipo": "liquido",
+        "capacidad": 1
+      },
+      "icono": "icon_taza_madera",
+      "sprite_mundo": null
+    },
+    {
+      "id": "taza_piedra",
+      "nombre": "Taza de piedra",
+      "descripcion": "Taza labrada en piedra. Contenedor de líquidos, más pesada y resistente que la de madera.",
+      "categoria": "utensilio",
+      "peso": 0.6,
+      "apilable": false,
+      "stack_maximo": 1,
+      "valor_base": 4,
+      "receta": {
+        "insumos": [
+          {
+            "id": "piedra",
+            "cantidad": 1
+          }
+        ],
+        "habilidad": "Carpinteria",
+        "xp_otorgada": 6,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 4
+      },
+      "familia": "taza",
+      "contenedor": {
+        "tipo": "liquido",
+        "capacidad": 1
+      },
+      "icono": "icon_taza_piedra",
+      "sprite_mundo": null
+    },
+    {
+      "id": "taza_plastico",
+      "nombre": "Taza de plástico",
+      "descripcion": "Taza moldeada en bioplástico. Contenedor de líquidos liviano y barato de producir.",
+      "categoria": "utensilio",
+      "peso": 0.15,
+      "apilable": false,
+      "stack_maximo": 1,
+      "valor_base": 18,
+      "receta": {
+        "insumos": [
+          {
+            "id": "plastico",
+            "cantidad": 1
+          }
+        ],
+        "habilidad": "Manufactura",
+        "xp_otorgada": 5,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 3
+      },
+      "familia": "taza",
+      "contenedor": {
+        "tipo": "liquido",
+        "capacidad": 1
+      },
+      "icono": "icon_taza_plastico",
+      "sprite_mundo": null
+    },
+    {
+      "id": "plato_madera",
+      "nombre": "Plato de madera",
+      "descripcion": "Plato tallado en madera. Contenedor para una porción de comida sólida.",
+      "categoria": "utensilio",
+      "peso": 0.3,
+      "apilable": false,
+      "stack_maximo": 1,
+      "valor_base": 5,
+      "receta": {
+        "insumos": [
+          {
+            "id": "madera",
+            "cantidad": 1
+          }
+        ],
+        "habilidad": "Carpinteria",
+        "xp_otorgada": 5,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 3
+      },
+      "familia": "plato",
+      "contenedor": {
+        "tipo": "solido",
+        "capacidad": 1
+      },
+      "icono": "icon_plato_madera",
+      "sprite_mundo": null
+    },
+    {
+      "id": "plato_piedra",
+      "nombre": "Plato de piedra",
+      "descripcion": "Plato labrado en piedra. Contenedor para comida sólida, más pesado y resistente.",
+      "categoria": "utensilio",
+      "peso": 0.8,
+      "apilable": false,
+      "stack_maximo": 1,
+      "valor_base": 4,
+      "receta": {
+        "insumos": [
+          {
+            "id": "piedra",
+            "cantidad": 1
+          }
+        ],
+        "habilidad": "Carpinteria",
+        "xp_otorgada": 6,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 4
+      },
+      "familia": "plato",
+      "contenedor": {
+        "tipo": "solido",
+        "capacidad": 1
+      },
+      "icono": "icon_plato_piedra",
+      "sprite_mundo": null
+    },
+    {
+      "id": "plato_plastico",
+      "nombre": "Plato de plástico",
+      "descripcion": "Plato moldeado en bioplástico. Contenedor para comida sólida, liviano.",
+      "categoria": "utensilio",
+      "peso": 0.2,
+      "apilable": false,
+      "stack_maximo": 1,
+      "valor_base": 18,
+      "receta": {
+        "insumos": [
+          {
+            "id": "plastico",
+            "cantidad": 1
+          }
+        ],
+        "habilidad": "Manufactura",
+        "xp_otorgada": 5,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 3
+      },
+      "familia": "plato",
+      "contenedor": {
+        "tipo": "solido",
+        "capacidad": 1
+      },
+      "icono": "icon_plato_plastico",
+      "sprite_mundo": null
+    },
+    {
+      "id": "pan",
+      "nombre": "Pan",
+      "descripcion": "Hogaza horneada con harina. Restaura energía al comerla.",
+      "categoria": "consumible",
+      "peso": 0.3,
+      "apilable": true,
+      "stack_maximo": 20,
+      "valor_base": 25,
+      "receta": {
+        "insumos": [
+          {
+            "id": "harina",
+            "cantidad": 2
+          }
+        ],
+        "habilidad": "Cocina",
+        "xp_otorgada": 5,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 3
+      },
+      "efecto": {
+        "tipo": "restaurar_energia",
+        "habilidad_afectada": null,
+        "magnitud": 20,
+        "duracion_seg": 0,
+        "estacable": false
+      },
+      "icono": "icon_pan",
+      "sprite_mundo": null
+    },
+    {
+      "id": "cafe",
+      "nombre": "Café",
+      "descripcion": "Café recién preparado con Granos de café, servido en una taza (de cualquier material). Da un impulso temporal a la Manufactura.",
+      "categoria": "consumible",
+      "peso": 0.3,
+      "apilable": true,
+      "stack_maximo": 20,
+      "valor_base": 11,
+      "receta": {
+        "insumos": [
+          {
+            "id": "granos_cafe",
+            "cantidad": 2
+          },
+          {
+            "familia": "taza",
+            "cantidad": 1,
+            "consume": false
+          }
+        ],
+        "habilidad": "Cocina",
+        "xp_otorgada": 8,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 4
+      },
+      "es_liquido": true,
+      "efecto": {
+        "tipo": "velocidad",
+        "habilidad_afectada": "Manufactura",
+        "magnitud": 10,
+        "duracion_seg": 300,
+        "estacable": false
+      },
+      "icono": "icon_cafe",
+      "sprite_mundo": null
+    },
+    {
+      "id": "jugo_manzana",
+      "nombre": "Jugo de manzana",
+      "descripcion": "Jugo fresco de manzana, servido en una taza (de cualquier material). Restaura energía al beberlo.",
+      "categoria": "consumible",
+      "peso": 0.3,
+      "apilable": true,
+      "stack_maximo": 20,
+      "valor_base": 9,
+      "receta": {
+        "insumos": [
+          {
+            "id": "manzana",
+            "cantidad": 2
+          },
+          {
+            "familia": "taza",
+            "cantidad": 1,
+            "consume": false
+          }
+        ],
+        "habilidad": "Cocina",
+        "xp_otorgada": 6,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 3
+      },
+      "es_liquido": true,
+      "efecto": {
+        "tipo": "restaurar_energia",
+        "habilidad_afectada": null,
+        "magnitud": 15,
+        "duracion_seg": 0,
+        "estacable": false
+      },
+      "icono": "icon_jugo_manzana",
+      "sprite_mundo": null
+    },
+    {
+      "id": "cafe_con_leche",
+      "nombre": "Café con leche",
+      "descripcion": "Café preparado con Granos de café y Leche, servido en una taza (de cualquier material). Un impulso mayor a la Manufactura que el café solo.",
+      "categoria": "consumible",
+      "peso": 0.4,
+      "apilable": true,
+      "stack_maximo": 20,
+      "valor_base": 15,
+      "receta": {
+        "insumos": [
+          {
+            "id": "granos_cafe",
+            "cantidad": 2
+          },
+          {
+            "id": "leche",
+            "cantidad": 1
+          },
+          {
+            "familia": "taza",
+            "cantidad": 1,
+            "consume": false
+          }
+        ],
+        "habilidad": "Cocina",
+        "xp_otorgada": 10,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 5
+      },
+      "es_liquido": true,
+      "efecto": {
+        "tipo": "velocidad",
+        "habilidad_afectada": "Manufactura",
+        "magnitud": 15,
+        "duracion_seg": 360,
+        "estacable": false
+      },
+      "icono": "icon_cafe_con_leche",
+      "sprite_mundo": null
+    },
+    {
+      "id": "huevo_cocido",
+      "nombre": "Huevo cocido",
+      "descripcion": "Huevo hervido, servido en un plato (de cualquier material). Restaura energía al comerlo.",
+      "categoria": "consumible",
+      "peso": 0.15,
+      "apilable": true,
+      "stack_maximo": 20,
+      "valor_base": 5,
+      "receta": {
+        "insumos": [
+          {
+            "id": "huevo",
+            "cantidad": 2
+          },
+          {
+            "familia": "plato",
+            "cantidad": 1,
+            "consume": false
+          }
+        ],
+        "habilidad": "Cocina",
+        "xp_otorgada": 6,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 3
+      },
+      "es_solido": true,
+      "efecto": {
+        "tipo": "restaurar_energia",
+        "habilidad_afectada": null,
+        "magnitud": 18,
+        "duracion_seg": 0,
+        "estacable": false
+      },
+      "icono": "icon_huevo_cocido",
+      "sprite_mundo": null
+    },
+    {
+      "id": "pescado_plancha",
+      "nombre": "Pescado a la plancha",
+      "descripcion": "Pescado hecho a la plancha, servido en un plato (de cualquier material). Restaura energía al comerlo.",
+      "categoria": "consumible",
+      "peso": 0.35,
+      "apilable": true,
+      "stack_maximo": 20,
+      "valor_base": 11,
+      "receta": {
+        "insumos": [
+          {
+            "id": "pescado",
+            "cantidad": 2
+          },
+          {
+            "familia": "plato",
+            "cantidad": 1,
+            "consume": false
+          }
+        ],
+        "habilidad": "Cocina",
+        "xp_otorgada": 8,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 4
+      },
+      "es_solido": true,
+      "efecto": {
+        "tipo": "restaurar_energia",
+        "habilidad_afectada": null,
+        "magnitud": 25,
+        "duracion_seg": 0,
+        "estacable": false
+      },
+      "icono": "icon_pescado_plancha",
+      "sprite_mundo": null
+    },
+    {
+      "id": "caldo_marisco",
+      "nombre": "Caldo de marisco",
+      "descripcion": "Caldo espeso de marisco, servido en una taza (de cualquier material). Da un impulso temporal a la Minería.",
+      "categoria": "consumible",
+      "peso": 0.4,
+      "apilable": true,
+      "stack_maximo": 20,
+      "valor_base": 17,
+      "receta": {
+        "insumos": [
+          {
+            "id": "marisco",
+            "cantidad": 2
+          },
+          {
+            "familia": "taza",
+            "cantidad": 1,
+            "consume": false
+          }
+        ],
+        "habilidad": "Cocina",
+        "xp_otorgada": 10,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 5
+      },
+      "es_liquido": true,
+      "efecto": {
+        "tipo": "velocidad",
+        "habilidad_afectada": "Mineria",
+        "magnitud": 12,
+        "duracion_seg": 300,
+        "estacable": false
+      },
+      "icono": "icon_caldo_marisco",
+      "sprite_mundo": null
+    },
+    {
+      "id": "pala_hierro",
+      "nombre": "Pala de hierro",
+      "descripcion": "Herramienta manual con cabezal de hierro y mango de madera. Mejora la velocidad de Agricultura mientras está equipada.",
+      "categoria": "equipable",
+      "peso": 2.5,
+      "apilable": false,
+      "stack_maximo": 1,
+      "valor_base": 27,
+      "receta": {
+        "insumos": [
+          {
+            "id": "mineral_hierro",
+            "cantidad": 2
+          },
+          {
+            "id": "madera",
+            "cantidad": 1
+          }
+        ],
+        "habilidad": "Manufactura",
+        "xp_otorgada": 20,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 5
+      },
+      "slot": "herramienta_mano",
+      "bono": {
+        "tipo": "velocidad",
+        "habilidad_afectada": "Agricultura",
+        "magnitud": 15,
+        "duracion_seg": 0,
+        "estacable": false
+      },
+      "icono": "icon_pala_hierro",
+      "sprite_mundo": null
+    },
+    {
+      "id": "pico_mineria",
+      "nombre": "Pico de minería",
+      "descripcion": "Herramienta manual con cabezal de hierro y mango de madera. Mejora la velocidad de Minería mientras está equipada.",
+      "categoria": "equipable",
+      "peso": 3.0,
+      "apilable": false,
+      "stack_maximo": 1,
+      "valor_base": 27,
+      "receta": {
+        "insumos": [
+          {
+            "id": "mineral_hierro",
+            "cantidad": 2
+          },
+          {
+            "id": "madera",
+            "cantidad": 1
+          }
+        ],
+        "habilidad": "Manufactura",
+        "xp_otorgada": 20,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 5
+      },
+      "slot": "herramienta_mano",
+      "bono": {
+        "tipo": "velocidad",
+        "habilidad_afectada": "Mineria",
+        "magnitud": 15,
+        "duracion_seg": 0,
+        "estacable": false
+      },
+      "icono": "icon_pico_mineria",
+      "sprite_mundo": null
+    },
+    {
+      "id": "cana_pescar",
+      "nombre": "Caña de pescar",
+      "descripcion": "Caña de madera con sedal de fibra vegetal. Mejora la velocidad de Pesca mientras está equipada.",
+      "categoria": "equipable",
+      "peso": 1.8,
+      "apilable": false,
+      "stack_maximo": 1,
+      "valor_base": 15,
+      "receta": {
+        "insumos": [
+          {
+            "id": "madera",
+            "cantidad": 2
+          },
+          {
+            "id": "fibra_vegetal",
+            "cantidad": 1
+          }
+        ],
+        "habilidad": "Manufactura",
+        "xp_otorgada": 20,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 5
+      },
+      "slot": "herramienta_mano",
+      "bono": {
+        "tipo": "velocidad",
+        "habilidad_afectada": "Pesca",
+        "magnitud": 15,
+        "duracion_seg": 0,
+        "estacable": false
+      },
+      "icono": "icon_cana_pescar",
+      "sprite_mundo": null
+    },
+    {
+      "id": "gorro_lana",
+      "nombre": "Gorro de lana",
+      "descripcion": "Gorro tejido en hilo de lana. Prenda de cabeza, puramente cosmética.",
+      "categoria": "equipable",
+      "peso": 0.3,
+      "apilable": false,
+      "stack_maximo": 1,
+      "valor_base": 56,
+      "receta": {
+        "insumos": [
+          {
+            "id": "hilo_lana",
+            "cantidad": 2
+          }
+        ],
+        "habilidad": "Costura",
+        "xp_otorgada": 12,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 4
+      },
+      "slot": "tocado",
+      "icono": "icon_gorro_lana",
+      "sprite_mundo": null
+    },
+    {
+      "id": "chaleco_lana",
+      "nombre": "Chaleco de lana",
+      "descripcion": "Chaleco grueso tejido en hilo de lana. Prenda de torso, puramente cosmética.",
+      "categoria": "equipable",
+      "peso": 0.6,
+      "apilable": false,
+      "stack_maximo": 1,
+      "valor_base": 87,
+      "receta": {
+        "insumos": [
+          {
+            "id": "hilo_lana",
+            "cantidad": 3
+          }
+        ],
+        "habilidad": "Costura",
+        "xp_otorgada": 18,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 5
+      },
+      "slot": "torso",
+      "icono": "icon_chaleco_lana",
+      "sprite_mundo": null
+    },
+    {
+      "id": "camiseta_fibra",
+      "nombre": "Camiseta de fibra",
+      "descripcion": "Camiseta liviana de tela de fibra. Prenda de torso, puramente cosmética.",
+      "categoria": "equipable",
+      "peso": 0.4,
+      "apilable": false,
+      "stack_maximo": 1,
+      "valor_base": 39,
+      "receta": {
+        "insumos": [
+          {
+            "id": "tela_fibra",
+            "cantidad": 2
+          }
+        ],
+        "habilidad": "Costura",
+        "xp_otorgada": 12,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 4
+      },
+      "slot": "torso",
+      "icono": "icon_camiseta_fibra",
+      "sprite_mundo": null
+    },
+    {
+      "id": "pantalon_fibra",
+      "nombre": "Pantalón de fibra",
+      "descripcion": "Pantalón de tela de fibra. Prenda de piernas, puramente cosmética.",
+      "categoria": "equipable",
+      "peso": 0.5,
+      "apilable": false,
+      "stack_maximo": 1,
+      "valor_base": 60,
+      "receta": {
+        "insumos": [
+          {
+            "id": "tela_fibra",
+            "cantidad": 3
+          }
+        ],
+        "habilidad": "Costura",
+        "xp_otorgada": 18,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 5
+      },
+      "slot": "piernas",
+      "icono": "icon_pantalon_fibra",
+      "sprite_mundo": null
+    },
+    {
+      "id": "silla_madera",
+      "nombre": "Silla de madera",
+      "descripcion": "Silla simple tallada en madera. Objeto de decoración para la sala.",
+      "categoria": "decorativo",
+      "peso": 4.0,
+      "apilable": false,
+      "stack_maximo": 1,
+      "valor_base": 13,
+      "receta": {
+        "insumos": [
+          {
+            "id": "madera",
+            "cantidad": 2
+          }
+        ],
+        "habilidad": "Carpinteria",
+        "xp_otorgada": 10,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 4
+      },
+      "tamano_grilla": {
+        "ancho": 1,
+        "alto": 1
+      },
+      "rotable": true,
+      "icono": "icon_silla_madera",
+      "sprite_mundo": "obj_silla_madera"
+    },
+    {
+      "id": "mesa_madera",
+      "nombre": "Mesa de madera",
+      "descripcion": "Mesa robusta de madera maciza. Objeto de decoración para la sala.",
+      "categoria": "decorativo",
+      "peso": 8.0,
+      "apilable": false,
+      "stack_maximo": 1,
+      "valor_base": 17,
+      "receta": {
+        "insumos": [
+          {
+            "id": "madera",
+            "cantidad": 4
+          }
+        ],
+        "habilidad": "Carpinteria",
+        "xp_otorgada": 15,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 6
+      },
+      "tamano_grilla": {
+        "ancho": 2,
+        "alto": 1
+      },
+      "rotable": true,
+      "icono": "icon_mesa_madera",
+      "sprite_mundo": "obj_mesa_madera"
+    },
+    {
+      "id": "estanteria",
+      "nombre": "Estantería",
+      "descripcion": "Estantería de madera con base de piedra. Objeto de decoración para la sala.",
+      "categoria": "decorativo",
+      "peso": 12.0,
+      "apilable": false,
+      "stack_maximo": 1,
+      "valor_base": 17,
+      "receta": {
+        "insumos": [
+          {
+            "id": "madera",
+            "cantidad": 3
+          },
+          {
+            "id": "piedra",
+            "cantidad": 2
+          }
+        ],
+        "habilidad": "Carpinteria",
+        "xp_otorgada": 20,
+        "nivel_requerido": 1,
+        "tiempo_crafteo_seg": 7
+      },
+      "tamano_grilla": {
+        "ancho": 2,
+        "alto": 1
+      },
+      "rotable": true,
+      "icono": "icon_estanteria",
+      "sprite_mundo": "obj_estanteria"
+    }
+  ]
+}
