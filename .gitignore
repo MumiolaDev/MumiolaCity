@@ -1,0 +1,12 @@
+# Packs de assets originales tal como se descargan (~80 MB).
+#
+# No se versionan a propósito: son re-descargables desde kaylousberg.com y al
+# proyecto solo se copia el formato glTF de lo que realmente se usa, que sí está
+# versionado en mumiola-city/arte/modelos_3d/. Guardar además los .fbx y .obj
+# del pack original sería triplicar el peso del repo sin ganar nada.
+#
+# Packs en uso, todos CC0 (Kay Lousberg, www.kaylousberg.com):
+#   - KayKit Prototype Bits    — escenario: suelos, paredes, pilares
+#   - KayKit Furniture Bits    — mobiliario
+#   - KayKit Character Animations — maniquí y bibliotecas de animación
+/ass/
