@@ -202,6 +202,7 @@ _surfaces = [{
 blend_shape_mode = 0
 
 [node name="PersonajeControlador" type="CharacterBody3D" unique_id=968987215]
+collision_mask = 0
 motion_mode = 1
 script = ExtResource("1_k8751")
 
@@ -209,8 +210,10 @@ script = ExtResource("1_k8751")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
 shape = SubResource("CapsuleShape3D_ac2kl")
 
-[node name="Visual" type="Node3D" parent="." unique_id=87234690]
+[node name="Visual" type="Node3D" parent="." unique_id=87234690 node_paths=PackedStringArray("animador", "esqueleto")]
 script = ExtResource("2_bm77v")
+animador = NodePath("Mannequin_Medium/AnimationPlayer")
+esqueleto = NodePath("Mannequin_Medium/Rig_Medium/Skeleton3D")
 
 [node name="Mannequin_Medium" type="Node3D" parent="Visual" unique_id=102654099]
 
@@ -279,7 +282,7 @@ bones/8/parent = 7
 bones/8/rest = Transform3D(0.05728419, -0.99835724, 4.4361707e-07, 5.6624367e-07, 4.7683673e-07, 0.99999976, -0.99835724, -0.05728419, 5.9262936e-07, -0.21200737, 0.13413215, 8.402462e-08)
 bones/8/enabled = true
 bones/8/position = Vector3(-0.21200734, 0.13413227, 8.5732175e-08)
-bones/8/rotation = Quaternion(-0.6190137, 0.390466, 0.5528969, 0.3983258)
+bones/8/rotation = Quaternion(-0.6190137, 0.39046597, 0.5528969, 0.39832586)
 bones/8/scale = Vector3(0.9999993, 0.9999993, 0.99999976)
 bones/9/name = "lowerarm.r"
 bones/9/parent = 8

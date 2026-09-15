@@ -27,7 +27,34 @@ const SLOTS := [&"cuerpo", &"piernas", &"torso", &"cabeza", &"tocado"]
 ## BoneAttachment3D de cada slot cuando haya un personaje modular.
 @export var esqueleto : Skeleton3D
 
+## Animaciones que tienen que repetirse mientras dure el estado, por su nombre
+## logico.
+##
+## Las animaciones importadas desde glTF llegan con loop_mode en NONE porque el
+## formato no distingue las ciclicas de las que se reproducen una vez, asi que
+## hay que marcarlas a mano. Sin esto, caminar un trayecto largo deja al avatar
+## congelado en el ultimo cuadro cuando la animacion termina.
+@export var en_bucle : Array[StringName] = [&"idle", &"caminar", &"sentado"]
+
 var _actual : StringName = &""
+
+
+func _ready() -> void:
+	if animador == null:
+		push_error("AvatarComposer en %s: falta asignar 'animador' en el inspector." % name)
+		return
+	_aplicar_bucles()
+
+
+## Marca como ciclicas las animaciones listadas en en_bucle. Modifica el recurso
+## en memoria, no el archivo importado.
+func _aplicar_bucles() -> void:
+	for logica in en_bucle:
+		if not animaciones.has(logica):
+			continue
+		var anim : Animation = animador.get_animation(animaciones[logica])
+		if anim != null:
+			anim.loop_mode = Animation.LOOP_LINEAR
 
 
 ## Reproduce una animacion por su nombre logico.
@@ -36,6 +63,8 @@ var _actual : StringName = &""
 ## desde _physics_process y reiniciarla en cada fotograma la dejaria congelada
 ## en el primer cuadro.
 func reproducir(animacion : StringName) -> void:
+	if animador == null:
+		return
 	if animacion == _actual:
 		return
 	if not animaciones.has(animacion):

@@ -550,22 +550,41 @@ IsoGrid (Node3D)
 ```gdscript
 class_name IsoGrid extends Node3D
 
-signal ocupacion_cambiada(celdas: Array)
+const SIN_CELDA := Vector2i.MAX                     # celda_bajo_puntero() sin impacto
 
-@export var suelo: GridMap
-@export var paredes: GridMap
+signal ocupacion_cambiada(celdas : Array[Vector2i])
 
-var _ocupadas: Dictionary = {}                      # Vector2i -> WorldObject
+@export var suelo : GridMap                         # define que celdas existen
+@export var paredes : GridMap                       # bloquean, no definen celdas
+@export var altura_piso : float                     # cara superior del suelo, no 0
+@export var piezas_transitables : Array[StringName] # excepciones de paredes (D15)
 
-func mundo_a_celda(pos: Vector3) -> Vector2i        # suelo.local_to_map()
-func celda_a_mundo(celda: Vector2i) -> Vector3      # suelo.map_to_local()
-func celda_valida(celda: Vector2i) -> bool          # ¿hay suelo pintado?
-func celdas_de(origen: Vector2i, tamano: Vector2i) -> Array[Vector2i]
-func esta_libre(origen: Vector2i, tamano: Vector2i = Vector2i.ONE) -> bool
-func ocupar(origen: Vector2i, tamano: Vector2i, obj: WorldObject) -> bool
+var _ocupadas : Dictionary = {}                     # Vector2i -> WorldObject
+var _paredes_planta : Dictionary = {}               # planta de paredes, cache perezosa
+var _astar : AStarGrid2D = null                     # uno por sala, perezoso
+
+# Geometria
+func celda_a_mundo(celda: Vector2i) -> Vector3
+func mundo_a_celda(pos: Vector3) -> Vector2i
+func celda_bajo_puntero(camara: Camera3D, pos_pantalla: Vector2) -> Vector2i
+func celdas_de(origen: Vector2i, size: Vector2i, rotacion := 0) -> Array[Vector2i]
+func centro_de(origen: Vector2i, size: Vector2i, rotacion := 0) -> Vector3
+func region_usada() -> Rect2i
+
+# Transitabilidad
+func celda_valida(celda: Vector2i) -> bool          # hay suelo pintado?
+func hay_pared(celda: Vector2i) -> bool
+func esta_libre(origen: Vector2i, size := Vector2i.ONE, rotacion := 0) -> bool
+func celdas_bloqueadas() -> Array[Vector2i]
+func recalcular_paredes() -> void                   # tras repintar paredes en runtime
+
+# Ocupacion
+func ocupar(origen: Vector2i, size: Vector2i, obj: WorldObject, rotacion := 0) -> bool
 func liberar_objeto(obj: WorldObject) -> void
 func objeto_en(celda: Vector2i) -> WorldObject
-func celdas_bloqueadas() -> Array[Vector2i]         # ocupadas + sin suelo; alimenta AStarGrid2D
+
+# Rutas
+func ruta(origen: Vector2i, destino: Vector2i) -> Array[Vector2i]
 ```
 
 **`Node3D` y no `extends GridMap`.** El script podría colgar del `GridMap` del suelo y heredar las conversiones gratis, pero eso haría de las paredes un apéndice de la capa de suelo cuando son dos vistas de la misma sala. `IsoGrid` es dueño de la ocupación y del área construible (`SISTEMAS.md` §3.1), no de dibujar el piso. El costo es un `suelo.` por conversión; la ganancia es que una tercera capa —techos, decoración fija— entra sin reorganizar nada.
@@ -575,6 +594,12 @@ func celdas_bloqueadas() -> Array[Vector2i]         # ocupadas + sin suelo; alim
 **`celda_valida()` pregunta por el suelo, no por un rectángulo.** `get_cell_item(...) != GridMap.INVALID_CELL_ITEM` hace que el área caminable sea *lo que pintaste*: salas en L o irregulares salen gratis. Por eso desapareció el `@export var grid_size` del diseño original — con el suelo como fuente de verdad, sobra.
 
 **La API pública habla en `Vector2i`** (planta del piso) y convierte a `Vector3i` solo para hablar con los `GridMap`. Así `celda_origen` (**D3**), los `tamano_grilla` de `items.json` y el `AStarGrid2D` siguen valiendo sin cambios.
+
+**El `AStarGrid2D` vive acá, no en cada personaje.** Es un índice derivado de la grilla, no un dato de quien camina: cincuenta NPCs en una sala comparten este mismo mapa de celdas sólidas en vez de mantener cincuenta copias. Se construye de forma perezosa —la primera vez que alguien pide una `ruta()`— para no depender del orden de `_ready()` entre nodos, y `ocupar()` lo parchea desde dentro. Esto último es lo que convierte el bug más previsible de la fase 4 (§3.1 de `SISTEMAS.md`) en algo imposible: ya no hay nada que un personaje nuevo pueda olvidarse de conectar.
+
+**`ruta()` devuelve el camino sin la celda de origen.** Que `get_id_path()` incluya el punto de partida es un detalle del motor, y conviene que lo sepa un solo lugar en vez de cada quien que pida una ruta.
+
+**`celda_bajo_puntero()` también vive acá, y no en el personaje.** Lo necesitan al menos dos cosas —quien camina y la vista previa de colocación—, y duplicar esa matemática es garantizar que algún día discrepen. La altura del plano es `altura_piso`, propiedad de la grilla: usar la altura del personaje funcionaba solo mientras hubiera uno solo parado en el piso.
 
 **Invariante:** los dos hijos van con transformación en cero y el origen de `IsoGrid` es el origen de la sala. `map_to_local()` trabaja en el espacio local del `GridMap`: si alguien mueve un hijo, las conversiones mienten sin dar error.
 
@@ -598,8 +623,7 @@ signal estado_cambiado(estado: StringName)
 var energia: float
 var celda_actual: Vector2i
 var estado: StringName = &"idle"                 # idle | caminando | sentado | actuando
-var _astar: AStarGrid2D
-var _ruta: Array[Vector2i]                       # celdas; se mapean al plano XZ
+var _ruta: Array[Vector2i]                       # celdas pendientes del recorrido
 
 func ir_a_celda(celda: Vector2i) -> void
 func detener() -> void
@@ -615,7 +639,7 @@ func reproducir_animacion(nombre: StringName) -> void
 
 **`esta_adyacente_a`** es lo que consultan los `InteractionBehavior` con `requiere_adyacencia == true`: sentarse en una silla al otro lado de la sala no debería funcionar.
 
-**`AStarGrid2D` sigue siendo el pathfinder aunque el mundo sea 3D.** Opera sobre una grilla de enteros y no le importa la dimensión del render: se alimenta con `IsoGrid.celdas_bloqueadas()` y cada celda del resultado se convierte con `celda_a_mundo()`. No hace falta `NavigationServer3D` para una grilla de celdas discretas.
+**El pathfinding no vive acá.** `ir_a_celda()` delega en `IsoGrid.ruta()`, que mantiene un único `AStarGrid2D` por sala. El personaje solo guarda la lista de celdas que le queda por recorrer. `AStarGrid2D` sigue sirviendo aunque el mundo sea 3D: opera sobre una grilla de enteros y no le importa la dimensión del render, y cada celda del resultado se convierte con `celda_a_mundo()`.
 
 **`gastar_energia` devuelve `bool` pero no bloquea (D7):** devuelve `false` cuando la energía está por debajo del umbral, y quien llama decide penalizar la velocidad, no cancelar la acción. **En el MVP nadie lo llama todavía** — D7 quedó postergada a la fase 2 a propósito, así que el método se escribe pero la barra solo sube. Mientras tanto, los cuatro consumibles que restauran energía no cambian nada al comerlos.
 
@@ -645,6 +669,24 @@ func to_dict() -> Dictionary                     # apariencia serializable
 **Pendiente de contenido, no de estructura.** El maniquí de KayKit son seis mallas separadas pesadas al mismo esqueleto (`ArmLeft`, `ArmRight`, `Body`, `Head`, `LegLeft`, `LegRight`), y el esqueleto expone huesos de enganche tipo `handslot.l` para las herramientas. Intercambiar una parte es asignarle otro `Mesh` a su `MeshInstance3D`. Lo que falta son prendas que ponerle: hasta que existan, `actualizar_parte()` queda sin implementar porque no habría con qué probarla.
 
 **`animaciones` traduce nombres lógicos a nombres del pack.** El juego pide `&"caminar"` y el diccionario decide que eso es `"Rig_Medium_MovementBasic/Walking_A"`. Sin esa capa, el nombre de un archivo de KayKit se filtraría hasta `PlayerController`.
+
+### 3.3b `IndicadorCelda extends MeshInstance3D`
+
+Resalta la celda bajo el puntero, coloreada según su estado. Es una ayuda de desarrollo —ver de un vistazo qué está libre y qué bloqueado, sin deducirlo del comportamiento del personaje— y el germen de la vista previa de colocación que va a necesitar `RoomBuilderUI` en la fase 4.
+
+```gdscript
+class_name IndicadorCelda extends MeshInstance3D
+
+@export var grid : IsoGrid
+@export var camara : Camera3D
+@export var color_libre : Color
+@export var color_bloqueado : Color
+@export var alzado : float                          # separacion del piso, anti z-fighting
+```
+
+**Ya encontró un bug que era invisible de otro modo:** una pieza de puerta bloqueaba la celda del hueco y dejaba libres las dos de muro, exactamente al revés de lo correcto. Sin el indicador eso se manifestaba solo como "el personaje camina raro por ahí" (**D15**).
+
+**Lo que le falta para ser la vista previa de la fase 4:** mostrar el conjunto de celdas de `celdas_de()` en vez de una sola, y colorear según si el objeto entero cabe, no celda por celda.
 
 ### 3.4 `RoomController extends Node3D`
 

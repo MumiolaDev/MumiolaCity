@@ -326,7 +326,7 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_i0p10")
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_8vbks"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_pq23r"]
 size = Vector3(4.0000005, 4, 0.5300007)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_t8snw"]
@@ -520,7 +520,7 @@ mesh = SubResource("ArrayMesh_sptyi")
 visible = false
 
 [node name="pilar_base" type="MeshInstance3D" parent="pilar_base" unique_id=1596209409]
-transform = Transform3D(0.5, 0, 0, 0, 0.75, 0, 0, 0, 0.5, -0.5, 0, 0.5)
+transform = Transform3D(0.75, 0, 0, 0, 0.75, 0, 0, 0, 0.75, 0, 0, 0)
 mesh = SubResource("ArrayMesh_hp6u3")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="pilar_base/pilar_base" unique_id=711859961]
@@ -546,19 +546,19 @@ shape = SubResource("BoxShape3D_fpa55")
 visible = false
 
 [node name="espacio_puerta" type="MeshInstance3D" parent="espacio_puerta" unique_id=1983324127]
-transform = Transform3D(0.5, 0, 0, 0, 0.75, 0, 0, 0, 0.5, -0.5, 0, 0.5)
+transform = Transform3D(0.75, 0, 0, 0, 0.75, 0, 0, 0, 0.5, 0, 0, 0.5)
 mesh = SubResource("ArrayMesh_ogojf")
 
-[node name="StaticBody3D" type="StaticBody3D" parent="espacio_puerta/espacio_puerta" unique_id=1930643684]
+[node name="StaticBody3D" type="StaticBody3D" parent="espacio_puerta/espacio_puerta" unique_id=948298796]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.3841858e-07, 2, 0.014999896)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="espacio_puerta/espacio_puerta/StaticBody3D" unique_id=332715348]
-shape = SubResource("BoxShape3D_8vbks")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="espacio_puerta/espacio_puerta/StaticBody3D" unique_id=1678064828]
+shape = SubResource("BoxShape3D_pq23r")
 
 [node name="pared_base" type="Node3D" parent="." unique_id=1046822093]
 
 [node name="pared_base" type="MeshInstance3D" parent="pared_base" unique_id=367460072]
-transform = Transform3D(0.5, 0, 0, 0, 0.75, 0, 0, 0, 0.5, -0.5, 0, 0.5)
+transform = Transform3D(0.5, 0, 0, 0, 0.75, 0, 0, 0, 0.5, -0.5, 0, -0.25)
 mesh = SubResource("ArrayMesh_l4330")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="pared_base/pared_base" unique_id=1243220772]
@@ -568,10 +568,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.99999976, 2, 0.0149998665)
 shape = SubResource("BoxShape3D_juuhs")
 
 [node name="ventana_cerrada" type="Node3D" parent="." unique_id=1209458712]
-visible = false
 
 [node name="ventana_cerrada" type="MeshInstance3D" parent="ventana_cerrada" unique_id=1755281926]
-transform = Transform3D(0.5, 0, 0, 0, 0.75, 0, 0, 0, 0.5, -0.5, 0, 0.5)
+transform = Transform3D(0.5, 0, 0, 0, 0.75, 0, 0, 0, 0.5, -0.5, 0, -0.25)
 mesh = SubResource("ArrayMesh_mdd38")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="ventana_cerrada/ventana_cerrada" unique_id=76402636]
@@ -581,10 +580,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.3841858e-07, 2, 0.01499986
 shape = SubResource("BoxShape3D_v1ds0")
 
 [node name="ventana_abierta" type="Node3D" parent="." unique_id=1710850504]
-visible = false
 
 [node name="ventana_abierta" type="MeshInstance3D" parent="ventana_abierta" unique_id=1622117748]
-transform = Transform3D(0.5, 0, 0, 0, 0.75, 0, 0, 0, 0.5, -0.5, 0, 0.5)
+transform = Transform3D(0.5, 0, 0, 0, 0.75, 0, 0, 0, 0.5, -0.5, 0, -0.25)
 mesh = SubResource("ArrayMesh_ghp2v")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="ventana_abierta/ventana_abierta" unique_id=1768520829]

@@ -15,10 +15,33 @@
 extends Node3D
 class_name IsoGrid
 
+## Valor que devuelve celda_bajo_puntero() cuando el rayo no corta el plano del
+## piso. Solo puede pasar si la camara mira exactamente en horizontal.
+const SIN_CELDA := Vector2i.MAX
+
 ## Capa de escenario caminable. Define que celdas existen.
 @export var suelo : GridMap
 ## Capa de escenario del anillo exterior. No define celdas caminables.
 @export var paredes : GridMap
+
+## Altura de la cara superior del suelo, en metros. No es cero: las piezas de
+## suelo tienen grosor.
+##
+## Se usa para convertir un clic de pantalla en celda. Cortar el plano
+## equivocado no da un error vertical sino lateral: con la camara a 35 grados,
+## equivocarse medio metro de altura corre el resultado casi una celda entera.
+@export var altura_piso : float = 0.632
+
+## Nombres de piezas de la capa de paredes que NO bloquean el paso.
+##
+## Por defecto toda pieza pintada en 'paredes' bloquea su celda. Esta lista es la
+## excepcion, para lo que es visualmente muro pero atravesable: el hueco de una
+## puerta, un arco, una cornisa a la altura de la cabeza.
+##
+## Existe porque bloquear y dibujar son dos cosas distintas y conviene no
+## deducir una de la otra: la capa donde se pinta una pieza dice como se ve, no
+## como se comporta.
+@export var piezas_transitables : Array[StringName] = []
 
 ## Se emite cada vez que cambia la ocupacion, con todas las celdas afectadas de
 ## una sola vez. Quien mantenga un AStarGrid2D debe suscribirse: esa copia de
@@ -31,6 +54,11 @@ var _ocupadas : Dictionary = {} # Vector2i -> WorldObject
 # vez que alguien pregunta, para no depender del orden de _ready() entre nodos.
 var _paredes_planta : Dictionary = {}
 var _paredes_listas : bool = false
+
+# El A* vive aqui y no en cada personaje: es un indice derivado de la grilla, no
+# un dato de quien camina. Uno por sala, compartido por todos los que esten en
+# ella. Se construye la primera vez que alguien pide una ruta.
+var _astar : AStarGrid2D = null
 
 
 ## Devuelve la posicion en el mundo dado el indice de la celda.
@@ -102,8 +130,13 @@ func hay_pared(celda : Vector2i) -> bool:
 func recalcular_paredes() -> void:
 	_paredes_planta.clear()
 	for c in paredes.get_used_cells():
+		if _es_transitable(paredes.get_cell_item(c)):
+			continue
 		_paredes_planta[Vector2i(c.x, c.z)] = true
 	_paredes_listas = true
+	_validar_piezas(paredes)
+	_validar_piezas(suelo)
+	_astar = null  # cambio la transitabilidad: el A* se reconstruye al pedirse
 
 
 ## Marca las celdas como ocupadas siempre que sea posible, con un obj de
@@ -115,6 +148,7 @@ func ocupar(origen : Vector2i, size : Vector2i, obj : WorldObject, rotacion := 0
 	var celdas := celdas_de(origen, size,rotacion)
 	for c in celdas:
 		_ocupadas[c] = obj
+	_marcar_en_astar(celdas)
 	ocupacion_cambiada.emit(celdas)
 	return true
 
@@ -148,3 +182,133 @@ func celdas_bloqueadas() -> Array[Vector2i]:
 			if not esta_libre(celda):
 				celdas.append(celda)
 	return celdas
+
+
+## Devuelve el camino de celdas desde origen hasta destino, sin incluir la celda
+## de origen. Array vacio si no hay camino o si alguno de los extremos no sirve.
+##
+## El A* es unico por sala: cincuenta personajes caminando comparten este mismo
+## indice en vez de mantener cincuenta copias del mismo mapa de celdas solidas.
+func ruta(origen : Vector2i, destino : Vector2i) -> Array[Vector2i]:
+	_asegurar_astar()
+	if not _astar.region.has_point(origen) or not _astar.region.has_point(destino):
+		return []
+	if _astar.is_point_solid(destino):
+		return []
+
+	var camino := _astar.get_id_path(origen, destino)
+	if camino.size() < 2:
+		return []
+
+	var resultado : Array[Vector2i] = []
+	resultado.assign(camino)
+	resultado.remove_at(0)  # la primera celda es en la que ya esta parado
+	return resultado
+
+
+## Construye el A* si todavia no existe, sobre la region de suelo pintado.
+##
+## Se hace de forma perezosa y no en _ready() para no depender del orden de los
+## nodos: cualquiera que pida una ruta lo encuentra listo.
+func _asegurar_astar() -> void:
+	if _astar != null:
+		return
+
+	# La cache de paredes se calcula primero y aparte: esta_libre() la pide, y
+	# recalcular_paredes() invalida el A*. Si eso pasara a mitad del bucle de
+	# abajo, se anularia el A* que estamos construyendo.
+	if not _paredes_listas:
+		recalcular_paredes()
+
+	# Se arma sobre una variable local y se publica al final, por la misma razon:
+	# mientras dura la construccion, _astar sigue en null y nada puede leerlo a
+	# medio llenar.
+	var astar := AStarGrid2D.new()
+	astar.region = region_usada()
+	astar.cell_size = Vector2.ONE
+	# AT_LEAST_ONE_WALKABLE permite moverse en diagonal si al menos una de las dos
+	# celdas ortogonales adyacentes esta libre. Impide colarse por el hueco en X
+	# entre dos esquinas que se tocan, pero deja caminar en diagonal pegado a una
+	# pared. ONLY_IF_NO_OBSTACLES, que exige las dos libres, prohibe toda diagonal
+	# cerca de un muro y obliga a recorridos en escalones.
+	astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_AT_LEAST_ONE_WALKABLE
+	astar.update()
+
+	var region := astar.region
+	for x in region.size.x:
+		for z in region.size.y:
+			var celda := region.position + Vector2i(x, z)
+			astar.set_point_solid(celda, not esta_libre(celda))
+
+	_astar = astar
+
+
+## Mantiene sincronizada la copia de celdas solidas que guarda el A*.
+##
+## Se llama desde dentro de ocupar(), a proposito: mientras esto vivia en el
+## personaje, cada uno tenia que acordarse de suscribirse a ocupacion_cambiada
+## para no caminar atravesando muebles. Ahora no hay nada que recordar.
+func _marcar_en_astar(celdas : Array[Vector2i]) -> void:
+	if _astar == null:
+		return
+	for c in celdas:
+		if _astar.region.has_point(c):
+			_astar.set_point_solid(c, not esta_libre(c))
+
+
+## Devuelve la celda del piso a la que apunta una posicion de pantalla.
+##
+## Intersecta el rayo de la camara contra el plano del piso, asi que no hace
+## falta que el escenario tenga colision para poder clicarlo. Devuelve SIN_CELDA
+## si el rayo no corta el plano; la celda devuelta puede no tener suelo, eso lo
+## decide quien llama con celda_valida() o esta_libre().
+func celda_bajo_puntero(camara : Camera3D, pos_pantalla : Vector2) -> Vector2i:
+	var origen := camara.project_ray_origin(pos_pantalla)
+	var direccion := camara.project_ray_normal(pos_pantalla)
+	var plano := Plane(Vector3.UP, altura_piso)
+	var golpe = plano.intersects_ray(origen, direccion)
+	if golpe == null:
+		return SIN_CELDA
+	return mundo_a_celda(golpe)
+
+
+## Avisa si alguna pieza pintada es mas grande que una celda.
+##
+## El GridMap solo registra la celda donde se coloco una pieza, no las que su
+## malla invade. Una pared de dos metros de ancho bloquea una sola celda y el
+## personaje la atraviesa por la otra mitad, sin que nada de error. La regla es
+## que toda pieza de escenario mida una celda: lo que abarca varias se pinta
+## celda por celda. Esto convierte ese bug silencioso en un aviso.
+func _validar_piezas(grid_map : GridMap) -> void:
+	if grid_map == null or grid_map.mesh_library == null:
+		return
+
+	var avisados := {}
+	var celda_xz := Vector2(grid_map.cell_size.x, grid_map.cell_size.z)
+
+	for c in grid_map.get_used_cells():
+		var id := grid_map.get_cell_item(c)
+		if avisados.has(id):
+			continue
+		var malla := grid_map.mesh_library.get_item_mesh(id)
+		if malla == null:
+			continue
+
+		var caja : AABB = grid_map.mesh_library.get_item_mesh_transform(id) * malla.get_aabb()
+		if caja.size.x > celda_xz.x * 1.05 or caja.size.z > celda_xz.y * 1.05:
+			avisados[id] = true
+			push_warning(
+				"IsoGrid: la pieza '%s' mide %.2f x %.2f y la celda es %.2f x %.2f. " % [
+					grid_map.mesh_library.get_item_name(id),
+					caja.size.x, caja.size.z, celda_xz.x, celda_xz.y
+				]
+				+ "Solo bloquea la celda donde se pinto, no las que invade. "
+				+ "Escalala a una celda y pintala varias veces."
+			)
+
+
+## Devuelve si una pieza de la capa de paredes esta declarada como atravesable.
+func _es_transitable(id : int) -> bool:
+	if piezas_transitables.is_empty() or paredes.mesh_library == null:
+		return false
+	return StringName(paredes.mesh_library.get_item_name(id)) in piezas_transitables

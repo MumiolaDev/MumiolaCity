@@ -33,6 +33,7 @@ Antes de escribir un sistema, hay que revisar si el motor ya lo resuelve — y s
 | 1 | `IsoGrid` | Nodo/Escena | Escena | `Node3D` | 1 |
 | 2 | `PlayerController` | Nodo/Escena | Escena | `CharacterBody3D` | 1 |
 | 3 | `AvatarComposer` | Nodo | Componente | `Node3D` | 1 |
+| 3b | `IndicadorCelda` | Nodo | Componente | `MeshInstance3D` | 1 (ayuda de desarrollo) |
 | 4 | `RoomController` | Nodo/Escena | Escena | `Node3D` | 1 |
 | 5 | `WorldObject` | Nodo/Escena | Escena | `Area3D` | 1 |
 | 6 | `InteractionBehavior` (+ `SentarseBehavior`) | Resource | Recurso | `Resource` | 1 |
@@ -114,7 +115,7 @@ IsoGrid (Node3D)        ← el script
 
 **Interactúa con:** vive dentro de cada `RoomController`; `PlayerController` la consulta para moverse celda a celda; `WorldObject` se registra en ella al colocarse; en fase 4, `RoomBuilderUI` la usa para validar dónde se puede construir.
 
-**Funciones clave:** `mundo_a_celda(pos: Vector3) -> Vector2i` y `celda_a_mundo(celda: Vector2i) -> Vector3` (envuelven lo nativo del suelo), `celda_valida(celda) -> bool` (¿hay suelo pintado?), `celdas_de(origen, tamano) -> Array[Vector2i]`, `esta_libre(origen, tamano) -> bool`, `ocupar(origen, tamano, objeto)`, `liberar_objeto(objeto)`, `objeto_en(celda) -> WorldObject`, `celdas_bloqueadas() -> Array[Vector2i]`.
+**Funciones clave:** `celda_a_mundo()` / `mundo_a_celda()` y `celda_bajo_puntero(camara, pos_pantalla)` para geometría; `celda_valida()`, `hay_pared()` y `esta_libre()` para transitabilidad; `celdas_de()`, `ocupar()`, `liberar_objeto()` y `objeto_en()` para ocupación; y **`ruta(origen, destino)`**, que mantiene el único `AStarGrid2D` de la sala. Firmas completas en [`CLASES.md`](CLASES.md) §3.1.
 
 ### 2. `PlayerController` — Nodo/Escena · Escena propia · `extends CharacterBody3D`
 **Función:** movimiento del avatar sobre la grilla, estado de personaje (sentado, energía) y los métodos que invocan los `InteractionBehavior` (ej. `sentarse_en`, `reproducir_animacion`).

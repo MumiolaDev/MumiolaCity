@@ -4,7 +4,7 @@
 **Complementa:** [`GDD.md`](GDD.md) (qué es el juego) y [`SCRIPTS.md`](SCRIPTS.md) (qué scripts existen).
 **Este documento responde otra pregunta:** *cómo se comunican esos scripts entre sí, quién es dueño de cada dato, y qué decisiones de arquitectura hay que cerrar antes de escribir código.* La referencia de clases campo por campo está en [`CLASES.md`](CLASES.md).
 
-> **Cómo leerlo.** Las secciones §1–§4 describen la arquitectura tal como se deduce de `SCRIPTS.md`. La §5 (modelo de estado), la §6 (decisiones D1–D11) y la §7 (estado de los datos) son **nuevas**: son huecos que aparecieron al revisar el diseño en profundidad. De las once decisiones de la §6, **cinco ya están cerradas** (D1, D2, D3, D7 y D11, más el lado de datos de D5); el resto sigue como propuesta, escrita así precisamente porque cambiarlas después de implementadas sale caro.
+> **Cómo leerlo.** Las secciones §1–§4 describen la arquitectura tal como se deduce de `SCRIPTS.md`. La §5 (modelo de estado), la §6 (decisiones D1–D15) y la §7 (estado de los datos) son **nuevas**: son huecos que aparecieron al revisar el diseño en profundidad. De las quince decisiones de la §6, **siete ya están cerradas** (D1, D2, D3, D7, D11, D15 y la dirección de D12, más el lado de datos de D5); el resto sigue como propuesta, escrita así precisamente porque cambiarlas después de implementadas sale caro.
 
 ---
 
@@ -349,7 +349,7 @@ La tabla más importante del documento. La mayoría de los bugs de un juego de e
 
 ---
 
-## 6. Decisiones de arquitectura: cinco cerradas, seis pendientes
+## 6. Decisiones de arquitectura: siete cerradas, ocho pendientes
 
 Once decisiones que hay que cerrar antes de escribir el sistema correspondiente, ordenadas por lo caro que sale cambiarlas después. **Cinco ya están cerradas** — D1, D2 y D11 aplicadas en `items.json`, D3 resuelta acá abajo, y D7 postergada a la fase 2 a propósito — y **D5 tiene el lado de los datos hecho y el del código pendiente**. Las demás siguen abiertas.
 
@@ -477,6 +477,71 @@ Los autoloads se inicializan en el orden del Project Settings, y `_ready()` de u
 Verificado sobre los 29 ítems: para todo ítem con receta, `habilidad_origen` es **siempre** igual a `receta.habilidad`. Es un campo duplicado esperando a desincronizarse.
 
 **Aplicado en `items.json` (v0.3):** `habilidad_origen` se eliminó de los 18 ítems crafteados y quedó solo en materia prima (de dónde se recolecta). Para lo crafteado, la fuente única es `receta.habilidad`.
+
+---
+
+### D12 — Paredes estructurales contra paredes del jugador · **decidida en dirección, pendiente de detalle**
+
+**El problema.** Si el jugador puede levantar paredes, hay dos clases de pared con reglas opuestas: el perímetro de un departamento, que nadie debe poder tocar, y los tabiques con los que el propietario divide su sala. Tratarlas igual permite que alguien demuela la fachada; tratarlas como cosas sin relación obliga a dos sistemas de colocación, dos de guardado y dos de inventario.
+
+**Decisión: las estructurales son escenario, los tabiques son objetos.**
+
+| | Estructural | Del jugador |
+|---|---|---|
+| Vive en | `GridParedes`, pintada en el editor | `WorldObject` con su `ItemInstance` |
+| La coloca | el diseño de la sala | el propietario, desde su inventario |
+| Se puede quitar | no | sí, vuelve al inventario (**D3**) |
+| Ocupa | una celda, siempre | lo que diga su `tamano_grilla` |
+| Se persiste en | la escena `.tscn` | `RoomController.to_dict()` |
+
+**El jugador compra las paredes y son suyas**, igual que una silla: se craftean, se venden y se colocan. Eso le da a Carpintería un producto de demanda recurrente —todo el mundo redecora— sin inventar una mecánica nueva, y es uno de los sumideros de Ducados que pide el GDD §5.
+
+**El mismo ítem tiene dos usos**, y eso es exactamente para lo que existe la composición de `InteractionBehavior` (GDD §6.1): una pared se puede **colocar** como tabique o **aplicar** como revestimiento sobre una estructural (ver **D13**). Son dos comportamientos sobre la misma `ItemDefinition`, no dos ítems.
+
+**Dónde vive el permiso.** No en `IsoGrid`, que solo sabe qué celdas existen y cuáles están ocupadas. La sala declara qué parte de sí misma es editable por el propietario, y `RoomController` es quien valida — como ya dice §3.1 de este documento. El límite de cuánto se puede ampliar se engancha con la habilidad de Construcción (GDD §3.3).
+
+**Lo que queda por definir:** la forma exacta de esa área editable —un `Rect2i`, un conjunto de celdas, o una marca por celda— y si el perímetro es simplemente "lo que está fuera del área editable" o una lista aparte.
+
+---
+
+### D13 — El revestimiento de pared, ¿por sala o por celda? · **abierta, bloquea la fase 4**
+
+Aplicar una pared como revestimiento **no coloca nada en la grilla**: cambia el aspecto de una celda estructural que ya existe. Por eso no es un `ItemInstance` en una celda y necesita su propio sitio.
+
+- **Por sala** (lo que hace Habbo): un solo revestimiento para todos los muros. Un dato por sala, una interfaz trivial, y el ítem se consume una vez.
+- **Por celda:** permite paredes de acento y decorar cada habitación distinto. Es más fiel a la idea de simulador de la vida (§1 del GDD), pero es estado nuevo por celda que hay que guardar, y una interfaz que exige elegir superficie.
+
+**Recomendación: empezar por sala y dejar la puerta abierta.** Guardarlo como `Dictionary` de celda a revestimiento desde el principio cuesta lo mismo que guardar un solo valor, y permite pasar a por-celda después sin migrar el guardado. Lo que sí hay que decidir de entrada es **dónde vive ese dato**: es del emplazamiento, no del objeto, así que va en `RoomController.to_dict()` junto a `celda_origen` y `rotacion_grilla` (**D3**), nunca en el `ItemInstance` de la pared.
+
+---
+
+### D14 — Colocar un tabique no puede dejar la sala partida · **abierta, bloquea `RoomBuilderUI` (fase 4)**
+
+**El problema.** Un jugador puede tapiar su propia puerta o aislar media casa. Con sus muebles es problema suyo y reversible, pero **una visita que entra a una sala mal dividida queda encerrada** o no puede llegar a la mitad de las habitaciones, y no tiene forma de arreglarlo porque los objetos no son suyos.
+
+**La validación es barata porque la infraestructura ya está.** Antes de confirmar una colocación, comprobar que todas las celdas con suelo sigan siendo alcanzables desde la entrada: un relleno por inundación sobre la grilla, O(n) y despreciable para una sala. Si el tabique desconecta algo, se rechaza.
+
+**Por qué hay que decidirlo antes de escribir el código y no después:** condiciona la firma de `RoomController.colocar_objeto()`, que tiene que poder devolver "no, esto parte la sala" como un fracaso distinto de "ahí no cabe". Agregar un motivo de rechazo cuando ya hay comportamientos escritos encima es tocar todas las llamadas.
+
+**Cuándo implementarlo:** en la **fase 4**, junto con `RoomBuilderUI` y en el mismo momento en que se escriba `colocar_objeto()` — no después, como validación agregada. La regla es que ninguna colocación llegue a ejecutarse sin haber pasado por ahí, y eso solo se sostiene si la comprobación vive dentro de la transacción de colocación, igual que `esta_libre()`.
+
+**Nota de alcance:** la comprobación es necesaria solo para lo que bloquea el paso. Una silla no puede partir una sala, así que conviene que solo la paguen los objetos cuyo `tamano_grilla` los convierte en obstáculo — o directamente los que declaren que bloquean, si más adelante hay objetos atravesables.
+
+---
+
+### D15 — Toda pieza de `GridMap` mide una celda · **decidida**
+
+**El problema, encontrado en la práctica.** `GridMap.get_used_cells()` devuelve las celdas donde se *colocó* una pieza, no las que su malla **invade**. Una pared de dos metros de ancho pintada en una celda bloquea esa sola y el personaje la atraviesa por la otra mitad, sin que nada dé error. Con una puerta de tres celdas el efecto fue peor y exactamente inverso: bloqueaba el hueco y dejaba libres los dos muros.
+
+**Decisión: toda pieza de escenario mide exactamente una celda, y bloquea o no bloquea entera.** Lo que abarca varias se pinta celda por celda. Dos losas de un metro se ven igual que una de dos, y a cambio *colocar* y *bloquear* vuelven a ser la misma operación.
+
+**Un hueco de puerta es la ausencia de pared**, no una pieza de puerta: se pintan los muros a los lados y se deja la celda del medio vacía. Si se quiere el marco visual, es un `WorldObject` decorativo sobre la celda transitable, no escenario.
+
+**La excepción declarada.** `IsoGrid.piezas_transitables` lista las piezas de la capa de paredes que no bloquean, para lo que es visualmente muro pero atravesable. Existe porque **dibujar y bloquear son cosas distintas** y no conviene deducir una de la otra: la capa donde se pinta una pieza dice cómo se ve, no cómo se comporta.
+
+**Qué la protege.** `IsoGrid._validar_piezas()` compara la caja envolvente de cada pieza contra el tamaño de celda y avisa por consola al arrancar. Convierte un bug silencioso —el personaje atraviesa medio muro— en un mensaje que nombra la pieza culpable.
+
+**Esto limita al `GridMap`, no al juego.** Los objetos del jugador sí son multicelda y siempre lo fueron: `celdas_de()` expande la huella, `esta_libre()` valida el conjunto y `ocupar()` registra todas las celdas apuntando a la misma instancia. El editor de salas del juego va a instanciar `WorldObject`, no a pintar celdas de `GridMap`, así que la regla se queda del lado del diseñador y no se le contagia al jugador.
 
 ---
 
@@ -687,5 +752,5 @@ No queda ninguna inconsistencia de datos abierta. Lo que sigue pendiente en `ite
 | **Fase 1** (mundo base) | **D8** (firma de `interactuar`) y **D9** (orden de autoloads) — **D3** ya decidida |
 | **Fase 2** (ciclo económico) | **D4** (id de habilidad), **D5** (el `ModifierStack`; el esquema de datos ya está hecho), **D6** (`GatherTable`), **D10** (`ItemDatabase`) — **D1**, **D2** y **D11** ya decididas |
 | **Fase 2, balance** | **D7** (sumidero de energía), postergada aquí a propósito. Los precios ya están corregidos (§7.1) |
-| **Fase 4** (construcción) | Sincronizar `AStarGrid2D` con `IsoGrid` en cada colocación (§3.1) |
+| **Fase 4** (construcción) | **D13** (revestimiento por sala o por celda) y **D14** (una colocación no puede partir la sala, dentro de `colocar_objeto()` y no después). Cerrar el detalle del área editable de **D12**. La sincronización del `AStarGrid2D` (§3.1) ya está resuelta: vive dentro de `IsoGrid.ocupar()` |
 | **Fase 5** (mercado) | Relación `valor_base` ↔ precio piso NPC (§3.7) |
