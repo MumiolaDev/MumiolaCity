@@ -1,6 +1,6 @@
 # MumiolaCity — Referencia de clases y objetos
 
-**Versión:** 0.3 · **Fecha:** 2026-09-06 (D1, D2, D3, D7 y D11 cerradas; catálogo v0.4 con 42 ítems)
+**Versión:** 0.4 · **Fecha:** 2026-09-15 (capa Mundo reescrita a 3D; D1, D2, D3, D7 y D11 cerradas; catálogo v0.4 con 42 ítems)
 **Complementa:** [`SCRIPTS.md`](SCRIPTS.md) (qué scripts existen y en qué orden) y [`SISTEMAS.md`](SISTEMAS.md) (cómo se comunican y qué decisiones faltan).
 **Este documento es la firma de cada clase:** de qué hereda, qué campos expone, qué estado guarda, qué señales emite, qué métodos ofrece y qué invariantes tiene que respetar. Es lo que se lee con el editor abierto, justo antes de escribir el archivo.
 
@@ -341,7 +341,7 @@ var _por_familia: Dictionary = {}       # StringName -> Array[ItemDefinition]
 var _por_categoria: Dictionary = {}
 var _recetas_por_habilidad: Dictionary = {}
 
-func _ready() -> void                    # escanea res://data/items/
+func _ready() -> void                    # escanea res://data/objetos/
 func obtener(id: StringName) -> ItemDefinition
 func items_de_familia(familia: StringName) -> Array[ItemDefinition]
 func items_de_categoria(categoria: String) -> Array[ItemDefinition]
@@ -533,26 +533,50 @@ func _migrar(save: SaveGame) -> SaveGame         # segun version_formato
 
 ---
 
-## 3. Mundo — `res://scenes/world/` y `res://scenes/avatar/`
+## 3. Mundo — `res://escenas/mundo/` y `res://escenas/personaje/`
 
-### 3.1 `IsoGrid extends TileMapLayer`
+> **Revisado el 2026-09-15.** Esta es la única capa que cambió al pasar de sprites 2.5D a mundo 3D en tiempo real (GDD §7): las bases pasan a `Node3D`, `CharacterBody3D` y `Area3D`, `IsoGrid` se reorganiza sobre dos `GridMap` y desaparece el y-sort. Las capas de Datos, Managers y UI quedaron sin tocar — eso es lo que compraba la regla de dirección de `SISTEMAS.md` §1.
+
+### 3.1 `IsoGrid extends Node3D`
+
+Escena propia con dos capas de escenario como hijas:
+
+```
+IsoGrid (Node3D)
+├── Suelo   (GridMap)     # lo caminable
+└── Paredes (GridMap)     # el anillo exterior
+```
 
 ```gdscript
-class_name IsoGrid extends TileMapLayer
+class_name IsoGrid extends Node3D
 
-@export var grid_size: Vector2i = Vector2i(12, 12)
+signal ocupacion_cambiada(celdas: Array)
 
-var _ocupadas: Dictionary = {}           # Vector2i -> WorldObject
+@export var suelo: GridMap
+@export var paredes: GridMap
 
-func mundo_a_celda(pos: Vector2) -> Vector2i        # local_to_map()
-func celda_a_mundo(celda: Vector2i) -> Vector2      # map_to_local()
-func celda_valida(celda: Vector2i) -> bool
-func esta_libre(celda: Vector2i, tamano: Vector2i = Vector2i.ONE) -> bool
-func ocupar(celda: Vector2i, tamano: Vector2i, obj: WorldObject) -> bool
+var _ocupadas: Dictionary = {}                      # Vector2i -> WorldObject
+
+func mundo_a_celda(pos: Vector3) -> Vector2i        # suelo.local_to_map()
+func celda_a_mundo(celda: Vector2i) -> Vector3      # suelo.map_to_local()
+func celda_valida(celda: Vector2i) -> bool          # ¿hay suelo pintado?
+func celdas_de(origen: Vector2i, tamano: Vector2i) -> Array[Vector2i]
+func esta_libre(origen: Vector2i, tamano: Vector2i = Vector2i.ONE) -> bool
+func ocupar(origen: Vector2i, tamano: Vector2i, obj: WorldObject) -> bool
 func liberar_objeto(obj: WorldObject) -> void
 func objeto_en(celda: Vector2i) -> WorldObject
-func celdas_ocupadas() -> Array[Vector2i]           # alimenta AStarGrid2D
+func celdas_bloqueadas() -> Array[Vector2i]         # ocupadas + sin suelo; alimenta AStarGrid2D
 ```
+
+**`Node3D` y no `extends GridMap`.** El script podría colgar del `GridMap` del suelo y heredar las conversiones gratis, pero eso haría de las paredes un apéndice de la capa de suelo cuando son dos vistas de la misma sala. `IsoGrid` es dueño de la ocupación y del área construible (`SISTEMAS.md` §3.1), no de dibujar el piso. El costo es un `suelo.` por conversión; la ganancia es que una tercera capa —techos, decoración fija— entra sin reorganizar nada.
+
+**Dos `GridMap` y no uno.** Una celda de `GridMap` admite **un solo ítem**: pintar una pared sobre una celda de suelo la reemplaza. Regla de composición: **suelo por dentro, paredes por fuera**, en el anillo de celdas sin suelo.
+
+**`celda_valida()` pregunta por el suelo, no por un rectángulo.** `get_cell_item(...) != GridMap.INVALID_CELL_ITEM` hace que el área caminable sea *lo que pintaste*: salas en L o irregulares salen gratis. Por eso desapareció el `@export var grid_size` del diseño original — con el suelo como fuente de verdad, sobra.
+
+**La API pública habla en `Vector2i`** (planta del piso) y convierte a `Vector3i` solo para hablar con los `GridMap`. Así `celda_origen` (**D3**), los `tamano_grilla` de `items.json` y el `AStarGrid2D` siguen valiendo sin cambios.
+
+**Invariante:** los dos hijos van con transformación en cero y el origen de `IsoGrid` es el origen de la sala. `map_to_local()` trabaja en el espacio local del `GridMap`: si alguien mueve un hijo, las conversiones mienten sin dar error.
 
 **Un objeto de 2×1 registra las dos celdas apuntando a la misma instancia** — así `esta_libre()` funciona igual sin importar el tamaño del objeto consultado.
 
@@ -560,10 +584,10 @@ func celdas_ocupadas() -> Array[Vector2i]           # alimenta AStarGrid2D
 
 **Todo cambio de ocupación tiene que invalidar el `AStarGrid2D` del `PlayerController`** — el bug más previsible de la fase 4 (§3.1 de `SISTEMAS.md`). Emitir una señal `ocupacion_cambiada(celda)` es más barato que reconstruir la grilla entera.
 
-### 3.2 `PlayerController extends CharacterBody2D`
+### 3.2 `PlayerController extends CharacterBody3D`
 
 ```gdscript
-class_name PlayerController extends CharacterBody2D
+class_name PlayerController extends CharacterBody3D
 
 signal llego_a_celda(celda: Vector2i)
 signal estado_cambiado(estado: StringName)
@@ -575,11 +599,11 @@ var energia: float
 var celda_actual: Vector2i
 var estado: StringName = &"idle"                 # idle | caminando | sentado | actuando
 var _astar: AStarGrid2D
-var _ruta: PackedVector2Array
+var _ruta: Array[Vector2i]                       # celdas; se mapean al plano XZ
 
 func ir_a_celda(celda: Vector2i) -> void
 func detener() -> void
-func sentarse_en(objeto: WorldObject, offset: Vector2) -> bool
+func sentarse_en(objeto: WorldObject, offset: Vector3) -> bool
 func levantarse() -> void
 func gastar_energia(n: float) -> bool            # (D7)
 func restaurar_energia(n: float) -> void
@@ -591,33 +615,41 @@ func reproducir_animacion(nombre: StringName) -> void
 
 **`esta_adyacente_a`** es lo que consultan los `InteractionBehavior` con `requiere_adyacencia == true`: sentarse en una silla al otro lado de la sala no debería funcionar.
 
+**`AStarGrid2D` sigue siendo el pathfinder aunque el mundo sea 3D.** Opera sobre una grilla de enteros y no le importa la dimensión del render: se alimenta con `IsoGrid.celdas_bloqueadas()` y cada celda del resultado se convierte con `celda_a_mundo()`. No hace falta `NavigationServer3D` para una grilla de celdas discretas.
+
 **`gastar_energia` devuelve `bool` pero no bloquea (D7):** devuelve `false` cuando la energía está por debajo del umbral, y quien llama decide penalizar la velocidad, no cancelar la acción. **En el MVP nadie lo llama todavía** — D7 quedó postergada a la fase 2 a propósito, así que el método se escribe pero la barra solo sube. Mientras tanto, los cuatro consumibles que restauran energía no cambian nada al comerlos.
 
-### 3.3 `AvatarComposer extends Node2D`
+### 3.3 `AvatarComposer extends Node3D`
 
 ```gdscript
-class_name AvatarComposer extends Node2D
+class_name AvatarComposer extends Node3D
 
-const CAPAS := [&"cuerpo", &"piernas", &"torso", &"cabeza", &"tocado"]   # orden de dibujo
+const SLOTS := [&"cuerpo", &"piernas", &"torso", &"cabeza", &"tocado"]
 
-@export var direccion: int = 0                   # 0..7, angulos isometricos
+@export var esqueleto: Skeleton3D
+@export var animador: AnimationPlayer
 
-var _capas: Dictionary = {}                      # StringName -> AnimatedSprite2D
+var _partes: Dictionary = {}                     # StringName -> MeshInstance3D bajo su BoneAttachment3D
 
-func actualizar_capa(capa: StringName, frames: SpriteFrames) -> void
+func actualizar_parte(slot: StringName, malla: Mesh) -> void
 func aplicar_equipo(item: ItemDefinition) -> void
 func quitar_equipo(slot: StringName) -> void
-func reproducir(animacion: StringName) -> void   # a todas las capas a la vez
-func mirar_hacia(direccion: int) -> void
+func reproducir(animacion: StringName) -> void
 func to_dict() -> Dictionary                     # apariencia serializable
 ```
 
-**Todas las capas comparten los nombres de animación.** Reproducir `&"caminar"` en las cinco a la vez las mantiene sincronizadas sin escribir un sistema de animación. La contrapartida es una regla de contenido dura: **cada `SpriteFrames` nueva debe tener exactamente el mismo conjunto de animaciones y el mismo número de cuadros**, o las capas se desfasan. Vale la pena que el pipeline de Blender (GDD §7) lo garantice desde el render, no que se descubra en el juego.
+**Un esqueleto, un `BoneAttachment3D` por slot.** Cambiar de camiseta es cambiar la malla que cuelga del attachment del torso; el `AnimationPlayer` del rig mueve todo junto. Desapareció `mirar_hacia(direccion)`: la orientación es la rotación del nodo, no un índice de ángulo pre-renderizado — y con ella se fue la regla dura de que cada capa tuviera el mismo número de cuadros en cada uno de los 8 ángulos.
 
-### 3.4 `RoomController extends Node2D`
+**Sigue siendo un requisito, no un lujo:** la ropa de Costura es mercancía comerciable y tiene que verse puesta. Es la habilidad que le da contenido económico al avatar.
+
+**Pendiente de contenido, no de estructura.** El maniquí de KayKit son seis mallas separadas pesadas al mismo esqueleto (`ArmLeft`, `ArmRight`, `Body`, `Head`, `LegLeft`, `LegRight`), y el esqueleto expone huesos de enganche tipo `handslot.l` para las herramientas. Intercambiar una parte es asignarle otro `Mesh` a su `MeshInstance3D`. Lo que falta son prendas que ponerle: hasta que existan, `actualizar_parte()` queda sin implementar porque no habría con qué probarla.
+
+**`animaciones` traduce nombres lógicos a nombres del pack.** El juego pide `&"caminar"` y el diccionario decide que eso es `"Rig_Medium_MovementBasic/Walking_A"`. Sin esa capa, el nombre de un archivo de KayKit se filtraría hasta `PlayerController`.
+
+### 3.4 `RoomController extends Node3D`
 
 ```gdscript
-class_name RoomController extends Node2D
+class_name RoomController extends Node3D
 
 signal objeto_colocado(obj: WorldObject)
 signal objeto_retirado(obj: WorldObject)
@@ -627,7 +659,7 @@ signal objeto_retirado(obj: WorldObject)
 @export var propietario_id: StringName           # vacio = publica
 
 @onready var grid: IsoGrid = $IsoGrid
-@onready var contenedor_objetos: Node2D = $Objetos     # y_sort_enabled = true
+@onready var contenedor_objetos: Node3D = $Objetos
 
 func colocar_objeto(inst: ItemInstance, celda: Vector2i, rotacion: int = 0) -> WorldObject
 func retirar_objeto(obj: WorldObject) -> ItemInstance
@@ -649,12 +681,14 @@ colocar_objeto(instancia, celda):        retirar_objeto(obj):
 
 Si el inventario conserva la referencia *y* el `WorldObject` también, el mismo objeto existe dos veces: es el bug de duplicación clásico, y con `Resource` — que se pasa por referencia — es facilísimo de cometer sin notarlo. Si el paso 2 puede fallar (inventario lleno al retirar), el paso 1 se revierte antes de tocar nada más.
 
-**`contenedor_objetos` con `y_sort_enabled`** resuelve la profundidad sin calcular `z_index` a mano.
+**La profundidad ya no es asunto de nadie.** Con el render 3D la resuelve el búfer de profundidad: desapareció el y-sort, el `z_index` y toda la clase de bugs de objetos dibujados en el orden equivocado. `contenedor_objetos` queda solo como agrupador de la escena.
 
-### 3.5 `WorldObject extends Area2D`
+**La cámara vive en la escena de la sala**, no acá: un `Node3D` pivote centrado con una `Camera3D` ortográfica como hija (GDD §7). Rotar la sala al estilo Habbo es interpolar `pivote.rotation.y` en pasos de 90°.
+
+### 3.5 `WorldObject extends Area3D`
 
 ```gdscript
-class_name WorldObject extends Area2D
+class_name WorldObject extends Area3D
 
 signal interactuado(behavior: InteractionBehavior, actor: Node)
 
@@ -681,10 +715,10 @@ func _on_input_event(viewport, evento, idx) -> void
 
 **Escenas que no vienen de un ítem.** Una mesada pública de la plaza no la colocó ningún jugador, pero `CraftingStation` y `MarketStall` heredan de acá. Para que la invariante se sostenga sin excepciones, esas escenas traen su `ItemInstance` creado dentro del propio `.tscn`.
 
-### 3.6 `GatherableNode extends Area2D`
+### 3.6 `GatherableNode extends Area3D`
 
 ```gdscript
-class_name GatherableNode extends Area2D
+class_name GatherableNode extends Area3D
 
 signal recolectado(drops: Array)
 signal agotado
@@ -715,7 +749,7 @@ class_name CropPlot extends GatherableNode
 signal plantado(semilla: ItemDefinition)
 signal maduro
 
-@export var sprite_etapas: Sprite2D
+@export var mallas_etapas: Array[Mesh]           # una por etapa de crecimiento
 
 var semilla_id: StringName
 var temporizador_id: String
@@ -776,7 +810,7 @@ func activos() -> Array[Modificador]
 
 ---
 
-## 4. UI — `res://scenes/ui/`
+## 4. UI — `res://escenas/ui/`
 
 Todas se suscriben a señales y ninguna es consultada por un manager. Todas se pueden borrar del árbol y el juego sigue funcionando — ese es el test de que la capa está bien puesta.
 
@@ -891,11 +925,11 @@ stateDiagram-v2
 
 | # | Clase | Capa | Extends | Fase |
 |---|---|---|---|---|
-| 1 | `IsoGrid` | Mundo | `TileMapLayer` | 1 |
-| 2 | `PlayerController` | Mundo | `CharacterBody2D` | 1 |
-| 3 | `AvatarComposer` | Mundo | `Node2D` | 1 |
-| 4 | `RoomController` | Mundo | `Node2D` | 1 |
-| 5 | `WorldObject` | Mundo | `Area2D` | 1 |
+| 1 | `IsoGrid` | Mundo | `Node3D` | 1 |
+| 2 | `PlayerController` | Mundo | `CharacterBody3D` | 1 |
+| 3 | `AvatarComposer` | Mundo | `Node3D` | 1 |
+| 4 | `RoomController` | Mundo | `Node3D` | 1 |
+| 5 | `WorldObject` | Mundo | `Area3D` | 1 |
 | 6 | `InteractionBehavior` | Datos | `Resource` | 1 |
 | 7 | `SentarseBehavior` | Datos | `InteractionBehavior` | 1 |
 | 8 | `ContextMenuUI` | UI | `PopupMenu` | 1 |
@@ -920,7 +954,7 @@ stateDiagram-v2
 | 27 | `RecipeManager` | Manager | `Node` | 2 |
 | 28 | `TimeManager` | Manager | `Node` | 2 |
 | 29 | `EconomyManager` | Manager | `Node` | 2 |
-| 30 | `GatherableNode` | Mundo | `Area2D` | 2 |
+| 30 | `GatherableNode` | Mundo | `Area3D` | 2 |
 | 31 | `CropPlot` | Mundo | `GatherableNode` | 2 |
 | 32 | `ContenedorBehavior` | Datos | `InteractionBehavior` | 2 |
 | 33 | `ModifierStack` (ex `BuffController`, D5) | Mundo | `Node` | 2 |

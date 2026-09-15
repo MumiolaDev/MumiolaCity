@@ -1,6 +1,6 @@
 # MumiolaCity — Sistemas y cómo interactúan
 
-**Versión:** 0.3 · **Fecha:** 2026-09-06 (decisiones D1, D2, D3, D7 y D11 cerradas; catálogo v0.4)
+**Versión:** 0.4 · **Fecha:** 2026-09-15 (render 3D en tiempo real; decisiones D1, D2, D3, D7 y D11 cerradas; catálogo v0.4)
 **Complementa:** [`GDD.md`](GDD.md) (qué es el juego) y [`SCRIPTS.md`](SCRIPTS.md) (qué scripts existen).
 **Este documento responde otra pregunta:** *cómo se comunican esos scripts entre sí, quién es dueño de cada dato, y qué decisiones de arquitectura hay que cerrar antes de escribir código.* La referencia de clases campo por campo está en [`CLASES.md`](CLASES.md).
 
@@ -14,8 +14,8 @@ Todo el juego cabe en cuatro capas. La regla que las mantiene sanas es una sola:
 
 | Capa | Qué vive acá | Puede llamar a | Nunca conoce a |
 |---|---|---|---|
-| **UI** (`res://scenes/ui/`) | `InventoryUI`, `CraftingUI`, `SkillsPanelUI`, `MarketUI`, `RoomBuilderUI`, `ContextMenuUI`, `HUD` | Managers, Datos | — |
-| **Mundo** (`res://scenes/world/`, `avatar/`) | `RoomController`, `IsoGrid`, `WorldObject`, `GatherableNode`, `CropPlot`, `CraftingStation`, `MarketStall`, `PlayerController`, `AvatarComposer` | Managers, Datos | La UI |
+| **UI** (`res://escenas/ui/`) | `InventoryUI`, `CraftingUI`, `SkillsPanelUI`, `MarketUI`, `RoomBuilderUI`, `ContextMenuUI`, `HUD` | Managers, Datos | — |
+| **Mundo** (`res://escenas/mundo/`, `personaje/`) | `RoomController`, `IsoGrid`, `WorldObject`, `GatherableNode`, `CropPlot`, `CraftingStation`, `MarketStall`, `PlayerController`, `AvatarComposer` | Managers, Datos | La UI |
 | **Managers** (`res://autoloads/`) | `GameManager`, `SkillManager`, `InventoryManager`, `RecipeManager`, `TimeManager`, `EconomyManager`, `SaveManager`, `ItemDatabase` | Datos, otros managers | La UI **y** el Mundo |
 | **Datos** (`res://data/`) | `ItemDefinition`, `RecipeDefinition`, `SkillDefinition`, `ItemInstance`, `InteractionBehavior` y sus hijos, `GatherTable` | Nada | Todo lo demás |
 
@@ -25,10 +25,10 @@ Todo el juego cabe en cuatro capas. La regla que las mantiene sanas es una sola:
 
 ```mermaid
 flowchart TD
-  subgraph ui[UI · scenes/ui]
+  subgraph ui[UI · escenas/ui]
     InventoryUI; CraftingUI; SkillsPanelUI; MarketUI; RoomBuilderUI; ContextMenuUI; HUD
   end
-  subgraph mundo[Mundo · scenes/world + avatar]
+  subgraph mundo[Mundo · escenas/mundo + personaje]
     RoomController; IsoGrid; WorldObject; GatherableNode; CropPlot; CraftingStation; MarketStall; PlayerController; AvatarComposer
   end
   subgraph mgr[Managers · autoloads]
@@ -115,9 +115,12 @@ Para cada sistema: de qué es **dueño** (el dato que solo él puede mutar), qu�
 ### 3.1 Espacio — `IsoGrid` + `RoomController`
 
 - **Dueño de:** qué celda está ocupada por qué `WorldObject`, y cuál es el área construible de la sala.
-- **No le corresponde:** saber *qué* es el objeto que ocupa la celda (eso es `ItemDefinition`), ni si el jugador tiene permiso de construir ahí (eso es `RoomController` + nivel de Construcción).
+- **No le corresponde:** saber *qué* es el objeto que ocupa la celda (eso es `ItemDefinition`), ni si el jugador tiene permiso de construir ahí (eso es `RoomController` + nivel de Construcción), ni cómo se dibuja el escenario.
+- **Cómo está construido (revisado el 2026-09-15):** `IsoGrid` es un `Node3D` con dos `GridMap` hijos, `Suelo` y `Paredes`. Una celda de `GridMap` admite un solo ítem, así que pintar una pared sobre una celda de suelo la reemplazaría; la regla de composición es **suelo por dentro, paredes por fuera**, en el anillo de celdas sin suelo. La consecuencia buena es que el área caminable deja de ser un rectángulo declarado y pasa a ser *lo que está pintado*: `celda_valida()` pregunta `get_cell_item()` al suelo, y las salas irregulares salen gratis.
+- **Lo que un jugador puede tocar no va nunca en un `GridMap`.** Una celda no tiene `ItemInstance`, ni `estado_runtime`, ni verbos, ni recibe clics: el `GridMap` es escenario, y todo lo colocado por un jugador es un `WorldObject` (**D3**).
 - **Entra:** peticiones de ocupar/liberar desde `RoomController` y `RoomBuilderUI`. **Sale:** `esta_libre()`, y la lista de celdas bloqueadas que alimenta el `AStarGrid2D` de `PlayerController`.
-- **Punto de acoplamiento a vigilar:** `IsoGrid` es la única fuente de verdad de la ocupación, pero `AStarGrid2D` mantiene su **propia** copia de celdas sólidas. Hay que reconstruirla (o parchear la celda afectada con `set_point_solid()`) cada vez que se coloca o se quita un objeto, o el jugador va a caminar atravesando muebles. Es el bug más previsible de la fase 4.
+- **Punto de acoplamiento a vigilar:** `IsoGrid` es la única fuente de verdad de la ocupación, pero `AStarGrid2D` mantiene su **propia** copia de celdas sólidas. Hay que reconstruirla (o parchear la celda afectada con `set_point_solid()`) cada vez que se coloca o se quita un objeto, o el jugador va a caminar atravesando muebles. Es el bug más previsible de la fase 4. La forma barata de no depender de recordarlo: que `ocupar()` y `liberar_objeto()` emitan `ocupacion_cambiada` y que `PlayerController` se suscriba. Son dos líneas escritas hoy contra una tarde de depuración dentro de seis meses.
+- **`AStarGrid2D` sigue valiendo con el mundo en 3D:** opera sobre una grilla de enteros y no le importa la dimensión del render. Se le pasa `celdas_bloqueadas()` —ocupadas más las que no tienen suelo— y cada celda del resultado se convierte con `celda_a_mundo()`.
 
 ### 3.2 Identidad e inventario — `ItemDatabase` + `InventoryManager`
 
@@ -467,7 +470,7 @@ Los autoloads se inicializan en el orden del Project Settings, y `_ready()` de u
 
 `RecipeDefinition` admite insumos pedidos por `familia` ("cualquier taza"). Para resolver eso hace falta un índice `familia -> [ItemDefinition]`, y **ningún script de `SCRIPTS.md` tiene ese trabajo asignado**. Godot no autocarga los `.tres` de una carpeta: hay que recorrerla con `ResourceLoader`.
 
-**Propuesta:** autoload `ItemDatabase` que en `_ready()` escanea `res://data/items/`, y expone `obtener(id)`, `items_de_familia(familia)`, `items_de_categoria(categoria)`. Con él y `GatherTable` (D6), más los recursos anidados que hoy son diccionarios sueltos, el catálogo real sube de los 32 scripts que detalla `SCRIPTS.md` a 43 clases — el índice completo está en [`CLASES.md`](CLASES.md) §7.
+**Propuesta:** autoload `ItemDatabase` que en `_ready()` escanea `res://data/objetos/`, y expone `obtener(id)`, `items_de_familia(familia)`, `items_de_categoria(categoria)`. Con él y `GatherTable` (D6), más los recursos anidados que hoy son diccionarios sueltos, el catálogo real sube de los 32 scripts que detalla `SCRIPTS.md` a 43 clases — el índice completo está en [`CLASES.md`](CLASES.md) §7.
 
 ### D11 — `habilidad_origen` es redundante en los ítems crafteados · **resuelta**
 

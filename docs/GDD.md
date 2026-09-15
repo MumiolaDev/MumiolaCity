@@ -1,15 +1,19 @@
 # MumiolaCity — Documento de Diseño de Juego (GDD)
 
-**Versión:** 0.3 (las nueve habilidades con contenido real en `items.json` v0.4; precios derivados de una regla)
-**Fecha:** 2026-09-06
-**Motor:** Godot 4.x
-**Fase actual:** Diseño — prototipo local (single-player) antes de multijugador
+**Versión:** 0.4 (render 3D en tiempo real en vez de sprites pre-renderizados; idea central explicitada)
+**Fecha:** 2026-09-15
+**Motor:** Godot 4.7
+**Fase actual:** Fase 1 — sistema base. El diseño de fase 0 está cerrado.
 
 ---
 
 ## 1. Visión y pilares
 
-MumiolaCity es un clon espiritual de Habbo Hotel (salas isométricas, avatares, decoración social) fusionado con la columna vertebral de un MMORPG de habilidades tipo RuneScape: **una economía enteramente dirigida por lo que producen los jugadores**, no por tiendas del sistema.
+**La idea central, en una línea: un simulador de la vida real en línea en el que participás como uno más.** No sos el elegido, no hay guion que te ponga en el centro, no hay héroe. Sos un vecino de una ciudad que funciona porque la gente que vive en ella la hace funcionar. Esa frase es la regla con la que se decide si una función entra o no entra: *¿esto hace que se parezca más a una vida compartida, o me está convirtiendo en el protagonista?*
+
+Esa idea es la **dirección**; este documento es el **tamaño**. «Simulador de la vida real» invita al alcance infinito, y lo que hace terminable el proyecto es que el alcance lo fija el GDD: nueve habilidades, el catálogo de `items.json`, y las fases del §9. Cuando la visión y el alcance choquen, gana el alcance.
+
+En términos de referencias, MumiolaCity es un clon espiritual de Habbo Hotel (salas isométricas, avatares, decoración social) fusionado con la columna vertebral de un MMORPG de habilidades tipo RuneScape: **una economía enteramente dirigida por lo que producen los jugadores**, no por tiendas del sistema.
 
 **Ambientación: mundo moderno, no fantasía medieval.** A diferencia de la mayoría de los MMORPG de habilidades (que heredan la estética de gremios, herrerías y espadas de RuneScape), MumiolaCity ocurre en una ciudad contemporánea. Esto no es solo estética: condiciona directamente el nombre y el catálogo de cada habilidad de producción — por eso, por ejemplo, la habilidad que trabaja el metal se llama **Manufactura** (un taller/fábrica moderna) y no "Herrería", y por eso el plástico (vía Resina, procesada por Silvicultura) es un material intermedio de primera clase junto a la madera y la piedra. Cualquier habilidad o ítem nuevo debe evaluarse primero contra este filtro: ¿encajaría en una ciudad de hoy, o es un resabio de fantasía medieval?
 
@@ -171,27 +175,49 @@ Pendiente, no bloqueante: decidir objeto por objeto (a medida que se agreguen a 
 
 ---
 
-## 7. Dirección de arte
+## 7. Dirección de arte y render
 
-**Decisión: isométrico 2.5D con sprites pre-renderizados desde Blender**, no 3D en tiempo real con cámara fija.
+**Decisión (revisada el 2026-09-15): mundo 3D en tiempo real con cámara ortográfica isométrica.** Reemplaza a la decisión original de sprites 2.5D pre-renderizados desde Blender.
 
-Motivo resumido (detalle completo discutido con el usuario): mayor velocidad para producir el volumen de contenido que exige un Habbo-like (cientos de muebles/prendas), mejor rendimiento que geometría 3D en salas cargadas de objetos, y compatibilidad directa con el patrón de **avatar por capas** que necesita la economía de ropa vendible.
+**Por qué cambió.** La versión 0.3 de este documento eligió sprites pre-renderizados por tres motivos: velocidad para producir el volumen de contenido de un Habbo-like, rendimiento en salas cargadas, y compatibilidad con el avatar por capas. Dos de los tres se debilitaron al conseguir una base de modelos 3D libres:
 
-**Pipeline propuesto:**
+- **Volumen de contenido:** con packs CC0 ya modelados, obtener un mueble nuevo es arrastrar un `.gltf`, mientras que la ruta de sprites exige además modelar, renderizar en cada ángulo y armar el atlas. El 3D pasó a ser el camino rápido, no el lento.
+- **Rendimiento:** un centenar de mallas planas de pocos polígonos en una sala no es un problema en escritorio con hardware actual. Seguiría siéndolo en Web, y ahí la exportación en Compatibility con geometría de baja densidad tampoco preocupa.
+- **Avatar por capas:** este sí sigue en pie como requisito (ver abajo), pero en 3D se resuelve con `BoneAttachment3D` en vez de componer capas de sprites por cada ángulo, que es menos trabajo y no más.
 
-1. Modelar cada objeto/prenda una vez en Blender.
-2. Renderizar cada modelo en los mismos 4–8 ángulos isométricos fijos (batch script de Blender).
-3. Exportar a atlas de sprites (PNG con alpha) por objeto.
-4. En Godot: objetos de sala como `Sprite2D`/`AnimatedSprite2D` sobre una grilla isométrica; avatar como conjunto de capas (`cuerpo`, `torso`, `piernas`, `cabeza`, `tocado`) compuestas en el mismo ángulo, igual que Habbo compone su "figure data".
-5. Profundidad visual: `y-sort` por la posición en la grilla, no por capas manuales.
+**Lo que el cambio simplifica.** La proyección isométrica deja de ser una propiedad del mundo y pasa a ser un ángulo de cámara: no hay matemática 2:1, ni `TileSet` isométrico, ni conversión propia de coordenadas. El orden de dibujo lo resuelve el búfer de profundidad, así que **desaparece todo el sistema de y-sort** y la clase de bugs asociada.
 
-Referencia de patrón de composición por capas: el propio Habbo y, para el sistema de tiles con profundidad apilable (paredes/muebles/techos), el motor de Project Zomboid — aunque Zomboid dibuja sus tiles a mano, no los pre-renderiza.
+**Meta estética:** un aspecto **3D retro y acogedor**, de baja poligonización y sombreado plano. Más adelante se va a experimentar con post-procesado —posiblemente renderizar la escena a un `SubViewport` de baja resolución y escalarla con vecino más cercano, para un acabado cercano al pixel art. Eso es trabajo de fase avanzada: **primero funcionan los sistemas, después se ve bien.** La única precaución que se toma desde ya es mantener el mundo 3D en su propio `SubViewport` con la interfaz fuera de él, para que ese cambio sea una propiedad y no una reestructuración.
+
+**Base de modelos:** packs **KayKit** de Kay Lousberg, licencia **CC0** (uso comercial libre, atribución opcional). Prototype Bits para el escenario, Furniture Bits para el mobiliario y Character Animations para el avatar. Los originales viven fuera del proyecto; a `res://arte/modelos_3d/` se copia solo el formato glTF.
+
+**Escala: 1 celda de grilla = 1 metro = 1 unidad de Godot.** Los modelos de KayKit están autorizados en metros con el origen en la base, centrado en X y Z, así que colocar un objeto en una celda es asignarle la posición que devuelve `IsoGrid.celda_a_mundo()`, sin corrección. Con esa escala, una silla ocupa una celda, una mesa mediana 2×2 y una cama doble 3×3 — coherente con los `tamano_grilla` de `items.json`.
+
+**Cámara:** un `Node3D` pivote en el centro de la sala con la `Camera3D` como hija:
+
+```
+Pivote (Node3D)     rotation = (-35.264, 45, 0)   # isométrico verdadero
+└── Camera3D        projection = Orthogonal
+                    size = 12                      # altura visible en metros
+```
+
+Montarla así, y no como cámara suelta, es lo que hace que **rotar la sala en pasos de 90° al estilo Habbo** sea una interpolación sobre `pivote.rotation.y`.
+
+**El avatar por partes sigue siendo un requisito**, porque la ropa de Costura es mercancía comerciable y tiene que verse puesta. En 3D eso significa mallas intercambiables sobre el esqueleto del avatar, no capas de sprites compuestas por ángulo.
+
+**El maniquí de KayKit ya trae esa estructura:** son seis mallas separadas pesadas al mismo esqueleto (`ArmLeft`, `ArmRight`, `Body`, `Head`, `LegLeft`, `LegRight`), así que los slots tienen a qué mapear — `Body` al torso, las dos piernas a piernas, `Head` a cabeza. El esqueleto además expone huesos de enganche tipo `handslot.l`, que son el punto donde van a colgar la Pala, el Pico y la Caña de pescar cuando llegue `EquiparBehavior`. **Lo que falta es contenido, no arquitectura:** el pack libre no trae prendas alternativas que ponerle, así que hasta conseguirlas Costura no tiene efecto visible.
+
+**El pipeline de sprites no está descartado, está pospuesto.** Si algún día el rendimiento o la dirección de arte lo piden, la matemática de cámara ya es la misma y hornear los modelos a sprites —desde Blender o desde un `SubViewport` de Godot— no invalida nada de lo construido.
 
 ---
 
 ## 8. Arquitectura técnica (Godot)
 
 **Fase actual del prototipo:** single-player / **offline**, con la economía simulada mediante NPCs — el multijugador real con servidor autoritativo y base de datos queda para una fase posterior, una vez validadas las mecánicas. La visión final del proyecto **es un juego en línea**; el hecho de que el MVP sea offline es una decisión de secuencia, no de alcance — por eso `EconomyManager` (y en general cualquier sistema que en el futuro deba sincronizarse entre jugadores) se diseña desde ya desacoplado del transporte, para no tener que rediseñarlo cuando llegue la red real.
+
+**Render:** el mundo es 3D en tiempo real con cámara ortográfica isométrica (ver §7). El escenario estático —suelos y paredes— se pinta desde el editor con **dos `GridMap` separados**, uno por capa, porque una celda de `GridMap` solo admite un ítem y pintar una pared sobre una celda de suelo la reemplazaría. Regla de composición de la sala: **el suelo va por dentro y las paredes por fuera**, en el anillo de celdas sin suelo, igual que en Habbo. Eso hace que «¿se puede caminar acá?» sea exactamente «¿hay suelo pintado acá?».
+
+**Lo que un jugador puede tocar nunca va en el `GridMap`.** Una celda de `GridMap` no tiene `ItemInstance`, ni `estado_runtime`, ni verbos, ni puede recibir un clic: meter ahí una silla rompe **D3**. El `GridMap` es escenario; todo lo colocado por un jugador es un `WorldObject`.
 
 **Plataforma:** exportación nativa de escritorio (Windows/Linux) es el objetivo del MVP — es la que se prueba primero y con la que se valida que el juego funciona. Exportación **Web (HTML5)** es una meta secundaria, deseable pronto porque facilita mostrar el proyecto a otras personas sin que instalen nada, pero no bloquea el desarrollo inicial: funcionar en escritorio es suficiente por ahora.
 
@@ -202,20 +228,24 @@ Referencia de patrón de composición por capas: el propio Habbo y, para el sist
 
 Estructura de carpetas propuesta:
 
+Estructura real del proyecto (nombres en español, como el resto del código):
+
 ```
 res://
-  autoloads/        GameManager, SkillManager, InventoryManager,
-                     EconomyManager (simulado), SaveManager
+  autoloads/            GameManager, SkillManager, InventoryManager,
+                         EconomyManager (simulado), SaveManager
   data/
-    items/           Recursos .tres: ItemDefinition (id, categoría, stack, valor base)
-    recipes/         Recursos .tres: RecipeDefinition (insumos, resultado, habilidad, xp)
-    skills/          Recursos .tres: SkillDefinition (curva de xp, desbloqueos por nivel)
-  scenes/
-    world/           Área común + sala privada, ambas isométricas sobre grilla, cámara fija
-    avatar/          Avatar por capas + animaciones
-    ui/               Inventario, panel de habilidades, mercado, crafteo
-  art/
-    sprites/          Salida del pipeline de Blender, organizada por objeto/ángulo
+    objetos/             items.json + lista_items.md (fuente) y los .tres de ItemDefinition
+    recetas/             Recursos .tres: RecipeDefinition (insumos, resultado, habilidad, xp)
+    habilidades/         Recursos .tres: SkillDefinition (curva de xp, desbloqueos por nivel)
+    mesh_librarys/       Escenas fuente de los modelos y las .meshlib que consumen los GridMap
+  escenas/
+    mundo/               IsoGrid, área común y sala privada
+    personaje/           Avatar y animaciones
+    ui/                  Inventario, panel de habilidades, mercado, crafteo
+  arte/
+    modelos_3d/          Modelos glTF por familia: prototipo, muebles, restoran, avatar
+    sprites/             Reservada por si vuelve el pipeline de pre-renderizado (§7)
 ```
 
 Puntos de diseño de datos clave:

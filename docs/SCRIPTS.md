@@ -4,6 +4,8 @@
 >
 > **Versión navegable (artefacto):** https://claude.ai/code/artifact/5f914cd8-0d3b-437a-981a-0f18a4bb0a82 — mismo contenido que este archivo, con navegación por fase y enlaces cruzados entre scripts. Privado; compartir desde el menú de la página si hace falta. Si este documento cambia, hay que republicar el artefacto para que no quede desactualizado.
 >
+> **Revisado el 2026-09-15:** el proyecto pasó de sprites 2.5D pre-renderizados a **mundo 3D en tiempo real con cámara ortográfica isométrica** (GDD §7). Solo cambió la capa Mundo — nueve clases pasan a bases 3D y `IsoGrid` se reorganiza sobre dos `GridMap`. Los ocho managers, los once recursos de datos y toda la economía quedaron intactos, que es exactamente lo que compraba la regla de dirección de `SISTEMAS.md` §1.
+>
 > **Sistemas y decisiones abiertas:** ver [`SISTEMAS.md`](SISTEMAS.md) — cómo se comunican estos scripts entre sí, dónde vive cada dato y las once decisiones (D1–D11) que hay que cerrar antes de escribir el código de cada fase.
 >
 > **Firma de cada clase:** ver [`CLASES.md`](CLASES.md) — campos `@export`, señales, métodos e invariantes de las 43 clases. Este documento detalla **32**: las otras once son recursos de datos que aparecieron al revisar el diseño y se listan, con su fase y su motivo, en la tabla "Las once clases que esta tabla no detalla" de más abajo.
@@ -28,11 +30,11 @@ Antes de escribir un sistema, hay que revisar si el motor ya lo resuelve — y s
 
 | # | Script | Tipo | Forma | Extends | Fase |
 |---|---|---|---|---|---|
-| 1 | `IsoGrid` | Nodo | Componente | `TileMapLayer` | 1 |
-| 2 | `PlayerController` | Nodo/Escena | Escena | `CharacterBody2D` | 1 |
-| 3 | `AvatarComposer` | Nodo | Componente | `Node2D` | 1 |
-| 4 | `RoomController` | Nodo/Escena | Escena | `Node2D` | 1 |
-| 5 | `WorldObject` | Nodo/Escena | Escena | `Area2D` | 1 |
+| 1 | `IsoGrid` | Nodo/Escena | Escena | `Node3D` | 1 |
+| 2 | `PlayerController` | Nodo/Escena | Escena | `CharacterBody3D` | 1 |
+| 3 | `AvatarComposer` | Nodo | Componente | `Node3D` | 1 |
+| 4 | `RoomController` | Nodo/Escena | Escena | `Node3D` | 1 |
+| 5 | `WorldObject` | Nodo/Escena | Escena | `Area3D` | 1 |
 | 6 | `InteractionBehavior` (+ `SentarseBehavior`) | Resource | Recurso | `Resource` | 1 |
 | 7 | `ContextMenuUI` | UI | Escena | `PopupMenu` | 1 |
 | 8 | `HUD` | UI | Escena | `CanvasLayer` | 1 |
@@ -46,7 +48,7 @@ Antes de escribir un sistema, hay que revisar si el motor ya lo resuelve — y s
 | 16 | `InventoryManager` | Autoload | Autoload | `Node` | 2 |
 | 17 | `RecipeManager` | Autoload | Autoload | `Node` | 2 |
 | 18 | `TimeManager` | Autoload | Autoload | `Node` | 2 |
-| 19 | `GatherableNode` | Nodo/Escena | Escena | `Area2D` | 2 |
+| 19 | `GatherableNode` | Nodo/Escena | Escena | `Area3D` | 2 |
 | 20 | `CropPlot` | Nodo/Escena | Escena | `GatherableNode` | 2 |
 | 21 | `ContenedorBehavior` | Resource | Recurso | `InteractionBehavior` | 2 |
 | 22 | `ModifierStack` | Nodo | Componente | `Node` | 2 |
@@ -86,41 +88,60 @@ La undécima no es una clase nueva sino un desdoblamiento: la fila 6 de la tabla
 | Script propuesto originalmente | Por qué ya no existe |
 |---|---|
 | `InputController` | Godot ya tiene el **Input Map** (Project Settings → Input Map) y el singleton **`Input`**. Leer `Input.get_vector("mover_izq", "mover_der", "mover_arriba", "mover_abajo")` dentro de `PlayerController` cubre todo lo que este script iba a hacer, y el Input Map ya soporta remapeo en runtime (`InputMap.action_erase_events()` / `action_add_event()`) si algún día hace falta configurar controles. Un script intermedio propio solo agregaba una capa sin aportar nada. |
-| `CameraController` | `Camera2D` ya trae, configurables desde el inspector, los límites de encuadre (`limit_left/right/top/bottom`), el suavizado de seguimiento (`position_smoothing_enabled`) y los márgenes de arrastre. Basta con hacerla hija de la escena del jugador y configurarla — no necesita script. Si más adelante hace falta lógica real (ej. transición de cámara entre salas), se agrega ahí y recién entonces vuelve a ser un script. |
+| `CameraController` | Sigue eliminado tras el paso a 3D. La cámara es un `Node3D` pivote en el centro de la sala con una `Camera3D` ortográfica como hija, toda configurada desde el inspector (GDD §7). Rotar la sala en pasos de 90° es una interpolación sobre `pivote.rotation.y`, y encuadrar es mover el pivote — ninguna de las dos cosas justifica una clase. Si más adelante hace falta lógica real (transición de cámara entre salas, seguimiento con límites), se agrega ahí y recién entonces vuelve a ser un script. |
 
 ---
 
 ## Fase 1 — Sistema base (avatar en área común y sala privada)
 
-### 1. `IsoGrid` — Nodo · Componente · `extends TileMapLayer`
-**Función:** define la grilla isométrica de una sala y lleva la cuenta de qué celdas están ocupadas.
-**Godot nativo:** `TileMapLayer` (Godot 4.3+; `TileMap` con una sola capa en 4.x anteriores) aporta el pintado de tiles con herramienta de editor, la proyección isométrica configurada en el `TileSet` (*Tile Shape* = *Isometric*), la conversión de coordenadas (`local_to_map()` / `map_to_local()`) y el y-sort de los propios tiles. **Código propio:** solo la ocupación de gameplay — qué `WorldObject` está parado sobre cada celda, que el motor no modela.
-**Interactúa con:** vive dentro de cada `RoomController`; `PlayerController` la consulta para moverse celda a celda; `WorldObject` se registra en ella al colocarse; en fase 4, `RoomBuilderUI` la usa para validar dónde se puede construir.
-**Funciones clave:** `mundo_a_celda(pos: Vector2) -> Vector2i` (envuelve `local_to_map()`), `celda_a_mundo(celda: Vector2i) -> Vector2` (envuelve `map_to_local()`), `esta_libre(celda: Vector2i, tamano: Vector2i) -> bool` (propia).
+### 1. `IsoGrid` — Nodo/Escena · Escena propia · `extends Node3D`
+**Función:** es la autoridad sobre la grilla de una sala — qué celdas existen, cuáles se pueden caminar y qué `WorldObject` ocupa cada una. Coordina dos capas de escenario y lleva la ocupación de gameplay.
 
-### 2. `PlayerController` — Nodo/Escena · Escena propia · `extends CharacterBody2D`
+**Estructura de la escena** (§7 del GDD):
+```
+IsoGrid (Node3D)        ← el script
+├── Suelo   (GridMap)
+└── Paredes (GridMap)
+```
+
+**Por qué `Node3D` y no `extends GridMap`.** El script podría colgar del `GridMap` del suelo y heredar `map_to_local()` gratis, pero eso convertiría a las paredes en un apéndice de la capa de suelo cuando son dos representaciones de la misma sala. Además `IsoGrid` es dueño de *la ocupación y el área construible* (`SISTEMAS.md` §3.1), no de dibujar el piso: que el suelo sea un `GridMap` es un detalle de render. El costo de la indirección es un `suelo.` por cada conversión, cuatro líneas en total, y a cambio queda lugar para una tercera capa (techos, decoración fija) sin reorganizar nada.
+
+**Godot nativo:** `GridMap` aporta el pintado con herramienta de editor, la conversión de coordenadas (`local_to_map()` / `map_to_local()`), el agrupado en lotes de las mallas y la colisión del escenario. La proyección isométrica **ya no es asunto de este nodo**: es el ángulo de la cámara (§7 del GDD), así que no hay matemática 2:1 ni `TileSet` que configurar, y el orden de dibujo lo resuelve el búfer de profundidad en vez de un y-sort. **Código propio:** la ocupación de gameplay — qué `WorldObject` está parado sobre cada celda, que el motor no modela.
+
+**Convención de coordenadas:** la API pública habla en `Vector2i` (planta del piso) y convierte a `Vector3i` solo para hablar con los `GridMap`. Así `celda_origen` de **D3**, los `tamano_grilla` de `items.json` y el `AStarGrid2D` de `PlayerController` siguen valiendo tal como están escritos.
+
+**Invariante:** los dos `GridMap` hijos van con transformación en cero, y el origen de `IsoGrid` es el origen de la sala. `map_to_local()` devuelve coordenadas en el espacio local del `GridMap`: si alguien mueve un hijo, las conversiones empiezan a mentir sin dar error.
+
+**Interactúa con:** vive dentro de cada `RoomController`; `PlayerController` la consulta para moverse celda a celda; `WorldObject` se registra en ella al colocarse; en fase 4, `RoomBuilderUI` la usa para validar dónde se puede construir.
+
+**Funciones clave:** `mundo_a_celda(pos: Vector3) -> Vector2i` y `celda_a_mundo(celda: Vector2i) -> Vector3` (envuelven lo nativo del suelo), `celda_valida(celda) -> bool` (¿hay suelo pintado?), `celdas_de(origen, tamano) -> Array[Vector2i]`, `esta_libre(origen, tamano) -> bool`, `ocupar(origen, tamano, objeto)`, `liberar_objeto(objeto)`, `objeto_en(celda) -> WorldObject`, `celdas_bloqueadas() -> Array[Vector2i]`.
+
+### 2. `PlayerController` — Nodo/Escena · Escena propia · `extends CharacterBody3D`
 **Función:** movimiento del avatar sobre la grilla, estado de personaje (sentado, energía) y los métodos que invocan los `InteractionBehavior` (ej. `sentarse_en`, `reproducir_animacion`).
-**Godot nativo:** `CharacterBody2D` con `move_and_slide()` para el desplazamiento; el singleton **`Input`** + Input Map para el control (sin script intermedio, ver tabla de eliminados); y **`AStarGrid2D`** para el pathfinding click-to-walk estilo Habbo — Godot ya trae A* para grillas, alimentado con las celdas bloqueadas de `IsoGrid`. **Código propio:** la lógica de estado del personaje y las respuestas a los comportamientos de interacción.
+**Godot nativo:** `CharacterBody3D` con `move_and_slide()` para el desplazamiento; el singleton **`Input`** + Input Map para el control (sin script intermedio, ver tabla de eliminados); y **`AStarGrid2D`** para el pathfinding click-to-walk estilo Habbo. **`AStarGrid2D` sigue sirviendo aunque el mundo sea 3D**: opera sobre una grilla de enteros y no le importa la dimensión del render — se le pasan las celdas bloqueadas de `IsoGrid` y el resultado se mapea al plano XZ. **Código propio:** la lógica de estado del personaje y las respuestas a los comportamientos de interacción.
 **Interactúa con:** se mueve dentro de la `IsoGrid` de la `RoomController` activa; `GameManager` lo referencia como "el jugador actual"; `SentarseBehavior` y futuros comportamientos llaman a sus métodos para producir el efecto visible.
 **Funciones clave:** `_physics_process(delta: float) -> void`, `ir_a_celda(celda: Vector2i) -> void` (calcula ruta con `AStarGrid2D`), `sentarse_en(objeto: WorldObject) -> void`, `reproducir_animacion(nombre: String) -> void`.
 
-### 3. `AvatarComposer` — Nodo · Componente · `extends Node2D`
-**Función:** arma el avatar por capas (cuerpo/torso/piernas/cabeza/tocado, §7) según apariencia y equipo actual.
-**Godot nativo:** un `AnimatedSprite2D` por capa, todos con los mismos nombres de animación en sus `SpriteFrames`, de modo que reproducir "caminar" en todas las capas las mantiene sincronizadas sin sistema de animación propio; alternativamente un `AnimationPlayer` que las dirija a todas. **Código propio:** solo decidir qué `SpriteFrames`/textura corresponde a cada capa según lo equipado.
+### 3. `AvatarComposer` — Nodo · Componente · `extends Node3D`
+**Función:** arma el avatar por partes intercambiables (cuerpo/torso/piernas/cabeza/tocado, §7) según apariencia y equipo actual. El requisito no cambió con el render 3D: la ropa de Costura es mercancía comerciable y tiene que verse puesta.
+**Godot nativo:** un único `Skeleton3D` con un `BoneAttachment3D` por slot, y una malla intercambiable colgando de cada uno; el `AnimationPlayer` del rig mueve todo junto sin sistema de sincronización propio. Es menos trabajo que la versión 2D, donde había que componer cada capa en cada uno de los 4–8 ángulos. **Código propio:** solo decidir qué malla corresponde a cada slot según lo equipado.
 **Interactúa con:** componente de `PlayerController`; desde fase 2 lee qué hay equipado en `InventoryManager` para reflejarlo visualmente.
-**Funciones clave:** `actualizar_capa(capa: String, frames: SpriteFrames) -> void`, `aplicar_equipo(item: ItemDefinition) -> void`.
+**Pendiente de contenido, no de estructura:** el maniquí de KayKit son seis mallas separadas sobre un mismo esqueleto, así que intercambiar una parte es asignarle otro `Mesh` a su `MeshInstance3D`. Lo que falta son prendas que ponerle — hasta que existan, Costura no tiene efecto visible.
+**Traducción de nombres de animación:** el script guarda un diccionario de nombre lógico (`&"caminar"`) a nombre del pack (`Rig_Medium_MovementBasic/Walking_A`). Es lo que evita que el resto del código conozca a KayKit: cambiar de pack de animaciones es reescribir ese diccionario y nada más.
+**Funciones clave:** `actualizar_parte(slot: StringName, malla: Mesh) -> void`, `aplicar_equipo(item: ItemDefinition) -> void`.
 
-### 4. `RoomController` — Nodo/Escena · Escena propia · `extends Node2D`
+### 4. `RoomController` — Nodo/Escena · Escena propia · `extends Node3D`
 **Función:** representa una sala concreta (área común o sala privada): contiene una `IsoGrid`, los `WorldObject` colocados, el tipo de sala (vivienda/producción/tienda, GDD §6) y quién puede entrar.
-**Godot nativo:** cada sala **es** una escena `.tscn`, así que cargarla es `load()` + `PackedScene.instantiate()` — no hace falta un formato propio de "definición de sala". El y-sort de los objetos sale de activar *Y Sort Enabled* en el nodo que los agrupa, en vez de calcular `z_index` a mano. **Código propio:** el estado de la sala y su relación con la ocupación de `IsoGrid`.
+**Godot nativo:** cada sala **es** una escena `.tscn`, así que cargarla es `load()` + `PackedScene.instantiate()` — no hace falta un formato propio de "definición de sala". El orden de dibujo lo resuelve el búfer de profundidad: **con el render 3D desapareció el y-sort** y con él la clase de bugs de objetos dibujados en el orden equivocado. **Código propio:** el estado de la sala y su relación con la ocupación de `IsoGrid`.
 **Interactúa con:** instanciada y gestionada por `GameManager` al cambiar de escena; coloca y consulta `WorldObject` sobre su `IsoGrid`; en fase 4, `RoomBuilderUI` la usa para agregar/quitar objetos.
 **Funciones clave:** `colocar_objeto(item: ItemDefinition, celda: Vector2i) -> WorldObject`, `obtener_objetos() -> Array[WorldObject]`.
+**Nota de cámara:** el pivote con la `Camera3D` ortográfica (§7 del GDD) vive en la escena de la sala, centrado en ella. Sigue sin necesitar script: rotar la sala al estilo Habbo es una interpolación sobre `pivote.rotation.y`.
 
-### 5. `WorldObject` — Nodo/Escena · Escena propia · `extends Area2D`
+### 5. `WorldObject` — Nodo/Escena · Escena propia · `extends Area3D`
 **Función:** cualquier objeto colocado en una sala. Referencia su `ItemDefinition`, guarda `estado_instancia` (dato propio de esa instancia) y expone `verbos_disponibles()` / `ejecutar()` del sistema de interacción (GDD §6.1).
-**Godot nativo:** `Area2D` (que ya es un `Node2D`) aporta la detección de click y de mouse encima mediante su señal `input_event` y una `CollisionShape2D` — no hay que hacer pruebas de colisión de mouse a mano. **Código propio:** el sistema de verbos de interacción y el estado por instancia, que son diseño propio del juego (§6.1).
+**Godot nativo:** `Area3D` aporta la detección de click y de puntero encima mediante su señal `input_event` y una `CollisionShape3D` — no hay que hacer pruebas de picking a mano. Como la ocupación la lleva `IsoGrid`, la forma de colisión no necesita seguir la malla: un `BoxShape3D` del tamaño de la celda alcanza y es más barato. **Código propio:** el sistema de verbos de interacción y el estado por instancia, que son diseño propio del juego (§6.1).
 **Interactúa con:** vive dentro de un `RoomController`; su lista `interacciones` son recursos `InteractionBehavior`; `ContextMenuUI` lo consulta para mostrar verbos; `PlayerController` es el actor que ejecuta comportamientos sobre él.
-**Funciones clave:** `verbos_disponibles(actor: Node) -> Array[InteractionBehavior]`, `ejecutar(behavior: InteractionBehavior, actor: Node) -> void`, `_on_input_event(...)` (señal nativa de `Area2D`).
+**Funciones clave:** `verbos_disponibles(actor: Node) -> Array[InteractionBehavior]`, `ejecutar(behavior: InteractionBehavior, actor: Node) -> bool` (**D8**), `_on_input_event(...)` (señal nativa de `Area3D`).
 
 ### 6. `InteractionBehavior` (clase base) + `SentarseBehavior` — Resource · Recurso, sin escena · `extends Resource` (`SentarseBehavior extends InteractionBehavior`)
 **Función:** define qué puede hacer un jugador con un `WorldObject` (GDD §6.1), reutilizable y **sin estado propio** — el estado de una instancia concreta vive en `WorldObject.estado_instancia`, nunca en el `Resource`.
@@ -204,15 +225,15 @@ La undécima no es una clase nueva sino un desdoblamiento: la fila 6 de la tabla
 **Interactúa con:** `CropPlot` lo consulta para saber si ya puede cosecharse; `ModifierStack` lo usa si se decide que los buffs expiren con el juego cerrado; `SaveManager` persiste sus timestamps.
 **Funciones clave:** `registrar_temporizador(id: String, duracion_seg: float) -> void`, `tiempo_restante(id: String) -> float`.
 
-### 19. `GatherableNode` — Nodo/Escena · Escena propia · `extends Area2D`
+### 19. `GatherableNode` — Nodo/Escena · Escena propia · `extends Area3D`
 **Función:** nodo de recolección (árbol, mina, parcela) vinculado a una habilidad, con tiempo de acción, respawn y herramienta requerida.
-**Godot nativo:** `Area2D` para detectar el click y la cercanía del jugador (señales `input_event` y `body_entered`), y un nodo `Timer` hijo para el respawn dentro de la sesión.
+**Godot nativo:** `Area3D` para detectar el click y la cercanía del jugador (señales `input_event` y `body_entered`), y un nodo `Timer` hijo para el respawn dentro de la sesión.
 **Interactúa con:** vive dentro de una zona pública (`RoomController`) o de la sala de Producción del jugador; entrega `ItemInstance` a `InventoryManager` y xp a `SkillManager`; su velocidad sale de un único `ModifierStack.multiplicador_para()`, que ya combina el equipo equipado y los buffs activos (**D5**).
 **Funciones clave:** `recolectar(actor: Node) -> void`, `_on_respawn_timeout() -> void`.
 
 ### 20. `CropPlot` — Nodo/Escena · Escena propia · `extends GatherableNode`
 **Función:** variante para semillas plantables — al plantar arranca un temporizador y produce el resultado al cumplirse (campo `plantable` de `ItemDefinition`).
-**Godot nativo:** hereda toda la detección de `Area2D` de `GatherableNode`. **Ojo:** a diferencia del respawn de su clase padre, el crecimiento **sí** debe ir por `TimeManager` (timestamps), no por un nodo `Timer` — un cultivo tiene que seguir creciendo con el juego cerrado.
+**Godot nativo:** hereda toda la detección de `Area3D` de `GatherableNode`. **Ojo:** a diferencia del respawn de su clase padre, el crecimiento **sí** debe ir por `TimeManager` (timestamps), no por un nodo `Timer` — un cultivo tiene que seguir creciendo con el juego cerrado.
 **Interactúa con:** usa `TimeManager`; entrega el resultado a `InventoryManager` y xp a `SkillManager`.
 **Funciones clave:** `plantar(semilla: ItemDefinition) -> void`, `esta_lista_para_cosechar() -> bool`.
 
@@ -259,7 +280,7 @@ La undécima no es una clase nueva sino un desdoblamiento: la fila 6 de la tabla
 
 ### 27. `CraftingStation` — Nodo/Escena · Escena propia · `extends WorldObject`
 **Función:** objeto del mundo (mesada de cocina, banco de carpintería) que abre `CraftingUI` filtrada por su habilidad.
-**Godot nativo:** hereda de `WorldObject`, o sea del `Area2D` con detección de click ya resuelta; el verbo que abre la UI es un `InteractionBehavior` más, sin mecanismo nuevo.
+**Godot nativo:** hereda de `WorldObject`, o sea del `Area3D` con detección de click ya resuelta; el verbo que abre la UI es un `InteractionBehavior` más, sin mecanismo nuevo.
 **Interactúa con:** su lista `interacciones` incluye un comportamiento que abre `CraftingUI`; conecta con `RecipeManager` a través de esa UI.
 **Funciones clave:** `abrir_ui(actor: Node) -> void`.
 
