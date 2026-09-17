@@ -19,6 +19,13 @@ const CLAVE_OCUPANTES := &"sentarse_ocupantes"
 @export var offset_visual : Vector2 = Vector2.ZERO
 ## Nombre logico de la animacion, tal como lo entiende AvatarComposer.
 @export var animacion : StringName = &"sentado"
+## Cuanto girar al que se sienta respecto del mueble, en grados.
+##
+## No es un ajuste fino sino un desfase de modelado: el frente de una silla y el
+## frente de un avatar no tienen por que ser el mismo eje. Con 180 el avatar
+## queda mirando hacia afuera del respaldo. Ademas decide por donde se baja, que
+## es siempre la celda que tiene enfrente.
+@export_range(-180.0, 180.0, 90.0) var giro_asiento : float = 180.0
 
 
 ## Devuelve quienes estan sentados ahora mismo en el objeto.
@@ -66,7 +73,7 @@ func puede_interactuar(actor : Node, objeto : WorldObject) -> bool:
 func interactuar(actor : Node, objeto : WorldObject) -> bool:
 	if not puede_interactuar(actor, objeto):
 		return false
-	if not actor.sentarse_en(objeto, offset_visual, animacion):
+	if not actor.sentarse_en(objeto, offset_visual, animacion, giro_asiento):
 		return false
 
 	var sentados := ocupantes(objeto)

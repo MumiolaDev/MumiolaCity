@@ -177,5 +177,7 @@ func _sentarse_o_levantarse(sala : RoomController) -> void:
 		print("%s no ofrece nada que se pueda hacer ahora." % obj.nombre_mostrado())
 		return
 
+	# interactuar_con() y no ejecutar(): si el verbo pide adyacencia, el personaje
+	# camina hasta el mueble y recien ahi se sienta.
 	print("%s: %s" % [obj.nombre_mostrado(),
-		"hecho" if obj.ejecutar(verbos[0], personaje) else "no se pudo"])
+		"en camino" if personaje.interactuar_con(obj, verbos[0]) else "no se pudo"])

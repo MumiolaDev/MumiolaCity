@@ -19,6 +19,8 @@ const SLOTS := [&"cuerpo", &"piernas", &"torso", &"cabeza", &"tocado"]
 	&"idle": "Rig_Medium_General/Idle_A",
 	&"caminar": "Rig_Medium_MovementBasic/Walking_A",
 	&"sentado": "Rig_Medium_Simulation/Sit_Chair_Idle",
+	&"sentarse": "Rig_Medium_Simulation/Sit_Chair_Down",
+	&"levantarse": "Rig_Medium_Simulation/Sit_Chair_StandUp",
 }
 
 ## El AnimationPlayer que trae el modelo importado, con las bibliotecas cargadas.
@@ -38,12 +40,16 @@ const SLOTS := [&"cuerpo", &"piernas", &"torso", &"cabeza", &"tocado"]
 
 var _actual : StringName = &""
 
+## Que animacion arrancar cuando termine la que esta sonando. Vacio si ninguna.
+var _encadenada : StringName = &""
+
 
 func _ready() -> void:
 	if animador == null:
 		push_error("AvatarComposer en %s: falta asignar 'animador' en el inspector." % name)
 		return
 	_aplicar_bucles()
+	animador.animation_finished.connect(_al_terminar_animacion)
 
 
 ## Marca como ciclicas las animaciones listadas en en_bucle. Modifica el recurso
@@ -72,6 +78,37 @@ func reproducir(animacion : StringName) -> void:
 		return
 	_actual = animacion
 	animador.play(animaciones[animacion])
+
+
+## Reproduce una animacion de transicion y, al terminar, pasa a otra.
+##
+## Es lo que separa sentarse de estar sentado: Sit_Chair_Down se reproduce una
+## vez y deja al avatar en la pose que Sit_Chair_Idle continua en bucle. Sin el
+## encadenado habria que elegir entre no tener transicion o quedarse congelado en
+## el ultimo cuadro de ella.
+##
+## Solo funciona con animaciones que no esten en en_bucle: una animacion ciclica
+## no termina nunca, asi que animation_finished no se emite jamas.
+func reproducir_encadenado(transicion : StringName, destino : StringName) -> void:
+	if animador == null:
+		return
+	if not animaciones.has(transicion):
+		# Sin la transicion, al menos que el estado final se vea.
+		reproducir(destino)
+		return
+
+	_encadenada = destino
+	_actual = &""      # forzar el play aunque la transicion ya estuviera sonando
+	reproducir(transicion)
+
+
+## Encadena la animacion pendiente, si la hay.
+func _al_terminar_animacion(_nombre : StringName) -> void:
+	if _encadenada == &"":
+		return
+	var siguiente := _encadenada
+	_encadenada = &""
+	reproducir(siguiente)
 
 
 ## Devuelve el nombre logico de la animacion que se esta reproduciendo.

@@ -5,6 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://b7h6wv8hvktxs" path="res://arte/modelos_3d/avatar/Mannequin_Medium_mannequin_texture.png" id="3_bm77v"]
 [ext_resource type="AnimationLibrary" uid="uid://d2drodwx12kmv" path="res://arte/modelos_3d/avatar/animaciones/Rig_Medium_General.glb" id="4_r0vky"]
 [ext_resource type="AnimationLibrary" uid="uid://cdtaioexn1nei" path="res://arte/modelos_3d/avatar/animaciones/Rig_Medium_MovementBasic.glb" id="5_m6grn"]
+[ext_resource type="AnimationLibrary" uid="uid://dvupb0vmmj8de" path="res://arte/modelos_3d/avatar/animaciones/Rig_Medium_Simulation.glb" id="6_simul"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_ac2kl"]
 
@@ -402,3 +403,4 @@ skeleton = NodePath("..")
 [node name="AnimationPlayer" type="AnimationPlayer" parent="Visual/Mannequin_Medium" unique_id=2024518942]
 libraries/Rig_Medium_General = ExtResource("4_r0vky")
 libraries/Rig_Medium_MovementBasic = ExtResource("5_m6grn")
+libraries/Rig_Medium_Simulation = ExtResource("6_simul")

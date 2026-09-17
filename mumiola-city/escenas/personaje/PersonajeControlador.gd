@@ -26,6 +26,13 @@ var _ruta : Array[Vector2i] = []
 ## manana (D3).
 var _sentado_en : WorldObject = null
 
+## Por que celda bajarse al levantarse: la que queda al frente del asiento.
+var _celda_salida : Vector2i = IsoGrid.SIN_CELDA
+
+## Que hacer al terminar de caminar, si se camino para interactuar con algo.
+var _pendiente_objeto : WorldObject = null
+var _pendiente_verbo : InteractionBehavior = null
+
 ## El nodo que compone y orienta al avatar. Gira el, nunca el cuerpo.
 @onready var avatar : AvatarComposer = $Visual
 
@@ -65,6 +72,7 @@ func _physics_process(delta : float) -> void:
 			estado = &"idle"
 			avatar.reproducir(&"idle")
 			llego_a_celda.emit(grid.mundo_a_celda(global_position))
+			_resolver_pendiente()
 		return
 
 	velocity = hacia.normalized() * velocidad
@@ -93,6 +101,7 @@ func ir_a_celda(destino : Vector2i) -> bool:
 
 ## Detiene el recorrido en la celda a la que iba.
 func detener() -> void:
+	_cancelar_pendiente()
 	_ruta.clear()
 	velocity = Vector3.ZERO
 	estado = &"idle"
@@ -127,7 +136,7 @@ func esta_sentado() -> bool:
 ## hace que se vea sentado *en* la silla y no al lado. El offset es para ajustar
 ## a ojo modelos cuyo asiento no esta en el centro de su celda.
 func sentarse_en(objeto : WorldObject, offset : Vector2 = Vector2.ZERO,
-		animacion : StringName = &"sentado") -> bool:
+		animacion : StringName = &"sentado", giro_grados : float = 180.0) -> bool:
 	if objeto == null or grid == null or esta_sentado():
 		return false
 
@@ -140,11 +149,21 @@ func sentarse_en(objeto : WorldObject, offset : Vector2 = Vector2.ZERO,
 	pos.x += offset.x
 	pos.z += offset.y
 	global_position = pos
-	avatar.global_rotation.y = objeto.global_rotation.y
+
+	# El modelo del mueble y el del avatar no tienen por que mirar al mismo lado,
+	# asi que el desfase lo declara el comportamiento en vez de estar fijo aca.
+	var giro := objeto.global_rotation.y + deg_to_rad(giro_grados)
+	avatar.global_rotation.y = giro
+
+	# La celda de salida se calcula del giro que se aplico de verdad y no del
+	# rotacion_grilla del mueble: asi bajarse por adelante y mirar hacia adelante
+	# no pueden discrepar nunca.
+	var frente := Vector3(-sin(giro), 0.0, -cos(giro))
+	_celda_salida = objeto.celda_origen + Vector2i(roundi(frente.x), roundi(frente.z))
 
 	_sentado_en = objeto
 	estado = &"sentado"
-	avatar.reproducir(animacion)
+	avatar.reproducir_encadenado(&"sentarse", animacion)
 	return true
 
 
@@ -157,16 +176,80 @@ func levantarse() -> bool:
 	if not esta_sentado():
 		return false
 
-	var destino := grid.celda_libre_vecina(_sentado_en.celda_origen)
+	# Por delante del asiento si se puede; si esa celda no sirve, cualquier
+	# vecina libre, que sigue siendo mejor que quedarse clavado.
+	var destino := _celda_salida
+	if destino == IsoGrid.SIN_CELDA or not grid.esta_libre(destino):
+		destino = grid.celda_libre_vecina(_sentado_en.celda_origen)
+
 	if destino != IsoGrid.SIN_CELDA:
 		var pos := grid.celda_a_mundo(destino)
 		pos.y = grid.altura_piso
 		global_position = pos
 
 	_sentado_en = null
+	_celda_salida = IsoGrid.SIN_CELDA
 	estado = &"idle"
-	avatar.reproducir(&"idle")
+	avatar.reproducir_encadenado(&"levantarse", &"idle")
 	return true
+
+
+## Ejecuta un verbo sobre un objeto, caminando hasta el primero si hace falta.
+##
+## Es lo que evita que interactuar con algo lejano teletransporte al personaje.
+## Si el verbo pide adyacencia y no la hay, camina a una celda vecina del objeto
+## y deja la accion anotada para ejecutarla al llegar.
+##
+## Devuelve si la accion se ejecuto ya, o si quedo en camino. Un false significa
+## que ni siquiera se pudo empezar.
+func interactuar_con(objeto : WorldObject, verbo : InteractionBehavior) -> bool:
+	if objeto == null or verbo == null or grid == null:
+		return false
+
+	if not verbo.requiere_adyacencia or _esta_junto_a(objeto):
+		return objeto.ejecutar(verbo, self)
+
+	var destino := grid.celda_libre_vecina(objeto.celda_origen)
+	if destino == IsoGrid.SIN_CELDA or not ir_a_celda(destino):
+		return false
+
+	# Despues de ir_a_celda, que limpia lo pendiente al llamar a detener().
+	_pendiente_objeto = objeto
+	_pendiente_verbo = verbo
+	return true
+
+
+## Devuelve si el personaje esta en una celda vecina al objeto, o encima de el.
+func _esta_junto_a(objeto : WorldObject) -> bool:
+	var mia := grid.mundo_a_celda(global_position)
+	for celda in objeto.celdas_ocupadas(grid):
+		if maxi(absi(mia.x - celda.x), absi(mia.y - celda.y)) <= 1:
+			return true
+	return false
+
+
+## Ejecuta la accion que quedo pendiente al empezar a caminar.
+func _resolver_pendiente() -> void:
+	if _pendiente_objeto == null or _pendiente_verbo == null:
+		return
+
+	var objeto := _pendiente_objeto
+	var verbo := _pendiente_verbo
+	_pendiente_objeto = null
+	_pendiente_verbo = null
+
+	# El mueble pudo retirarse mientras el personaje iba caminando.
+	if is_instance_valid(objeto):
+		objeto.ejecutar(verbo, self)
+
+
+## Olvida la accion pendiente.
+##
+## Se llama desde detener(), asi que un clic en otro lado a mitad de camino
+## cancela la intencion: quien cambia de rumbo ya no quiere sentarse.
+func _cancelar_pendiente() -> void:
+	_pendiente_objeto = null
+	_pendiente_verbo = null
 
 
 ## Gira solo el avatar, nunca el cuerpo, para que la capsula de colision siga

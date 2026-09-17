@@ -10,3 +10,4 @@ requiere_adyacencia = true
 capacidad = 1
 offset_visual = Vector2(0, 0)
 animacion = &"sentado"
+giro_asiento = 180.0
