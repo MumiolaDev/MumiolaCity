@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"silla_madera"
+nombre = "Silla de madera"
+descripcion = "Silla simple tallada en madera. Objeto de decoracion para la sala."
+categoria = "decorativo"
+peso = 4.0
+apilable = false
+stack_maximo = 1
+valor_base = 13
+tamano_grilla = Vector2i(1, 1)
+rotable = true

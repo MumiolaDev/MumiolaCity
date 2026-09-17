@@ -110,6 +110,8 @@ func tiene_interaccion(verbo: StringName) -> bool
 func requiere_contenedor() -> StringName         # &"liquido" | &"solido" | &"" (D2)
 ```
 
+**Lo implementado en fase 1 es un subconjunto.** `receta`, `plantable`, `contenedor`, `efecto` y `bono` nombran tipos de la fase 2 que todavía no existen, y GDScript no compila un script que nombre un tipo inexistente: esos campos llegan con sus clases. `tiene_estado_propio()` y `requiere_contenedor()` dependen de `contenedor`, así que esperan con ellos. Lo que la fase 1 necesita —`tamano_grilla`, `rotable`, `interacciones`, `id`, `nombre`, `escena_mundo`— ya está.
+
 **Invariantes.**
 - `id` único en todo el catálogo — `ItemDatabase` debe fallar ruidosamente ante un duplicado, no quedarse con el último.
 - `tiene_estado_propio() == true` ⇒ `apilable == false` y `stack_maximo == 1` **(D1)**. Ya se cumple: `items.json` v0.4 marca los seis utensilios como instancias únicas.

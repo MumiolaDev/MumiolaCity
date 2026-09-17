@@ -349,7 +349,7 @@ La tabla más importante del documento. La mayoría de los bugs de un juego de e
 
 ---
 
-## 6. Decisiones de arquitectura: diez cerradas, ocho pendientes
+## 6. Decisiones de arquitectura: once cerradas, siete pendientes
 
 Once decisiones que hay que cerrar antes de escribir el sistema correspondiente, ordenadas por lo caro que sale cambiarlas después. **Cinco ya están cerradas** — D1, D2 y D11 aplicadas en `items.json`, D3 resuelta acá abajo, y D7 postergada a la fase 2 a propósito — y **D5 tiene el lado de los datos hecho y el del código pendiente**. Las demás siguen abiertas.
 
@@ -466,11 +466,17 @@ Los autoloads se inicializan en el orden del Project Settings, y `_ready()` de u
 
 **Propuesta:** `ItemDatabase` → `TimeManager` → `SkillManager` → `InventoryManager` → `RecipeManager` → `EconomyManager` → `GameManager` → `SaveManager`. `ItemDatabase` primero porque todos leen definiciones; `SaveManager` último porque restaura sobre todos los demás; `GameManager` penúltimo porque cambiar de sala presupone que los managers ya existen.
 
-### D10 — Falta `ItemDatabase` · **bloquea `RecipeManager` (fase 2)**
+### D10 — Falta `ItemDatabase` · **resuelta**
 
 `RecipeDefinition` admite insumos pedidos por `familia` ("cualquier taza"). Para resolver eso hace falta un índice `familia -> [ItemDefinition]`, y **ningún script de `SCRIPTS.md` tiene ese trabajo asignado**. Godot no autocarga los `.tres` de una carpeta: hay que recorrerla con `ResourceLoader`.
 
 **Propuesta:** autoload `ItemDatabase` que en `_ready()` escanea `res://data/objetos/`, y expone `obtener(id)`, `items_de_familia(familia)`, `items_de_categoria(categoria)`. Con él y `GatherTable` (D6), más los recursos anidados que hoy son diccionarios sueltos, el catálogo real sube de los 32 scripts que detalla `SCRIPTS.md` a 43 clases — el índice completo está en [`CLASES.md`](CLASES.md) §7.
+
+**Implementado en `res://autoloads/ItemDatabase.gd`**, con los tres métodos propuestos más `existe()`, `cantidad()` y `recargar()`, escaneando `res://data/objetos/definiciones/`. Se adelantó a la fase 1 porque no era opcional: `ItemInstance` guarda `definicion_id` y no la referencia al recurso (§1.8), así que sin un índice por id no hay forma de resolver la definición de nada.
+
+Dos detalles que aparecieron al escribirlo. Un id duplicado es `push_error` y **no** se registra: quedarse con el último cargado hace que el catálogo dependa del orden del sistema de archivos, y el bug reaparece meses después como «este ítem tiene el precio de otro». Y el escaneo ignora el sufijo `.remap`, porque en una build exportada los `.tres` llegan renombrados y sin eso el catálogo queda vacío **solo en el juego exportado**, que es la peor forma posible de descubrirlo.
+
+Queda contenido pendiente, no diseño: hoy hay una sola definición, `silla_madera`, para validar el paso 5. Las otras 26 salen de `items.json` en la fase 2.
 
 ### D11 — `habilidad_origen` es redundante en los ítems crafteados · **resuelta**
 
