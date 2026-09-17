@@ -314,14 +314,21 @@ func interactuar(actor: Node, objeto: WorldObject) -> bool      # (D8)
 
 **Regla que no se puede romper:** ni `puede_interactuar` ni `interactuar` escriben en `self`. Si un comportamiento necesita recordar algo, va en `objeto.estado_runtime` o en `objeto.instancia` **(D3)**. Cincuenta sillas comparten un `SentarseBehavior.tres`.
 
+**El actor se comprueba por método, no por tipo.** El parámetro es `Node` a propósito, para que un NPC pueda sentarse sin heredar de `PersonajeControlador`; los comportamientos usan `actor.has_method(&"sentarse_en")` en vez de un `is`.
+
+**`ocupantes()` filtra referencias muertas.** `estado_runtime` es el único lugar del juego que guarda referencias a nodos vivos, y un NPC liberado —o una sala descargada— deja una entrada que apunta a nada. Sin ese filtro una silla queda ocupada para siempre por un fantasma, y `is_instance_valid()` es la única forma de notarlo.
+
+**El ocupante se anota después de que el actor confirmó.** Si se anotara antes y sentarse fallara, la silla quedaría ocupada por alguien que sigue parado al lado. Y `levantarse()` lo desanota aunque el actor devuelva `false`, porque dejarlo en la lista mantiene la silla ocupada por nadie.
+
 #### Comportamientos concretos
 
 ```gdscript
-class_name SentarseBehavior extends InteractionBehavior
+class_name SentarseBehavior extends InteractionBehavior   # IMPLEMENTADO (paso 6)
+const CLAVE_OCUPANTES := &"sentarse_ocupantes"
 @export var capacidad: int = 1                  # 1 silla, 3 banco
-@export var offset_visual: Vector2
+@export var offset_visual: Vector2              # metros, para asientos descentrados
 @export var animacion: StringName = &"sentado"
-func ocupantes(objeto: WorldObject) -> Array    # lee estado_runtime
+func ocupantes(objeto: WorldObject) -> Array    # lee estado_runtime, filtra muertos
 func levantarse(actor: Node, objeto: WorldObject) -> bool
 
 class_name ContenedorBehavior extends InteractionBehavior
@@ -624,6 +631,7 @@ func recalcular_paredes() -> void                   # tras repintar paredes en r
 func ocupar(origen: Vector2i, size: Vector2i, obj: WorldObject, rotacion := 0) -> bool
 func liberar_objeto(obj: WorldObject) -> bool      # false si no ocupaba nada
 func objeto_en(celda: Vector2i) -> WorldObject
+func celda_libre_vecina(celda: Vector2i) -> Vector2i   # SIN_CELDA si esta rodeada
 
 # Rutas
 func ruta(origen: Vector2i, destino: Vector2i) -> Array[Vector2i]
@@ -816,7 +824,8 @@ var estado_runtime: Dictionary = {}              # NO se serializa; puede conten
 func definicion() -> ItemDefinition
 func verbos_disponibles(actor: Node) -> Array[InteractionBehavior]
 func ejecutar(behavior: InteractionBehavior, actor: Node) -> bool
-func celdas_ocupadas() -> Array[Vector2i]        # segun tamano_grilla y rotacion
+func celdas_ocupadas(grid: IsoGrid) -> Array[Vector2i]   # segun tamano_grilla y rotacion
+func sala() -> RoomController                    # sube por el arbol; null si no esta colocado
 func _on_input_event(viewport, evento, idx) -> void
 ```
 

@@ -1,7 +1,8 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="1_def"]
 [ext_resource type="PackedScene" path="res://escenas/objetos/silla_madera.tscn" id="2_escena"]
+[ext_resource type="Resource" path="res://data/objetos/comportamientos/sentarse.tres" id="3_sentarse"]
 
 [resource]
 script = ExtResource("1_def")
@@ -13,6 +14,7 @@ peso = 4.0
 apilable = false
 stack_maximo = 1
 valor_base = 13
+interacciones = Array[InteractionBehavior]([ExtResource("3_sentarse")])
 tamano_grilla = Vector2i(1, 1)
 rotable = true
 escena_mundo = ExtResource("2_escena")

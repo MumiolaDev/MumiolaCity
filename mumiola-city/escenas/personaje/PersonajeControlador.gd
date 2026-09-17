@@ -21,6 +21,11 @@ var estado : StringName = &"idle"
 
 var _ruta : Array[Vector2i] = []
 
+## En que esta sentado, si lo esta. Es una referencia a un nodo vivo, asi que
+## vive aca y nunca en la instancia: no tiene sentido que siga siendo cierta
+## manana (D3).
+var _sentado_en : WorldObject = null
+
 ## El nodo que compone y orienta al avatar. Gira el, nunca el cuerpo.
 @onready var avatar : AvatarComposer = $Visual
 
@@ -78,6 +83,9 @@ func ir_a_celda(destino : Vector2i) -> bool:
 	if camino.is_empty():
 		return false
 
+	if esta_sentado():
+		levantarse()
+
 	_ruta = camino
 	estado = &"caminando"
 	return true
@@ -97,11 +105,68 @@ func detener() -> void:
 ## nueva y sigue caminando hacia una celda que era de la anterior, en una grilla
 ## donde esa celda significa otra cosa o directamente no existe.
 func entrar_en(sala : RoomController) -> void:
+	# Sin esto, cambiar de sala sentado deja _sentado_en apuntando a un mueble de
+	# la sala anterior, que es una referencia viva a otro mundo.
+	if esta_sentado():
+		levantarse()
 	detener()
 	grid = sala.grid
 	camara = sala.camara
 	global_position = sala.posicion_de_entrada()
 	avatar.reproducir(&"idle")
+
+
+## Devuelve si el personaje esta sentado en algo.
+func esta_sentado() -> bool:
+	return _sentado_en != null
+
+
+## Sienta al personaje en un objeto. Devuelve si pudo.
+##
+## Lo para sobre la celda del objeto y lo orienta como el objeto, que es lo que
+## hace que se vea sentado *en* la silla y no al lado. El offset es para ajustar
+## a ojo modelos cuyo asiento no esta en el centro de su celda.
+func sentarse_en(objeto : WorldObject, offset : Vector2 = Vector2.ZERO,
+		animacion : StringName = &"sentado") -> bool:
+	if objeto == null or grid == null or esta_sentado():
+		return false
+
+	detener()
+
+	var def := objeto.definicion()
+	var size := Vector2i.ONE if def == null else def.tamano_grilla
+	var pos := grid.centro_de(objeto.celda_origen, size, objeto.rotacion_grilla)
+	pos.y = grid.altura_piso
+	pos.x += offset.x
+	pos.z += offset.y
+	global_position = pos
+	avatar.global_rotation.y = objeto.global_rotation.y
+
+	_sentado_en = objeto
+	estado = &"sentado"
+	avatar.reproducir(animacion)
+	return true
+
+
+## Levanta al personaje y lo deja en una celda vecina libre. Devuelve si pudo.
+##
+## El paso al costado no es cosmetico: sentado queda parado sobre la celda del
+## objeto, que esta ocupada, y desde una celda solida el A* no puede trazar
+## ninguna ruta. Sin esto, levantarse dejaria al personaje clavado.
+func levantarse() -> bool:
+	if not esta_sentado():
+		return false
+
+	var destino := grid.celda_libre_vecina(_sentado_en.celda_origen)
+	if destino != IsoGrid.SIN_CELDA:
+		var pos := grid.celda_a_mundo(destino)
+		pos.y = grid.altura_piso
+		global_position = pos
+
+	_sentado_en = null
+	estado = &"idle"
+	avatar.reproducir(&"idle")
+	return true
 
 
 ## Gira solo el avatar, nunca el cuerpo, para que la capsula de colision siga

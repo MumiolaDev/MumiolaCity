@@ -200,6 +200,24 @@ func liberar_objeto(obj : WorldObject) -> bool:
 	return true
 
 
+## Devuelve una celda vecina libre, o SIN_CELDA si esta rodeada.
+##
+## Hace falta para levantarse: quien se sienta queda parado sobre la celda de la
+## silla, que esta ocupada por el WorldObject, y desde una celda solida el A* no
+## puede trazar una ruta. Prueba primero las cuatro ortogonales y despues las
+## diagonales, para que el paso al levantarse sea el mas natural posible.
+func celda_libre_vecina(celda : Vector2i) -> Vector2i:
+	const VECINDAD := [
+		Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0),
+		Vector2i(1, -1), Vector2i(1, 1), Vector2i(-1, 1), Vector2i(-1, -1),
+	]
+	for paso in VECINDAD:
+		var vecina : Vector2i = celda + paso
+		if esta_libre(vecina):
+			return vecina
+	return SIN_CELDA
+
+
 ## Devuelve el objeto que ocupa una celda, o null si no hay ninguno.
 ##
 ## Un objeto de varias celdas responde lo mismo desde cualquiera de ellas: quien

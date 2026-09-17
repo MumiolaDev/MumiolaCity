@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="SentarseBehavior" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://escenas/objetos/interacciones/SentarseBehavior.gd" id="1_sentarse"]
+
+[resource]
+script = ExtResource("1_sentarse")
+verbo = &"sentarse"
+etiqueta = "Sentarse"
+requiere_adyacencia = true
+capacidad = 1
+offset_visual = Vector2(0, 0)
+animacion = &"sentado"

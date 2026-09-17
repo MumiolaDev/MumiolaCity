@@ -8,8 +8,8 @@ extends Node3D
 ## hay aca es el disparador.
 ##
 ## Teclas: TAB cambia de sala, Q y E giran el encuadre un cuarto de vuelta,
-## R gira la silla que se va a colocar, C la coloca en la celda bajo el mouse y
-## X retira lo que haya ahi.
+## R gira la silla que se va a colocar, C la coloca en la celda bajo el mouse,
+## X retira lo que haya ahi y S sienta o levanta al personaje.
 ##
 ## Girar el encuadre y girar el objeto son dos cosas distintas y por eso son dos
 ## teclas distintas: la camara orbita y los objetos se quedan donde estan, asi
@@ -113,6 +113,8 @@ func _unhandled_input(evento : InputEvent) -> void:
 		_colocar_silla_de_prueba(sala)
 	elif evento.keycode == KEY_X:
 		_retirar_bajo_el_mouse(sala)
+	elif evento.keycode == KEY_S:
+		_sentarse_o_levantarse(sala)
 
 
 ## Coloca una silla en la celda bajo el mouse y reporta el resultado.
@@ -148,3 +150,32 @@ func _retirar_bajo_el_mouse(sala : RoomController) -> void:
 
 	var inst := sala.retirar_objeto(obj)
 	print("Retirado de %s: %s" % [celda, "nada" if inst == null else inst.nombre_mostrado()])
+
+
+## Sienta al personaje en el objeto bajo el mouse, o lo levanta si ya esta
+## sentado.
+##
+## Provisional: cuando exista ContextMenuUI (paso 7), sentarse va a ser un verbo
+## mas del menu que se abre al clickear el mueble, y este atajo sobra.
+func _sentarse_o_levantarse(sala : RoomController) -> void:
+	if personaje.esta_sentado():
+		personaje.levantarse()
+		print("De pie.")
+		return
+
+	var celda := sala.grid.celda_bajo_puntero(sala.camara, get_viewport().get_mouse_position())
+	if celda == IsoGrid.SIN_CELDA:
+		return
+
+	var obj := sala.grid.objeto_en(celda)
+	if obj == null:
+		print("No hay nada en %s donde sentarse." % celda)
+		return
+
+	var verbos := obj.verbos_disponibles(personaje)
+	if verbos.is_empty():
+		print("%s no ofrece nada que se pueda hacer ahora." % obj.nombre_mostrado())
+		return
+
+	print("%s: %s" % [obj.nombre_mostrado(),
+		"hecho" if obj.ejecutar(verbos[0], personaje) else "no se pudo"])

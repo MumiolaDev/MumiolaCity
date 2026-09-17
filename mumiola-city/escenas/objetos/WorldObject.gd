@@ -59,6 +59,21 @@ func nombre_mostrado() -> String:
 	return "" if instancia == null else instancia.nombre_mostrado()
 
 
+## Devuelve la sala a la que pertenece, o null si todavia no esta en ninguna.
+##
+## Sube por el arbol buscando el tipo en vez de asumir una profundidad fija: hoy
+## el objeto cuelga de Objetos y Objetos de la sala, pero encadenar dos
+## get_parent() deja de funcionar en cuanto alguien agrupa los muebles por
+## categoria o los mete en un subnodo.
+func sala() -> RoomController:
+	var nodo := get_parent()
+	while nodo != null:
+		if nodo is RoomController:
+			return nodo
+		nodo = nodo.get_parent()
+	return null
+
+
 ## Devuelve las celdas que ocupa, segun su tamano y su rotacion.
 ##
 ## Recibe la grilla en vez de buscarla hacia arriba en el arbol: la expansion de
