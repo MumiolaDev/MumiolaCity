@@ -349,7 +349,7 @@ La tabla más importante del documento. La mayoría de los bugs de un juego de e
 
 ---
 
-## 6. Decisiones de arquitectura: ocho cerradas, ocho pendientes
+## 6. Decisiones de arquitectura: nueve cerradas, ocho pendientes
 
 Once decisiones que hay que cerrar antes de escribir el sistema correspondiente, ordenadas por lo caro que sale cambiarlas después. **Cinco ya están cerradas** — D1, D2 y D11 aplicadas en `items.json`, D3 resuelta acá abajo, y D7 postergada a la fase 2 a propósito — y **D5 tiene el lado de los datos hecho y el del código pendiente**. Las demás siguen abiertas.
 
@@ -556,6 +556,20 @@ Aplicar una pared como revestimiento **no coloca nada en la grilla**: cambia el 
 **Por qué ahora y no en la fase 4.** Es la respuesta al punto que **D14** deja planteado: agregar un motivo de rechazo cuando ya hay comportamientos escritos encima obliga a tocar todas las llamadas. `FUERA_DEL_AREA` (D12) y `PARTIRIA_LA_SALA` (D14) ya están en el enum aunque las validaciones que los producen todavía no existan — el hueco está hecho y la fase 4 solo tiene que llenarlo.
 
 **Consecuencia inmediata en la firma de `RoomController`.** `colocar_objeto()` devuelve `Errores.Codigo` y no `WorldObject`; el objeto recién creado se recupera con `IsoGrid.objeto_en(celda)` justo después de un `OK`. Así no hacen falta parámetros de salida ni devolver un diccionario.
+
+---
+
+### D17 — Plataforma: PC primero, móvil después, Web descartada · **decidida**
+
+**El problema.** El proyecto declaraba Web (HTML5) como meta secundaria, y eso arrastraba una consecuencia técnica que quedó abierta durante toda la fase 1: el único método de render que exporta a Web es **Compatibility**, mientras que `project.godot` declara **Forward+**. Mientras la contradicción siguiera en pie, ninguna decisión de dirección de arte se podía cerrar, porque la mitad de los efectos existían o no según cuál ganara.
+
+**Decisión: el destino principal es PC.** Móvil queda como segundo objetivo y Web sale del alcance. El motivo es de diseño antes que técnico: inventario, mercado, construcción de salas y chat son sesiones largas con teclado y mouse, y el género —mundo social persistente con economía de jugadores— vive en escritorio.
+
+**Consecuencia inmediata: el proyecto se queda en Forward+** y recupera los tres efectos que Compatibility no tiene y que sí importan para el look: niebla volumétrica, SDFGI y **desenfoque de profundidad**, este último el que produce el efecto maqueta que la cámara ortográfica hace tan reconocible.
+
+**Móvil no reabre la discusión, la traslada.** Godot permite un método de render por plataforma: `rendering/renderer/rendering_method.mobile = "mobile"` en `project.godot` deja Forward+ en escritorio y el renderizador Mobile en teléfonos, sin mantener dos proyectos. Mobile conserva LightmapGI, glow, LUT, niebla de profundidad, desenfoque de profundidad, decals y MSAA; pierde SSAO, niebla volumétrica, SDFGI y TAA. **No exportar a Android con Forward+**: no es una versión mejor del renderizador Mobile sino una tubería de escritorio, y rinde peor en teléfonos.
+
+**Qué significa para la dirección de arte.** SSAO es el único efecto del set acogedor que habría que poder apagar por plataforma el día que exista la build de móvil. Todo lo demás —luz horneada, grado de color, glow, niebla de profundidad— sobrevive a los dos renderizadores, así que el trabajo visual se puede hacer una sola vez.
 
 ---
 

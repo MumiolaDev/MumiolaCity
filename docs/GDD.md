@@ -182,7 +182,7 @@ Pendiente, no bloqueante: decidir objeto por objeto (a medida que se agreguen a 
 **Por qué cambió.** La versión 0.3 de este documento eligió sprites pre-renderizados por tres motivos: velocidad para producir el volumen de contenido de un Habbo-like, rendimiento en salas cargadas, y compatibilidad con el avatar por capas. Dos de los tres se debilitaron al conseguir una base de modelos 3D libres:
 
 - **Volumen de contenido:** con packs CC0 ya modelados, obtener un mueble nuevo es arrastrar un `.gltf`, mientras que la ruta de sprites exige además modelar, renderizar en cada ángulo y armar el atlas. El 3D pasó a ser el camino rápido, no el lento.
-- **Rendimiento:** un centenar de mallas planas de pocos polígonos en una sala no es un problema en escritorio con hardware actual. Seguiría siéndolo en Web, y ahí la exportación en Compatibility con geometría de baja densidad tampoco preocupa.
+- **Rendimiento:** un centenar de mallas planas de pocos polígonos en una sala no es un problema en escritorio con hardware actual. Con móvil como segundo objetivo (**D17**), la geometría de baja densidad sigue siendo la elección correcta de todos modos.
 - **Avatar por capas:** este sí sigue en pie como requisito (ver abajo), pero en 3D se resuelve con `BoneAttachment3D` en vez de componer capas de sprites por cada ángulo, que es menos trabajo y no más.
 
 **Lo que el cambio simplifica.** La proyección isométrica deja de ser una propiedad del mundo y pasa a ser un ángulo de cámara: no hay matemática 2:1, ni `TileSet` isométrico, ni conversión propia de coordenadas. El orden de dibujo lo resuelve el búfer de profundidad, así que **desaparece todo el sistema de y-sort** y la clase de bugs asociada.
@@ -219,7 +219,9 @@ Montarla así, y no como cámara suelta, es lo que hace que **rotar la sala en p
 
 **Lo que un jugador puede tocar nunca va en el `GridMap`.** Una celda de `GridMap` no tiene `ItemInstance`, ni `estado_runtime`, ni verbos, ni puede recibir un clic: meter ahí una silla rompe **D3**. El `GridMap` es escenario; todo lo colocado por un jugador es un `WorldObject`.
 
-**Plataforma:** exportación nativa de escritorio (Windows/Linux) es el objetivo del MVP — es la que se prueba primero y con la que se valida que el juego funciona. Exportación **Web (HTML5)** es una meta secundaria, deseable pronto porque facilita mostrar el proyecto a otras personas sin que instalen nada, pero no bloquea el desarrollo inicial: funcionar en escritorio es suficiente por ahora.
+**Plataforma: PC primero, móvil después, Web descartada (D17).** La exportación nativa de escritorio (Windows/Linux) es el objetivo del MVP y el destino principal del juego. Móvil queda como segundo objetivo, no como equivalente: el diseño —inventario, mercado, construcción de salas, chat— es de sesiones largas con teclado y mouse. **Web (HTML5) queda fuera del alcance**, con la consecuencia técnica de que el proyecto se queda en **Forward+** y conserva la niebla volumétrica, SDFGI y el desenfoque de profundidad.
+
+Cuando llegue el momento de exportar a móvil, el ajuste es una sola clave de `project.godot`: `rendering/renderer/rendering_method.mobile = "mobile"`. Dejar que un export de Android use Forward+ es el error de renderizado más común de Godot 4 — no es una versión mejor del renderizador Mobile, es una tubería de escritorio que rinde peor en teléfonos.
 
 **Mundo mínimo del MVP:** el prototipo necesita, como mínimo, dos espacios navegables (ver §6):
 
