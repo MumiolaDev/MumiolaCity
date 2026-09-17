@@ -349,7 +349,7 @@ La tabla más importante del documento. La mayoría de los bugs de un juego de e
 
 ---
 
-## 6. Decisiones de arquitectura: once cerradas, ocho pendientes
+## 6. Decisiones de arquitectura: doce cerradas, siete pendientes
 
 Once decisiones que hay que cerrar antes de escribir el sistema correspondiente, ordenadas por lo caro que sale cambiarlas después. **Cinco ya están cerradas** — D1, D2 y D11 aplicadas en `items.json`, D3 resuelta acá abajo, y D7 postergada a la fase 2 a propósito — y **D5 tiene el lado de los datos hecho y el del código pendiente**. Las demás siguen abiertas.
 
@@ -602,14 +602,15 @@ No es hipotético. Los ids en uso hoy son 2, 3, 4 en el suelo y 5, 8, 10 en las 
 
 ---
 
-### D19 — Quién decide hacia dónde mira un mueble · **abierta, bloquea `RoomBuilderUI` (fase 4)**
+### D19 — Quién decide hacia dónde mira un mueble · **decidida la convención; el control del jugador, diferido**
 
 **El síntoma.** Al girar el encuadre, una silla ya colocada se ve desde otro lado. Eso es correcto y no hay nada que arreglar — `rotar()` hace orbitar la cámara y los objetos se quedan donde están. Pero deja en evidencia que **orientar un mueble todavía no es una acción del jugador**: hoy `rotacion_grilla` se pasa como argumento a `colocar_objeto()` y nadie la elige.
 
-**Lo que hay que decidir** son dos cosas que conviene no confundir:
+Eran dos cosas distintas y se resolvieron por separado.
 
-1. **Qué significa `rotacion_grilla = 0`.** ¿El norte absoluto de la sala, o «mirando hacia la cámara» en el momento de colocar? Lo segundo es más cómodo de usar y más difícil de razonar.
-2. **Cómo se rota.** Habbo resuelve esto haciendo que volver a hacer clic sobre un mueble ya colocado lo gire un cuarto de vuelta. Es descubrible y no necesita interfaz. La alternativa es un control explícito en `RoomBuilderUI`.
+**1. Decidido: `rotacion_grilla = 0` es el norte absoluto de la sala.** No «mirando hacia la cámara», que es más cómodo de usar pero mucho más difícil de razonar. **No hay código que cambiar**: los objetos cuelgan de `Objetos`, que no rota — solo gira el pivote de la cámara — así que la rotación que `colocar_objeto()` aplica ya es absoluta respecto de la sala.
+
+**2. Diferido: cómo rota el jugador sus muebles.** Es secundario frente a que las cosas funcionen, así que no bloquea nada por ahora. Cuando llegue, la opción a evaluar primero es la de Habbo — volver a hacer clic sobre un mueble ya colocado lo gira un cuarto de vuelta: es descubrible y no necesita interfaz. La alternativa es un control explícito en `RoomBuilderUI`.
 
 **Lo que ya está resuelto y no hay que volver a discutir:** lo que se **guarda** es absoluto. Si `rotacion_grilla` significara algo relativo al ángulo de cámara, una sala guardada dependaría de cómo estaba mirando el jugador al colocar, y al recargarla los muebles apuntarían a cualquier lado. Una interfaz puede ser relativa a la vista; el dato nunca. Es el mismo criterio de **D18** — lo que cruza el borde del proyecto no depende del estado de la sesión.
 
@@ -826,5 +827,5 @@ No queda ninguna inconsistencia de datos abierta. Lo que sigue pendiente en `ite
 | **Fase 1** (mundo base) | **D8** (firma de `interactuar`) y **D9** (orden de autoloads) — **D3** ya decidida |
 | **Fase 2** (ciclo económico) | **D4** (id de habilidad), **D5** (el `ModifierStack`; el esquema de datos ya está hecho), **D6** (`GatherTable`), **D10** (`ItemDatabase`) — **D1**, **D2** y **D11** ya decididas |
 | **Fase 2, balance** | **D7** (sumidero de energía), postergada aquí a propósito. Los precios ya están corregidos (§7.1) |
-| **Fase 4** (construcción) | **D13** (revestimiento por sala o por celda), **D19** (quién orienta un mueble) y **D14** (una colocación no puede partir la sala, dentro de `colocar_objeto()` y no después). Cerrar el detalle del área editable de **D12**. La sincronización del `AStarGrid2D` (§3.1) ya está resuelta: vive dentro de `IsoGrid.ocupar()` |
+| **Fase 4** (construcción) | **D13** (revestimiento por sala o por celda) y **D14** (una colocación no puede partir la sala, dentro de `colocar_objeto()` y no después). Cerrar el detalle del área editable de **D12**. La sincronización del `AStarGrid2D` (§3.1) ya está resuelta: vive dentro de `IsoGrid.ocupar()` |
 | **Fase 5** (mercado) | Relación `valor_base` ↔ precio piso NPC (§3.7) |
