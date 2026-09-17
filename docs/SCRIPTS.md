@@ -139,11 +139,10 @@ IsoGrid (Node3D)        ← el script
 **Funciones clave:** `actualizar_parte(slot: StringName, malla: Mesh) -> void`, `aplicar_equipo(item: ItemDefinition) -> void`.
 
 ### 4. `RoomController` — Nodo/Escena · Escena propia · `extends Node3D`
-**Función:** representa una sala concreta (área común o sala privada): contiene una `IsoGrid`, los `WorldObject` colocados, el tipo de sala (vivienda/producción/tienda, GDD §6) y quién puede entrar.
-**Godot nativo:** cada sala **es** una escena `.tscn`, así que cargarla es `load()` + `PackedScene.instantiate()` — no hace falta un formato propio de "definición de sala". El orden de dibujo lo resuelve el búfer de profundidad: **con el render 3D desapareció el y-sort** y con él la clase de bugs de objetos dibujados en el orden equivocado. **Código propio:** el estado de la sala y su relación con la ocupación de `IsoGrid`.
-**Interactúa con:** instanciada y gestionada por `GameManager` al cambiar de escena; coloca y consulta `WorldObject` sobre su `IsoGrid`; en fase 4, `RoomBuilderUI` la usa para agregar/quitar objetos.
-**Funciones clave:** `colocar_objeto(item: ItemDefinition, celda: Vector2i) -> WorldObject`, `obtener_objetos() -> Array[WorldObject]`.
-**Nota de cámara:** el pivote con la `Camera3D` ortográfica (§7 del GDD) vive en la escena de la sala, centrado en ella. Sigue sin necesitar script: rotar la sala al estilo Habbo es una interpolación sobre `pivote.rotation.y`.
+**Función:** una sala del mundo — su grilla, sus objetos, su encuadre y quién la posee. Enciende y apaga, y es lo que permite que existan dos salas y se pueda ir de una a la otra.
+**Godot nativo:** `process_mode` y `visible` para apagar la sala entera de una vez; `Camera3D.current` para el turno de cámara, que el motor ya arbitra por viewport; un `Node3D` pivote para el encuadre isométrico y su rotación en cuartos de vuelta. **Código propio:** la noción de sala —tipo, dueño, celda de entrada— y las transacciones de colocar y retirar, que el motor no modela.
+**Interactúa con:** contiene un `IsoGrid` y un contenedor `Objetos`; `Mundo` —y en el paso 9 `GameManager`— la enciende y apaga; `PersonajeControlador.entrar_en(sala)` le pide la grilla, la cámara y la posición de entrada. **No conoce al personaje**: las dependencias apuntan hacia abajo.
+**Funciones clave:** `activar()` / `desactivar()` / `esta_activa()`, `posicion_de_entrada()`, `rotar(pasos)` y `objetos()`. `colocar_objeto()` y `retirar_objeto()` llegan con el paso 5, porque reciben y devuelven `ItemInstance`. Firmas completas en [`CLASES.md`](CLASES.md) §3.4.
 
 ### 5. `WorldObject` — Nodo/Escena · Escena propia · `extends Area3D`
 **Función:** cualquier objeto colocado en una sala. Referencia su `ItemDefinition`, guarda `estado_instancia` (dato propio de esa instancia) y expone `verbos_disponibles()` / `ejecutar()` del sistema de interacción (GDD §6.1).

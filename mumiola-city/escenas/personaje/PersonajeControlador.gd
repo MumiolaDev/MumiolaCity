@@ -5,8 +5,13 @@ extends CharacterBody3D
 signal llego_a_celda(celda : Vector2i)
 
 ## La grilla de la sala en la que esta parado el personaje.
+##
+## Se asigna desde el inspector solo en escenas de prueba de una sola sala. En el
+## mundo real la reapunta entrar_en() cada vez que se cambia de sala, asi que
+## puede estar en null mientras el personaje no este en ninguna.
 @export var grid : IsoGrid
-## La camara con la que se convierte un clic de pantalla en una celda.
+## La camara con la que se convierte un clic de pantalla en una celda. Tambien la
+## reapunta entrar_en(): cada sala trae la suya.
 @export var camara : Camera3D
 ## Metros por segundo. Con celdas de 1 metro, es tambien celdas por segundo.
 @export var velocidad : float = 3.0
@@ -25,6 +30,12 @@ func _ready() -> void:
 
 
 func _unhandled_input(evento : InputEvent) -> void:
+	# Sin sala no hay a donde caminar. Pasa entre que el mundo arranca y que
+	# alguien llama a entrar_en(), y tambien si una escena de prueba se olvido de
+	# asignar los exports.
+	if grid == null or camara == null:
+		return
+
 	if evento is InputEventMouseButton and evento.pressed and evento.button_index == MOUSE_BUTTON_LEFT:
 		var celda := grid.celda_bajo_puntero(camara, evento.position)
 		if celda != IsoGrid.SIN_CELDA:
@@ -77,6 +88,20 @@ func detener() -> void:
 	_ruta.clear()
 	velocity = Vector3.ZERO
 	estado = &"idle"
+
+
+## Muda el personaje a una sala: reapunta sus referencias, lo para en la celda
+## de entrada y descarta lo que estuviera recorriendo.
+##
+## Descartar la ruta no es opcional. Sin detener(), el personaje entra a la sala
+## nueva y sigue caminando hacia una celda que era de la anterior, en una grilla
+## donde esa celda significa otra cosa o directamente no existe.
+func entrar_en(sala : RoomController) -> void:
+	detener()
+	grid = sala.grid
+	camara = sala.camara
+	global_position = sala.posicion_de_entrada()
+	avatar.reproducir(&"idle")
 
 
 ## Gira solo el avatar, nunca el cuerpo, para que la capsula de colision siga

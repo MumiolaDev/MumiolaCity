@@ -215,7 +215,9 @@ Montarla así, y no como cámara suelta, es lo que hace que **rotar la sala en p
 
 **Fase actual del prototipo:** single-player / **offline**, con la economía simulada mediante NPCs — el multijugador real con servidor autoritativo y base de datos queda para una fase posterior, una vez validadas las mecánicas. La visión final del proyecto **es un juego en línea**; el hecho de que el MVP sea offline es una decisión de secuencia, no de alcance — por eso `EconomyManager` (y en general cualquier sistema que en el futuro deba sincronizarse entre jugadores) se diseña desde ya desacoplado del transporte, para no tener que rediseñarlo cuando llegue la red real.
 
-**Render:** el mundo es 3D en tiempo real con cámara ortográfica isométrica (ver §7). El escenario estático —suelos y paredes— se pinta desde el editor con **dos `GridMap` separados**, uno por capa, porque una celda de `GridMap` solo admite un ítem y pintar una pared sobre una celda de suelo la reemplazaría. Regla de composición de la sala: **el suelo va por dentro y las paredes por fuera**, en el anillo de celdas sin suelo, igual que en Habbo. Eso hace que «¿se puede caminar acá?» sea exactamente «¿hay suelo pintado acá?».
+**Render:** el mundo es 3D en tiempo real con cámara ortográfica isométrica (ver §7). El escenario estático —suelos y paredes— se pinta desde el editor con **dos `GridMap` separados**, uno por capa, porque una celda de `GridMap` solo admite un ítem y pintar una pared sobre una celda de suelo la reemplazaría. Regla de composición de la sala: **el suelo se pinta entero, también debajo de las paredes**, y la capa de paredes se pinta encima. Una pared sin losa debajo queda flotando y la sala se ve desconectada del piso, así que el anillo del perímetro lleva suelo igual que el interior.
+
+Eso significa que «¿se puede caminar acá?» **no** es «¿hay suelo pintado acá?»: es «hay suelo **y** no hay una pieza de pared que bloquee», que es exactamente lo que comprueba `IsoGrid.esta_libre()`. La excepción son las piezas declaradas en `piezas_transitables` —`espacio_puerta` entre ellas—, que son visualmente muro pero se atraviesan: **dibujar y bloquear son cosas distintas** y no conviene deducir una de la otra (**D15**).
 
 **Lo que un jugador puede tocar nunca va en el `GridMap`.** Una celda de `GridMap` no tiene `ItemInstance`, ni `estado_runtime`, ni verbos, ni puede recibir un clic: meter ahí una silla rompe **D3**. El `GridMap` es escenario; todo lo colocado por un jugador es un `WorldObject`.
 
@@ -244,7 +246,8 @@ res://
     habilidades/         Recursos .tres: SkillDefinition (curva de xp, desbloqueos por nivel)
     mesh_librarys/       Escenas fuente de los modelos y las .meshlib que consumen los GridMap
   escenas/
-    mundo/               IsoGrid, área común y sala privada
+    mundo/               IsoGrid, RoomController, Mundo y el indicador de celda
+      salas/             Una escena por sala: SalaComun, SalaPrivada…
     personaje/           Avatar y animaciones
     ui/                  Inventario, panel de habilidades, mercado, crafteo
   arte/

@@ -734,22 +734,47 @@ class_name IndicadorCelda extends MeshInstance3D
 ```gdscript
 class_name RoomController extends Node3D
 
+signal activada()
+signal desactivada()
 signal objeto_colocado(obj: WorldObject)
 signal objeto_retirado(obj: WorldObject)
+
+const PASO_ROTACION := PI / 2.0
 
 @export_enum("comun", "vivienda", "produccion", "tienda") var tipo: String
 @export var nombre_sala: String
 @export var propietario_id: StringName           # vacio = publica
+@export var celda_entrada: Vector2i              # donde aparece quien entra
 
 @onready var grid: IsoGrid = $IsoGrid
 @onready var contenedor_objetos: Node3D = $Objetos
+@onready var pivote: Node3D = $Pivote
+@onready var camara: Camera3D = $Pivote/Camera3D
 
+# Ciclo de vida
+func activar() -> void
+func desactivar() -> void
+func esta_activa() -> bool
+func posicion_de_entrada() -> Vector3
+
+# Encuadre
+func rotar(pasos: int) -> void                   # cuartos de vuelta
+
+# Contenido
+func objetos() -> Array[WorldObject]
 func colocar_objeto(inst: ItemInstance, celda: Vector2i, rotacion: int = 0) -> Errores.Codigo
 func retirar_objeto(obj: WorldObject) -> ItemInstance
-func objetos() -> Array[WorldObject]
 func to_dict() -> Dictionary
 func from_dict(d: Dictionary) -> void
 ```
+
+**La sala no conoce al personaje.** `activar()` enciende la sala y le da la cámara; quien cambia de sala es el que ubica al jugador con `PersonajeControlador.entrar_en(sala)`. Si `RoomController` importara `PersonajeControlador`, una sala no podría existir sin un jugador adentro — y eso rompe los NPCs, el guardado y cualquier previsualización de sala. Es la regla de dirección de dependencias de `SISTEMAS.md` §1.
+
+**`desactivar()` apaga, no solo oculta.** Pone `process_mode` en `DISABLED` además de `visible = false`, porque si no el `IndicadorCelda` de la sala dormida sigue corriendo su `_process()` y persiguiendo el mouse desde una sala que nadie mira. `activar()` rehabilita el procesamiento **antes** de tomar la cámara, porque una sala deshabilitada no puede.
+
+**`celda_entrada` no es comodidad.** **D14** define la validación de que un tabique no parta la sala como «todas las celdas con suelo siguen siendo alcanzables *desde la entrada*». Sin una entrada declarada, esa comprobación no tiene desde dónde medir.
+
+**`rotar()` gira el pivote, nunca el contenido.** Los objetos conservan sus coordenadas de grilla, así que celdas, rutas y ocupación no se enteran. El clic tampoco: `celda_bajo_puntero()` intersecta contra el plano del piso y no depende de por dónde mire la cámara.
 
 **`colocar_objeto` devuelve un `Errores.Codigo`, no el objeto creado (D16).** Rechazar una colocación tiene al menos cuatro motivos distintos —no hay piso, hay pared, está ocupada, partiría la sala— y un `null` no los distingue. El `WorldObject` recién creado se recupera con `grid.objeto_en(celda)` justo después de un `OK`, así que no hacen falta parámetros de salida ni devolver un diccionario.
 

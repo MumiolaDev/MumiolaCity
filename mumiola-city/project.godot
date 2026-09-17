@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="MumiolaCity"
-run/main_scene="uid://n2cd2ckiuo5q"
+run/main_scene="res://escenas/mundo/Mundo.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="res://icon.svg"
 
