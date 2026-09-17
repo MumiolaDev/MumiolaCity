@@ -17,6 +17,12 @@ signal activada()
 ## Se emite al apagarse, antes de que otra sala tome la camara.
 signal desactivada()
 
+## Se emite despues de que un objeto quedo colocado y su celda ocupada.
+signal objeto_colocado(obj : WorldObject)
+## Se emite con el objeto todavia vivo, justo antes de liberarlo, y con su
+## instancia ya desprendida: quien escuche puede mirarlo pero ya no es su dueno.
+signal objeto_retirado(obj : WorldObject)
+
 ## Un cuarto de vuelta. Rotar la sala al estilo Habbo es girar el pivote, nunca
 ## el contenido: los objetos siguen en sus mismas celdas.
 const PASO_ROTACION := PI / 2.0
