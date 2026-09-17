@@ -97,6 +97,13 @@ func levantarse(actor : Node, objeto : WorldObject) -> bool:
 	sentados.erase(actor)
 	objeto.estado_runtime[CLAVE_OCUPANTES] = sentados
 
-	if actor.has_method(&"levantarse"):
-		return actor.levantarse()
+	# Solo se le pide al actor que se pare si todavia estaba sentado. Cuando el
+	# camino es el inverso —el actor se levanto y avisa al mueble— ya no lo esta,
+	# y volver a pedirselo seria recursion.
+	if actor.has_method(&"esta_sentado") and actor.esta_sentado() \
+			and actor.has_method(&"levantarse"):
+		actor.levantarse()
+
+	# Devuelve true porque lo que esta funcion promete es desanotarlo, y eso ya
+	# ocurrio, sin importar por cual de los dos caminos se llego.
 	return true

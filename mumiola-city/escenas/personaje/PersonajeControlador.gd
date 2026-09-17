@@ -87,12 +87,15 @@ func _physics_process(delta : float) -> void:
 ##
 ## Devuelve false si la celda no existe, esta bloqueada o no hay camino.
 func ir_a_celda(destino : Vector2i) -> bool:
+	# Levantarse primero y no despues: sentado, el personaje esta parado sobre la
+	# celda del mueble, que es solida, y el A* no traza rutas desde ahi. Calcular
+	# el camino antes de bajarse devolveria siempre vacio.
+	if esta_sentado():
+		levantarse()
+
 	var camino := grid.ruta(grid.mundo_a_celda(global_position), destino)
 	if camino.is_empty():
 		return false
-
-	if esta_sentado():
-		levantarse()
 
 	_ruta = camino
 	estado = &"caminando"
@@ -176,22 +179,49 @@ func levantarse() -> bool:
 	if not esta_sentado():
 		return false
 
+	var objeto := _sentado_en
+
+	# Soltar el asiento antes de avisarle al mueble corta la recursion:
+	# SentarseBehavior.levantarse() vuelve a llamar aca, y la guarda de arriba lo
+	# detiene porque para entonces el personaje ya no esta sentado.
+	_sentado_en = null
+
 	# Por delante del asiento si se puede; si esa celda no sirve, cualquier
 	# vecina libre, que sigue siendo mejor que quedarse clavado.
 	var destino := _celda_salida
 	if destino == IsoGrid.SIN_CELDA or not grid.esta_libre(destino):
-		destino = grid.celda_libre_vecina(_sentado_en.celda_origen)
+		destino = grid.celda_libre_vecina(objeto.celda_origen)
 
 	if destino != IsoGrid.SIN_CELDA:
 		var pos := grid.celda_a_mundo(destino)
 		pos.y = grid.altura_piso
 		global_position = pos
 
-	_sentado_en = null
 	_celda_salida = IsoGrid.SIN_CELDA
 	estado = &"idle"
 	avatar.reproducir_encadenado(&"levantarse", &"idle")
+	_desanotar_de(objeto)
 	return true
+
+
+## Avisa a los comportamientos del mueble que este actor ya no lo esta usando.
+##
+## Sin esto el mueble sigue contandolo como ocupante y no lo deja volver a
+## sentarse, con la silla aparentemente libre. Levantarse tiene mas de un camino
+## —la tecla, caminar a otro lado, cambiar de sala— y todos terminan aca, que es
+## por que el aviso vive en levantarse() y no en cada uno de los que lo llaman.
+##
+## Los comportamientos se buscan por metodo y no por tipo, igual que ellos hacen
+## con el actor: el personaje no tiene por que conocer SentarseBehavior.
+func _desanotar_de(objeto : WorldObject) -> void:
+	if objeto == null or not is_instance_valid(objeto):
+		return
+	var def := objeto.definicion()
+	if def == null:
+		return
+	for verbo in def.interacciones:
+		if verbo != null and verbo.has_method(&"levantarse"):
+			verbo.levantarse(self, objeto)
 
 
 ## Ejecuta un verbo sobre un objeto, caminando hasta el primero si hace falta.
