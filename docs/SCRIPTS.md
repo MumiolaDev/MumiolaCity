@@ -30,6 +30,7 @@ Antes de escribir un sistema, hay que revisar si el motor ya lo resuelve — y s
 
 | # | Script | Tipo | Forma | Extends | Fase |
 |---|---|---|---|---|---|
+| 0 | `Errores` | Definición | Global (`class_name`) | `RefCounted` | 1 (transversal) |
 | 1 | `IsoGrid` | Nodo/Escena | Escena | `Node3D` | 1 |
 | 2 | `PlayerController` | Nodo/Escena | Escena | `CharacterBody3D` | 1 |
 | 3 | `AvatarComposer` | Nodo | Componente | `Node3D` | 1 |
@@ -94,6 +95,12 @@ La undécima no es una clase nueva sino un desdoblamiento: la fila 6 de la tabla
 ---
 
 ## Fase 1 — Sistema base (avatar en área común y sala privada)
+
+### 0. `Errores` — Definición · Global vía `class_name` · `extends RefCounted`
+**Función:** el enum único de códigos de rechazo del juego más su mensaje para el jugador. Toda operación que pueda ser rechazada —colocar, comprar, craftear, entrar a una sala— devuelve un `Errores.Codigo` en lugar de un `bool`.
+**Godot nativo:** `enum` con valores explícitos y `static func`, que en GDScript 2 son accesibles desde el `class_name` sin instanciar ni registrar autoload. **Código propio:** la tabla de códigos y sus textos, que son contenido del juego.
+**Interactúa con:** todo lo que pueda fallar de cara al jugador. En fase 1, `RoomController.colocar_objeto()` y `retirar_objeto()`; en fase 4, la validación de **D12** y **D14**; en fase 5, el mercado. `ContextMenuUI` y `HUD` toman de acá el texto que muestran.
+**Funciones clave:** `Errores.mensaje(codigo) -> String` y `Errores.ok(codigo) -> bool`. Enum completo en [`CLASES.md`](CLASES.md) §0.1.
 
 ### 1. `IsoGrid` — Nodo/Escena · Escena propia · `extends Node3D`
 **Función:** es la autoridad sobre la grilla de una sala — qué celdas existen, cuáles se pueden caminar y qué `WorldObject` ocupa cada una. Coordina dos capas de escenario y lleva la ocupación de gameplay.

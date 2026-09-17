@@ -20,6 +20,45 @@
 
 **Señales, no polling.** Ningún nodo consulta a un manager en `_process()`. El manager avisa.
 
+**Rechazos con código, no con `bool`.** Toda operación que el juego pueda rechazar devuelve un `Errores.Codigo`, nunca un booleano pelado. Un `bool` obliga a quien llama a adivinar el motivo o a inventarse un string, y el mismo texto termina escrito en varios lugares que se desincronizan. Ver §0.1.
+
+---
+
+### 0.1 `Errores` — códigos de rechazo
+
+```gdscript
+class_name Errores extends RefCounted
+
+enum Codigo {
+	OK = 0,
+	# 1xx  grilla y colocacion
+	CELDA_INEXISTENTE = 101, CELDA_OCUPADA = 102, HAY_PARED = 103,
+	FUERA_DEL_AREA = 104, PARTIRIA_LA_SALA = 105, NO_APOYADO = 106,
+	# 2xx  inventario y propiedad
+	NO_ES_TUYO = 201, INVENTARIO_LLENO = 202, NO_TIENE_ITEM = 203, ITEM_EN_USO = 204,
+	# 3xx  economia
+	SALDO_INSUFICIENTE = 301, PRECIO_INVALIDO = 302,
+	# 4xx  habilidades y produccion
+	NIVEL_INSUFICIENTE = 401, FALTAN_MATERIALES = 402, ESTACION_OCUPADA = 403,
+	# 5xx  permisos y salas
+	SIN_PERMISO = 501, SALA_LLENA = 502,
+}
+
+const MENSAJES := { ... }                       # codigo -> texto para el jugador
+static func mensaje(codigo: Codigo) -> String
+static func ok(codigo: Codigo) -> bool
+```
+
+Vive en `res://nucleo/Errores.gd`. **No es autoload**: `class_name` ya lo hace global y así no cuesta nada en runtime.
+
+**El alcance es deliberadamente estrecho.** Acá solo entran los rechazos que hay que explicarle al jugador. Los errores de programación —un `@export` sin asignar, un nodo que falta— siguen siendo `push_error()` y nunca reciben código: no son para el jugador, y mezclarlos convierte el enum en un cajón de sastre que crece sin control.
+
+**El mensaje vive al lado del enum y no en la UI**, para que agregar un código sin su texto sea imposible de pasar por alto. `mensaje()` nunca devuelve vacío: si falta, avisa por consola y devuelve un genérico, porque una ventana de error en blanco es peor para el jugador que un mensaje impreciso.
+
+**Los números son explícitos y están agrupados por sistema.** Así se puede reordenar, insertar y borrar sin que un código viejo cambie de significado en un guardado o en un log.
+
+**`FUERA_DEL_AREA` (D12) y `PARTIRIA_LA_SALA` (D14) ya existen aunque esas decisiones sigan abiertas.** Ese es el punto: **D14** advierte que agregar un motivo de rechazo cuando ya hay comportamientos escritos encima obliga a tocar todas las llamadas. El hueco está hecho y la fase 4 solo tiene que llenarlo.
+
 ---
 
 ## 1. Capa de datos — `res://data/`
@@ -580,7 +619,7 @@ func recalcular_paredes() -> void                   # tras repintar paredes en r
 
 # Ocupacion
 func ocupar(origen: Vector2i, size: Vector2i, obj: WorldObject, rotacion := 0) -> bool
-func liberar_objeto(obj: WorldObject) -> void
+func liberar_objeto(obj: WorldObject) -> bool      # false si no ocupaba nada
 func objeto_en(celda: Vector2i) -> WorldObject
 
 # Rutas
@@ -604,6 +643,8 @@ func ruta(origen: Vector2i, destino: Vector2i) -> Array[Vector2i]
 **Invariante:** los dos hijos van con transformación en cero y el origen de `IsoGrid` es el origen de la sala. `map_to_local()` trabaja en el espacio local del `GridMap`: si alguien mueve un hijo, las conversiones mienten sin dar error.
 
 **Un objeto de 2×1 registra las dos celdas apuntando a la misma instancia** — así `esta_libre()` funciona igual sin importar el tamaño del objeto consultado.
+
+**Devuelve `bool` y no `void`.** `false` significa que el objeto no ocupaba ninguna celda, que casi siempre es un síntoma de doble liberación: el paso 1 de `retirar_objeto()` (`CLASES.md` §3.4) ya corrió y alguien lo está repitiendo. Devolverlo hace que la transacción pueda abortar en vez de seguir como si nada.
 
 **`liberar_objeto(obj)` y no `liberar(celda)`.** Liberar por celda obliga a quien llama a saber cuántas celdas ocupaba y cuáles; liberar por objeto lo resuelve la grilla, que ya lo sabe. Es un método menos propenso a dejar celdas fantasma ocupadas.
 
@@ -703,12 +744,14 @@ signal objeto_retirado(obj: WorldObject)
 @onready var grid: IsoGrid = $IsoGrid
 @onready var contenedor_objetos: Node3D = $Objetos
 
-func colocar_objeto(inst: ItemInstance, celda: Vector2i, rotacion: int = 0) -> WorldObject
+func colocar_objeto(inst: ItemInstance, celda: Vector2i, rotacion: int = 0) -> Errores.Codigo
 func retirar_objeto(obj: WorldObject) -> ItemInstance
 func objetos() -> Array[WorldObject]
 func to_dict() -> Dictionary
 func from_dict(d: Dictionary) -> void
 ```
+
+**`colocar_objeto` devuelve un `Errores.Codigo`, no el objeto creado (D16).** Rechazar una colocación tiene al menos cuatro motivos distintos —no hay piso, hay pared, está ocupada, partiría la sala— y un `null` no los distingue. El `WorldObject` recién creado se recupera con `grid.objeto_en(celda)` justo después de un `OK`, así que no hacen falta parámetros de salida ni devolver un diccionario.
 
 **`colocar_objeto` toma un `ItemInstance`, no un `ItemDefinition` (D3).** Es lo que permite dejar una taza servida sobre la mesa y que siga teniendo café. `retirar_objeto` devuelve **la misma** instancia — no una copia — para que vuelva al inventario con su estado intacto.
 
@@ -963,10 +1006,11 @@ stateDiagram-v2
 
 ## 7. Índice de clases
 
-43 clases, contra los 32 scripts que detalla `SCRIPTS.md`. Las marcadas **NUEVA** son las que aparecieron al revisar el diseño; `SCRIPTS.md` las nombra en una tabla aparte, pero no las desarrolla.
+44 clases, contra los 32 scripts que detalla `SCRIPTS.md`. Las marcadas **NUEVA** son las que aparecieron al revisar el diseño; `SCRIPTS.md` las nombra en una tabla aparte, pero no las desarrolla.
 
 | # | Clase | Capa | Extends | Fase |
 |---|---|---|---|---|
+| 0 | `Errores` | Transversal | `RefCounted` | 1 |
 | 1 | `IsoGrid` | Mundo | `Node3D` | 1 |
 | 2 | `PlayerController` | Mundo | `CharacterBody3D` | 1 |
 | 3 | `AvatarComposer` | Mundo | `Node3D` | 1 |

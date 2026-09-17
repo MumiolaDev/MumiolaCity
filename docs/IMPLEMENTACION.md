@@ -49,13 +49,15 @@ Con el mundo en 3D, **la proyección isométrica dejó de ser un problema de est
 ### Verificar
 
 1. **Pintar en el editor.** Con la `MeshLibrary` asignada, pintá un suelo y unas paredes. Si la sala se ve completa y centrada y las paredes calzan sin huecos ni solapes, la escala está bien. **Hacé esto antes de escribir una línea de ocupación:** si no, cualquier bug de escala se te va a disfrazar de bug de ocupación.
-2. **Ojo con las piezas de dos celdas.** `pared_doble_base`, `espacio_puerta` y las ventanas miden 2 m de ancho pero ocupan una sola celda de `GridMap`: sobresalen hacia la vecina y hay que pintarlas celda por medio. Es espaciado, no escala.
+2. **Toda pieza mide exactamente una celda (D15).** `GridMap.get_used_cells()` devuelve las celdas donde se *colocó* una pieza, no las que su malla invade, así que una pared de dos metros pintada en una celda bloquea una sola y el personaje la atraviesa por la otra mitad. Las mallas del pack que sobresalían fueron reescaladas a un tile. Lo que abarca varias celdas se pinta celda por celda, y `_validar_piezas()` avisa por consola si aparece una pieza que no cumple.
 3. **Sanity check de la conversión:** imprimí `celda_a_mundo(Vector2i(0,0))`, `(1,0)` y `(0,1)` y confirmá que celdas vecinas difieren exactamente en el `cell_size`.
 4. **Test de ocupación:** `ocupar(Vector2i(1,1), Vector2i.ONE, dummy)` → `esta_libre(Vector2i(1,1))` da `false` → `liberar_objeto(dummy)` → vuelve a dar `true`.
 5. **Test de objeto multi-celda:** `ocupar(Vector2i(3,3), Vector2i(2,1), dummy)` → `esta_libre` da `false` tanto en `(3,3)` como en `(4,3)`; un solo `liberar_objeto(dummy)` libera las dos.
 6. **Test de límites:** `celda_valida()` da `false` en una celda donde no pintaste suelo.
 
-Los tests 3 a 6 se hacen con un `Node3D` vacío de mentira, antes de que exista `WorldObject`.
+Los tests 3 a 6 viven en **`escenas/mundo/test/test_isogrid.gd`**: un `Node3D` con ese script, una instancia de `IsoGrid.tscn` como hija con suelo pintado, y el export `grid` apuntando a ella. Se corre con **F6** y reporta por consola. **El script y su escena no se versionan** (`.gitignore`): dependen de cómo esté pintada la sala de prueba de cada máquina y no corren en ningún CI — lo que se versiona es este procedimiento. Usá `WorldObject.new()` como objeto de mentira y no un `Node3D`: `ocupar()` tipa el parámetro como `WorldObject`, y el stub ya existe aunque esté vacío.
+
+El script no usa `assert()` a propósito — corta en el primer fallo y desaparece en las builds de release — y busca las celdas libres en vez de tenerlas escritas, para que repintar la sala no haga fallar un test sin que nada esté roto.
 
 **Listo para pasar a `PlayerController` cuando:** la sala se ve bien en el editor con la cámara isométrica puesta, y los cuatro tests de ocupación y límites pasan. Todavía no hace falta que nada se mueva — eso es, literalmente, el siguiente script.
 
@@ -72,6 +74,6 @@ Los tests 3 a 6 se hacen con un `Node3D` vacío de mentira, antes de que exista 
 | 6 | `InteractionBehavior` + `SentarseBehavior` | Nada nuevo que definir — ya quedó resuelto en GDD §6.1. Implementar y verificar sentando al jugador en un `WorldObject` de prueba. |
 | 7–10 | `ContextMenuUI`, `HUD`, `GameManager`, `SaveManager` | Se benefician de que ya exista `RoomController` + `WorldObject` funcionando — dejalos para el final de la fase. Los cuatro se apoyan fuerte en nodos nativos (`PopupMenu`, `ProgressBar`, autoload, `ResourceSaver`), así que son más rápidos de lo que parecen. |
 
-> **Nota:** los scripts `InputController` y `CameraController` que aparecían en versiones anteriores de este plan fueron **eliminados** — Godot ya resuelve ambos con el Input Map + el singleton `Input`, y con un `Camera2D` configurado desde el inspector. Ver la tabla "Scripts eliminados" en [`SCRIPTS.md`](SCRIPTS.md).
+> **Nota:** los scripts `InputController` y `CameraController` que aparecían en versiones anteriores de este plan fueron **eliminados** — Godot ya resuelve ambos con el Input Map + el singleton `Input`, y con una `Camera3D` ortográfica colgada de un pivote, configurada desde el inspector. Ver la tabla "Scripts eliminados" en [`SCRIPTS.md`](SCRIPTS.md).
 
 **Definición de "fase 1 terminada"** (el objetivo real, GDD §9): parado en el área común, tu avatar se mueve por la grilla isométrica, podés cambiar a tu sala privada y volver, y podés sentarte en al menos un objeto interactuable. Todo lo demás de la fase (HUD, guardado) existe para sostener esa experiencia, no es un fin en sí mismo — si esa demo funciona, la fase está lista aunque el resto tenga bordes ásperos.

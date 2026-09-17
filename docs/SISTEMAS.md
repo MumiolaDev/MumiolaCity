@@ -349,7 +349,7 @@ La tabla más importante del documento. La mayoría de los bugs de un juego de e
 
 ---
 
-## 6. Decisiones de arquitectura: siete cerradas, ocho pendientes
+## 6. Decisiones de arquitectura: ocho cerradas, ocho pendientes
 
 Once decisiones que hay que cerrar antes de escribir el sistema correspondiente, ordenadas por lo caro que sale cambiarlas después. **Cinco ya están cerradas** — D1, D2 y D11 aplicadas en `items.json`, D3 resuelta acá abajo, y D7 postergada a la fase 2 a propósito — y **D5 tiene el lado de los datos hecho y el del código pendiente**. Las demás siguen abiertas.
 
@@ -542,6 +542,20 @@ Aplicar una pared como revestimiento **no coloca nada en la grilla**: cambia el 
 **Qué la protege.** `IsoGrid._validar_piezas()` compara la caja envolvente de cada pieza contra el tamaño de celda y avisa por consola al arrancar. Convierte un bug silencioso —el personaje atraviesa medio muro— en un mensaje que nombra la pieza culpable.
 
 **Esto limita al `GridMap`, no al juego.** Los objetos del jugador sí son multicelda y siempre lo fueron: `celdas_de()` expande la huella, `esta_libre()` valida el conjunto y `ocupar()` registra todas las celdas apuntando a la misma instancia. El editor de salas del juego va a instanciar `WorldObject`, no a pintar celdas de `GridMap`, así que la regla se queda del lado del diseñador y no se le contagia al jugador.
+
+---
+
+### D16 — Los rechazos se comunican con un código, no con un `bool` · **decidida**
+
+**El problema.** `ocupar()` devuelve `false` y quien llama no sabe por qué: puede no haber piso, puede haber una pared, puede estar ocupada o —en fase 4— puede que la colocación parta la sala en dos. Un booleano obliga a cada sistema a re-deducir el motivo o a inventarse su propio texto, y el mismo mensaje termina escrito en varios lugares que se desincronizan.
+
+**Decisión: existe un único enum `Errores.Codigo`** (`res://nucleo/Errores.gd`), con números explícitos agrupados por sistema —`1xx` grilla, `2xx` inventario, `3xx` economía, `4xx` habilidades, `5xx` permisos— y una tabla de mensajes en castellano al lado. Toda operación que el jugador pueda ver rechazada devuelve un código.
+
+**El alcance se defiende a propósito.** Solo entran los rechazos que hay que explicarle al jugador. Los errores de programación siguen siendo `push_error()` y no reciben código. Sin esa regla, el enum crece hasta volverse un cajón de sastre y deja de servir para lo único que tenía que servir.
+
+**Por qué ahora y no en la fase 4.** Es la respuesta al punto que **D14** deja planteado: agregar un motivo de rechazo cuando ya hay comportamientos escritos encima obliga a tocar todas las llamadas. `FUERA_DEL_AREA` (D12) y `PARTIRIA_LA_SALA` (D14) ya están en el enum aunque las validaciones que los producen todavía no existan — el hueco está hecho y la fase 4 solo tiene que llenarlo.
+
+**Consecuencia inmediata en la firma de `RoomController`.** `colocar_objeto()` devuelve `Errores.Codigo` y no `WorldObject`; el objeto recién creado se recupera con `IsoGrid.objeto_en(celda)` justo después de un `OK`. Así no hacen falta parámetros de salida ni devolver un diccionario.
 
 ---
 

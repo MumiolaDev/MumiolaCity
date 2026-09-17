@@ -10,3 +10,12 @@
 #   - KayKit Furniture Bits    — mobiliario
 #   - KayKit Character Animations — maniquí y bibliotecas de animación
 /ass/
+
+# Escenas de verificacion local de la grilla.
+#
+# Se corren a mano con F6 y reportan por consola; no son tests de regresion ni
+# corren en ningun CI, y dependen de como este pintada la sala de prueba de cada
+# maquina. Quedan fuera del repo a proposito: el procedimiento para rehacerlas
+# esta documentado en docs/IMPLEMENTACION.md, seccion 1.
+/mumiola-city/escenas/mundo/test/test_isogrid.*
+/mumiola-city/escenas/mundo/test/tmp.tscn

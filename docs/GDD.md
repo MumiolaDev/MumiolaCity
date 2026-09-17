@@ -234,6 +234,8 @@ Estructura real del proyecto (nombres en español, como el resto del código):
 res://
   autoloads/            GameManager, SkillManager, InventoryManager,
                          EconomyManager (simulado), SaveManager
+  nucleo/               Definiciones compartidas sin escena ni estado: Errores
+                         (codigos de rechazo + mensajes para el jugador)
   data/
     objetos/             items.json + lista_items.md (fuente) y los .tres de ItemDefinition
     recetas/             Recursos .tres: RecipeDefinition (insumos, resultado, habilidad, xp)

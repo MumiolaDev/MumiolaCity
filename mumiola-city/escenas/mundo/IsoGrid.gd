@@ -153,6 +153,43 @@ func ocupar(origen : Vector2i, size : Vector2i, obj : WorldObject, rotacion := 0
 	return true
 
 
+## Libera todas las celdas que ocupa un objeto y lo saca de la grilla.
+##
+## Busca las celdas recorriendo el diccionario en vez de recalcularlas desde el
+## origen y el size del objeto: si fue rotado, o si algo cambio entre ocupar y
+## liberar, el recalculo puede no coincidir con lo que realmente se marco y deja
+## celdas bloqueadas para siempre, sin nada que las reclame. _ocupadas es la
+## unica fuente de verdad sobre que celdas son de quien.
+##
+## Devuelve false si el objeto no estaba ocupando ninguna celda.
+func liberar_objeto(obj : WorldObject) -> bool:
+	var celdas : Array[Vector2i] = []
+	for celda in _ocupadas:
+		if _ocupadas[celda] == obj:
+			celdas.append(celda)
+
+	if celdas.is_empty():
+		return false
+
+	# Borrar antes de tocar el A*: _marcar_en_astar() recalcula esta_libre() por
+	# celda, asi que si todavia estuvieran en _ocupadas las volveria a marcar
+	# solidas y liberar no serviria de nada.
+	for c in celdas:
+		_ocupadas.erase(c)
+	_marcar_en_astar(celdas)
+	ocupacion_cambiada.emit(celdas)
+	return true
+
+
+## Devuelve el objeto que ocupa una celda, o null si no hay ninguno.
+##
+## Un objeto de varias celdas responde lo mismo desde cualquiera de ellas: quien
+## clickea la esquina de una mesa de 2x2 recibe la mesa, no un hueco. Es lo que
+## convierte un clic en un objeto con el que interactuar.
+func objeto_en(celda : Vector2i) -> WorldObject:
+	return _ocupadas.get(celda, null)
+
+
 ## Devuelve el rectangulo minimo que contiene todo el suelo pintado. Sirve para
 ## dimensionar el AStarGrid2D, que necesita una region finita.
 func region_usada() -> Rect2i:
