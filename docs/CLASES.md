@@ -616,6 +616,7 @@ func region_usada() -> Rect2i
 func celda_valida(celda: Vector2i) -> bool          # hay suelo pintado?
 func hay_pared(celda: Vector2i) -> bool
 func esta_libre(origen: Vector2i, size := Vector2i.ONE, rotacion := 0) -> bool
+func motivo_bloqueo(origen: Vector2i, size := Vector2i.ONE, rotacion := 0) -> Errores.Codigo
 func celdas_bloqueadas() -> Array[Vector2i]
 func recalcular_paredes() -> void                   # tras repintar paredes en runtime
 
@@ -647,6 +648,8 @@ func ruta(origen: Vector2i, destino: Vector2i) -> Array[Vector2i]
 **Un objeto de 2×1 registra las dos celdas apuntando a la misma instancia** — así `esta_libre()` funciona igual sin importar el tamaño del objeto consultado.
 
 **Devuelve `bool` y no `void`.** `false` significa que el objeto no ocupaba ninguna celda, que casi siempre es un síntoma de doble liberación: el paso 1 de `retirar_objeto()` (`CLASES.md` §3.4) ya corrió y alguien lo está repitiendo. Devolverlo hace que la transacción pueda abortar en vez de seguir como si nada.
+
+**`esta_libre()` delega en `motivo_bloqueo()`.** Con dos copias del criterio de transitabilidad, tarde o temprano una dice que sí y la otra que no. Además es lo que le permite a `colocar_objeto()` responder «ahí hay una pared» en lugar de un no pelado (**D16**); el orden de las comprobaciones —existe, está construido, está ocupado— es el orden en que se le explican al jugador.
 
 **`liberar_objeto(obj)` y no `liberar(celda)`.** Liberar por celda obliga a quien llama a saber cuántas celdas ocupaba y cuáles; liberar por objeto lo resuelve la grilla, que ya lo sabe. Es un método menos propenso a dejar celdas fantasma ocupadas.
 

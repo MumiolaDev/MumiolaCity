@@ -107,10 +107,29 @@ func centro_de(origen : Vector2i, size : Vector2i, rotacion : int = 0) -> Vector
 ## Revisa el espacio dado por el origen y el size, y devuelve si todas esas
 ## celdas son validas y no estan ocupadas.
 func esta_libre(origen : Vector2i, size := Vector2i.ONE , rotacion := 0) -> bool:
-	for c in celdas_de(origen, size,rotacion):
-		if not celda_valida(c) or hay_pared(c) or _ocupadas.has(c):
-			return false
-	return true
+	return motivo_bloqueo(origen, size, rotacion) == Errores.Codigo.OK
+
+
+## Devuelve por que no se puede ocupar una huella, o Errores.Codigo.OK si se
+## puede.
+##
+## esta_libre() delega aca en vez de repetir las comprobaciones: con dos copias
+## del criterio, tarde o temprano una dice que si y la otra que no. Es lo que le
+## permite a RoomController.colocar_objeto() decir "ahi hay una pared" en lugar
+## de un no pelado (D16).
+##
+## El orden de las comprobaciones es el orden en que se le explican al jugador:
+## primero si el lugar existe, despues si esta construido, y recien al final si
+## alguien llego antes.
+func motivo_bloqueo(origen : Vector2i, size := Vector2i.ONE, rotacion := 0) -> Errores.Codigo:
+	for c in celdas_de(origen, size, rotacion):
+		if not celda_valida(c):
+			return Errores.Codigo.CELDA_INEXISTENTE
+		if hay_pared(c):
+			return Errores.Codigo.HAY_PARED
+		if _ocupadas.has(c):
+			return Errores.Codigo.CELDA_OCUPADA
+	return Errores.Codigo.OK
 
 
 ## Devuelve si hay una pared ocupando la planta de tal celda.

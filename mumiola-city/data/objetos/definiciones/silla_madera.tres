@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="1_def"]
+[ext_resource type="PackedScene" path="res://escenas/objetos/silla_madera.tscn" id="2_escena"]
 
 [resource]
 script = ExtResource("1_def")
@@ -14,3 +15,4 @@ stack_maximo = 1
 valor_base = 13
 tamano_grilla = Vector2i(1, 1)
 rotable = true
+escena_mundo = ExtResource("2_escena")

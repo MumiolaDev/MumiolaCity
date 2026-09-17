@@ -1,0 +1,20 @@
+[gd_scene format=3 load_steps=4]
+
+[ext_resource type="Script" path="res://escenas/objetos/WorldObject.gd" id="1_wobj"]
+[ext_resource type="PackedScene" path="res://arte/modelos_3d/muebles/chair_A_wood.gltf" id="2_malla"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_silla"]
+size = Vector3(0.9, 1, 0.9)
+
+[node name="SillaMadera" type="Area3D"]
+collision_layer = 2
+collision_mask = 0
+script = ExtResource("1_wobj")
+celda_origen = Vector2i(0, 0)
+rotacion_grilla = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape3D_silla")
+
+[node name="Visual" parent="." instance=ExtResource("2_malla")]

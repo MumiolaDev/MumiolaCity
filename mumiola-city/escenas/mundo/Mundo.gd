@@ -7,7 +7,11 @@ extends Node3D
 ## en RoomController —activar(), desactivar(), rotar()—: lo unico desechable que
 ## hay aca es el disparador.
 ##
-## Teclas: TAB cambia de sala, Q y E giran el encuadre un cuarto de vuelta.
+## Teclas: TAB cambia de sala, Q y E giran el encuadre un cuarto de vuelta,
+## C coloca una silla en la celda bajo el mouse y X retira lo que haya ahi.
+##
+## C y X existen para poder probar el paso 4b sin menu contextual: el clic
+## izquierdo ya lo usa el personaje para caminar, y ContextMenuUI es el paso 7.
 
 ## El personaje vive fuera de las salas porque su estado —inventario,
 ## habilidades, nivel— no es de ninguna sala en particular, y reparentar un
@@ -17,6 +21,10 @@ extends Node3D
 @onready var contenedor_salas : Node3D = $Salas
 
 var _actual : int = -1
+
+## Con que rotacion se coloca la proxima silla de prueba. Gira con cada Q o E
+## para poder comprobar que la rotacion de la huella y la visual concuerdan.
+var _rotacion_silla : int = 0
 
 
 func _ready() -> void:
@@ -89,5 +97,46 @@ func _unhandled_input(evento : InputEvent) -> void:
 		return
 	if evento.keycode == KEY_Q:
 		sala.rotar(-1)
+		_rotacion_silla = posmod(_rotacion_silla - 1, 4)
 	elif evento.keycode == KEY_E:
 		sala.rotar(1)
+		_rotacion_silla = posmod(_rotacion_silla + 1, 4)
+	elif evento.keycode == KEY_C:
+		_colocar_silla_de_prueba(sala)
+	elif evento.keycode == KEY_X:
+		_retirar_bajo_el_mouse(sala)
+
+
+## Coloca una silla en la celda bajo el mouse y reporta el resultado.
+##
+## Provisional, para poder probar colocar_objeto() sin menu contextual. La
+## instancia se crea aca porque todavia no hay inventario del cual sacarla: en la
+## fase 2 este paso pasa a ser InventoryManager.quitar_instancia().
+func _colocar_silla_de_prueba(sala : RoomController) -> void:
+	var celda := sala.grid.celda_bajo_puntero(sala.camara, get_viewport().get_mouse_position())
+	if celda == IsoGrid.SIN_CELDA:
+		return
+
+	var inst := ItemInstance.new()
+	inst.definicion_id = &"silla_madera"
+
+	var resultado := sala.colocar_objeto(inst, celda, _rotacion_silla)
+	if Errores.ok(resultado):
+		print("Colocada en %s: %s" % [celda, sala.grid.objeto_en(celda).nombre_mostrado()])
+	else:
+		print("No se pudo colocar en %s: %s" % [celda, Errores.mensaje(resultado)])
+
+
+## Retira el objeto que haya en la celda bajo el mouse.
+func _retirar_bajo_el_mouse(sala : RoomController) -> void:
+	var celda := sala.grid.celda_bajo_puntero(sala.camara, get_viewport().get_mouse_position())
+	if celda == IsoGrid.SIN_CELDA:
+		return
+
+	var obj := sala.grid.objeto_en(celda)
+	if obj == null:
+		print("No hay nada en %s." % celda)
+		return
+
+	var inst := sala.retirar_objeto(obj)
+	print("Retirado de %s: %s" % [celda, "nada" if inst == null else inst.nombre_mostrado()])

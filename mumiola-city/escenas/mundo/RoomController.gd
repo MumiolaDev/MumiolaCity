@@ -107,8 +107,99 @@ func objetos() -> Array[WorldObject]:
 	return lista
 
 
-# colocar_objeto() y retirar_objeto() son el paso 4b y llegan junto con el paso
-# 5. Su firma ya esta decidida —colocar_objeto() devuelve Errores.Codigo y el
-# objeto creado se recupera con grid.objeto_en(celda), ver D16— pero no se
-# pueden escribir todavia: reciben y devuelven ItemInstance, y tanto ese recurso
-# como WorldObject son stubs vacios. Escribirlos ahora seria adivinar su forma.
+## Coloca un item en la sala. Devuelve OK, o por que no se pudo (D16).
+##
+## El objeto creado se recupera con grid.objeto_en(celda) despues de un OK, asi
+## que no hace falta devolverlo ni usar parametros de salida.
+##
+## Toma un ItemInstance y no un ItemDefinition (D3): es lo que permite dejar una
+## taza servida sobre la mesa y que siga teniendo cafe. La propiedad de esa
+## instancia pasa a ser del WorldObject y de nadie mas.
+##
+## Valida todo antes de crear nada. Si la huella no entra, no queda un nodo
+## huerfano dando vueltas ni una celda a medio ocupar.
+func colocar_objeto(inst : ItemInstance, celda : Vector2i, rotacion : int = 0) -> Errores.Codigo:
+	if inst == null:
+		return Errores.Codigo.NO_TIENE_ITEM
+
+	var def := inst.definicion()
+	if def == null:
+		# No es un rechazo del jugador sino un catalogo incompleto: la instancia
+		# apunta a un id que ItemDatabase no tiene.
+		push_error("RoomController: no hay definicion para '%s'." % inst.definicion_id)
+		return Errores.Codigo.NO_TIENE_ITEM
+
+	if not def.rotable:
+		rotacion = 0
+
+	var motivo := grid.motivo_bloqueo(celda, def.tamano_grilla, rotacion)
+	if motivo != Errores.Codigo.OK:
+		return motivo
+
+	# Aca van, en la fase 4, las dos validaciones que faltan: que la celda este
+	# dentro del area editable de la sala (D12, FUERA_DEL_AREA) y que la
+	# colocacion no deje una parte de la sala sin salida (D14, PARTIRIA_LA_SALA).
+	# El hueco existe desde ahora justamente para que agregarlas no obligue a
+	# cambiar esta firma ni a tocar todas las llamadas.
+
+	# Paso 1 de la transaccion, en la fase 2: InventoryManager.quitar_instancia().
+	# Tiene que ocurrir aca, antes de que nada mas se escriba, y tiene que poder
+	# fallar. Mientras no exista el inventario, quien llama es el dueno de la
+	# instancia y se la entrega a la sala.
+
+	var obj := _instanciar(def)
+	obj.instancia = inst
+	obj.celda_origen = celda
+	obj.rotacion_grilla = rotacion
+
+	if not grid.ocupar(celda, def.tamano_grilla, obj, rotacion):
+		obj.free()   # nunca entro al arbol, asi que free() y no queue_free()
+		return Errores.Codigo.CELDA_OCUPADA
+
+	contenedor_objetos.add_child(obj)
+	obj.global_position = grid.centro_de(celda, def.tamano_grilla, rotacion)
+	# El signo es el que concuerda con celdas_de(): una rotacion impar cambia
+	# ancho por profundidad, y girar -90 grados en Y lleva el eje +X al +Z.
+	obj.rotation.y = -PASO_ROTACION * rotacion
+
+	objeto_colocado.emit(obj)
+	return Errores.Codigo.OK
+
+
+## Retira un objeto de la sala y devuelve su instancia, o null si no estaba.
+##
+## Devuelve *la misma* instancia y no una copia, para que vuelva al inventario
+## con su estado intacto: la taza sigue teniendo el cafe.
+##
+## Le pone null a obj.instancia antes de liberarlo a proposito. La propiedad
+## tiene que ser exclusiva (D3): si el inventario conserva la referencia y el
+## WorldObject tambien, el mismo objeto existe dos veces. Con Resource, que se
+## pasa por referencia, es facilisimo de cometer sin notarlo.
+func retirar_objeto(obj : WorldObject) -> ItemInstance:
+	if obj == null:
+		return null
+	if not grid.liberar_objeto(obj):
+		# No ocupaba ninguna celda: o no era de esta sala, o ya se retiro.
+		return null
+
+	var inst := obj.instancia
+	obj.instancia = null
+
+	# Paso 2 de la transaccion, en la fase 2: InventoryManager.agregar_instancia().
+	# Puede fallar con el inventario lleno, y ahi hay que devolver el objeto a su
+	# celda antes de tocar nada mas.
+
+	objeto_retirado.emit(obj)
+	obj.queue_free()
+	return inst
+
+
+## Crea el nodo del objeto: su escena propia si la tiene, o un WorldObject pelado.
+func _instanciar(def : ItemDefinition) -> WorldObject:
+	if def.escena_mundo != null:
+		var nodo := def.escena_mundo.instantiate()
+		if nodo is WorldObject:
+			return nodo
+		push_error("RoomController: la escena_mundo de '%s' no es un WorldObject." % def.id)
+		nodo.free()
+	return WorldObject.new()
