@@ -8,7 +8,13 @@ extends Node3D
 ## hay aca es el disparador.
 ##
 ## Teclas: TAB cambia de sala, Q y E giran el encuadre un cuarto de vuelta,
-## C coloca una silla en la celda bajo el mouse y X retira lo que haya ahi.
+## R gira la silla que se va a colocar, C la coloca en la celda bajo el mouse y
+## X retira lo que haya ahi.
+##
+## Girar el encuadre y girar el objeto son dos cosas distintas y por eso son dos
+## teclas distintas: la camara orbita y los objetos se quedan donde estan, asi
+## que una silla ya colocada se ve desde otro lado sin haber cambiado de
+## orientacion. Como decide el jugador hacia donde mira un mueble es D19.
 ##
 ## C y X existen para poder probar el paso 4b sin menu contextual: el clic
 ## izquierdo ya lo usa el personaje para caminar, y ContextMenuUI es el paso 7.
@@ -22,8 +28,9 @@ extends Node3D
 
 var _actual : int = -1
 
-## Con que rotacion se coloca la proxima silla de prueba. Gira con cada Q o E
-## para poder comprobar que la rotacion de la huella y la visual concuerdan.
+## Con que rotacion se coloca la proxima silla de prueba. Gira con R, no con el
+## encuadre, para poder comprobar que la rotacion de la huella y la visual
+## concuerdan sin confundirla con el giro de la camara.
 var _rotacion_silla : int = 0
 
 
@@ -97,10 +104,11 @@ func _unhandled_input(evento : InputEvent) -> void:
 		return
 	if evento.keycode == KEY_Q:
 		sala.rotar(-1)
-		_rotacion_silla = posmod(_rotacion_silla - 1, 4)
 	elif evento.keycode == KEY_E:
 		sala.rotar(1)
+	elif evento.keycode == KEY_R:
 		_rotacion_silla = posmod(_rotacion_silla + 1, 4)
+		print("La proxima silla se coloca con rotacion %d." % _rotacion_silla)
 	elif evento.keycode == KEY_C:
 		_colocar_silla_de_prueba(sala)
 	elif evento.keycode == KEY_X:
