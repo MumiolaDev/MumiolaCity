@@ -349,7 +349,7 @@ La tabla más importante del documento. La mayoría de los bugs de un juego de e
 
 ---
 
-## 6. Decisiones de arquitectura: nueve cerradas, ocho pendientes
+## 6. Decisiones de arquitectura: diez cerradas, ocho pendientes
 
 Once decisiones que hay que cerrar antes de escribir el sistema correspondiente, ordenadas por lo caro que sale cambiarlas después. **Cinco ya están cerradas** — D1, D2 y D11 aplicadas en `items.json`, D3 resuelta acá abajo, y D7 postergada a la fase 2 a propósito — y **D5 tiene el lado de los datos hecho y el del código pendiente**. Las demás siguen abiertas.
 
@@ -570,6 +570,29 @@ Aplicar una pared como revestimiento **no coloca nada en la grilla**: cambia el 
 **Móvil no reabre la discusión, la traslada.** Godot permite un método de render por plataforma: `rendering/renderer/rendering_method.mobile = "mobile"` en `project.godot` deja Forward+ en escritorio y el renderizador Mobile en teléfonos, sin mantener dos proyectos. Mobile conserva LightmapGI, glow, LUT, niebla de profundidad, desenfoque de profundidad, decals y MSAA; pierde SSAO, niebla volumétrica, SDFGI y TAA. **No exportar a Android con Forward+**: no es una versión mejor del renderizador Mobile sino una tubería de escritorio, y rinde peor en teléfonos.
 
 **Qué significa para la dirección de arte.** SSAO es el único efecto del set acogedor que habría que poder apagar por plataforma el día que exista la build de móvil. Todo lo demás —luz horneada, grado de color, glow, niebla de profundidad— sobrevive a los dos renderizadores, así que el trabajo visual se puede hacer una sola vez.
+
+---
+
+### D18 — Lo que se guarda viaja por nombre de pieza, nunca por id · **decidida**
+
+**El problema.** Un `GridMap` guarda **ids**, y la `MeshLibrary` mapea id → malla + nombre. Los ids se asignan al exportar la biblioteca desde su escena fuente, **en el orden de los nodos de primer nivel**. Si un re-export los reasigna —agregar una ventana en el medio de la escena alcanza— cada sala pintada se repinta con mallas distintas y **nada da error**: las paredes se vuelven suelo y lo descubrís mirando.
+
+No es hipotético. Los ids en uso hoy son 2, 3, 4 en el suelo y 5, 8, 10 en las paredes, con huecos en 0, 1, 6, 7 y 9: la huella de una biblioteca que ya se editó. Y el mapeo real no estaba escrito en ninguna parte — hubo que deducirlo del orden de los nodos de la escena fuente y validarlo cruzando qué ids aparecen en cada capa.
+
+**Decisión: el nombre es el contrato estable; el id es un detalle de la sesión.** Todo lo que cruce el borde del proyecto —`RoomController.to_dict()`, el guardado de partidas, las salas que en el futuro viajen entre cliente y servidor— serializa **nombres de pieza**, y se resuelven a id contra la biblioteca cargada en ese momento con `MeshLibrary.find_item_by_name()`, envuelto en `CatalogoPiezas.id_de()`.
+
+**Por qué ahora.** `to_dict()` todavía no existe. Escrito con ids, un re-export corrompe todas las salas guardadas de todos los jugadores sin vuelta atrás; escrito con nombres, sobreviven a cualquier reacomodo. Cuesta cero hoy y es una migración después — la misma forma que **D14** y **D16**.
+
+**Qué lo protege mientras tanto.** `res://nucleo/CatalogoPiezas.gd` declara qué piezas tiene que traer cada capa y con qué prefijo se llaman, e `IsoGrid._validar_piezas()` lo comprueba al arrancar. Avisa de las tres fallas mudas: una pieza mayor que una celda (**D15**), un id pintado que la biblioteca ya no tiene, y una pieza pintada en la capa que no le corresponde.
+
+**Una biblioteca por capa.** `suelos.meshlib` y `paredes.meshlib`, exportadas de `escenario_suelos.tscn` y `escenario_paredes.tscn`, en lugar de una compartida. Acota el radio: agregar una ventana deja de poder mover los ids del suelo, y pintar un suelo en la capa de paredes —un muro invisible que nadie podría explicar— deja de ser posible porque la pieza ni siquiera está en esa biblioteca.
+
+**Reglas de mantenimiento**, que son el resto de la defensa:
+
+1. Al re-exportar una biblioteca, usar siempre **Merge With Existing**. Sin eso los ids se reasignan desde cero.
+2. **Nunca renombrar una pieza ya pintada.** No da error: `piezas_transitables` simplemente deja de reconocerla y el vano se vuelve muro.
+3. Agregar piezas **al final** de la escena fuente, nunca en el medio.
+4. Toda pieza nueva se declara también en `CatalogoPiezas.PIEZAS`. Si se olvida uno de los dos pasos, el arranque lo dice.
 
 ---
 

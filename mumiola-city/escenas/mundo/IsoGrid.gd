@@ -134,8 +134,8 @@ func recalcular_paredes() -> void:
 			continue
 		_paredes_planta[Vector2i(c.x, c.z)] = true
 	_paredes_listas = true
-	_validar_piezas(paredes)
-	_validar_piezas(suelo)
+	_validar_piezas(paredes, CatalogoPiezas.PAREDES)
+	_validar_piezas(suelo, CatalogoPiezas.SUELO)
 	_astar = null  # cambio la transitabilidad: el A* se reconstruye al pedirse
 
 
@@ -309,24 +309,53 @@ func celda_bajo_puntero(camara : Camera3D, pos_pantalla : Vector2) -> Vector2i:
 	return mundo_a_celda(golpe)
 
 
-## Avisa si alguna pieza pintada es mas grande que una celda.
+## Avisa por consola de todo lo que puede romper una sala en silencio.
 ##
-## El GridMap solo registra la celda donde se coloco una pieza, no las que su
-## malla invade. Una pared de dos metros de ancho bloquea una sola celda y el
-## personaje la atraviesa por la otra mitad, sin que nada de error. La regla es
-## que toda pieza de escenario mida una celda: lo que abarca varias se pinta
-## celda por celda. Esto convierte ese bug silencioso en un aviso.
-func _validar_piezas(grid_map : GridMap) -> void:
+## Tres fallas, las tres mudas si nadie las busca: una pieza mas grande que una
+## celda solo bloquea donde se pinto (D15); un id pintado que la biblioteca ya no
+## tiene deja la celda invisible pero bloqueando, y el bug aparece como "el
+## personaje no puede pasar por un lugar vacio"; y una pieza pintada en la capa
+## que no le toca es un muro que nadie va a poder explicar, porque en la capa de
+## paredes todo bloquea salvo lo declarado en piezas_transitables.
+##
+## La segunda es la que importa a largo plazo: pasa sola, al re-exportar la
+## MeshLibrary sin fusionar con la existente, y no rompe una celda sino todas.
+func _validar_piezas(grid_map : GridMap, capa : StringName) -> void:
 	if grid_map == null or grid_map.mesh_library == null:
 		return
 
+	for problema in CatalogoPiezas.verificar(grid_map.mesh_library, capa):
+		push_warning("IsoGrid: " + problema)
+
 	var avisados := {}
 	var celda_xz := Vector2(grid_map.cell_size.x, grid_map.cell_size.z)
+	var conocidos := grid_map.mesh_library.get_item_list()
 
 	for c in grid_map.get_used_cells():
 		var id := grid_map.get_cell_item(c)
 		if avisados.has(id):
 			continue
+
+		if not (id in conocidos):
+			avisados[id] = true
+			push_warning(
+				"IsoGrid: la celda (%d, %d) de la capa '%s' usa el id %d, que la biblioteca ya no tiene. " % [
+					c.x, c.z, capa, id
+				]
+				+ "Se reasignaron los ids al exportar: hay que remapear la sala por nombre."
+			)
+			continue
+
+		var nombre := CatalogoPiezas.nombre_de(grid_map.mesh_library, id)
+		if not CatalogoPiezas.corresponde_a(nombre, capa):
+			avisados[id] = true
+			push_warning(
+				"IsoGrid: la pieza '%s' esta pintada en la capa '%s', y por su nombre no le corresponde." % [
+					nombre, capa
+				]
+			)
+			continue
+
 		var malla := grid_map.mesh_library.get_item_mesh(id)
 		if malla == null:
 			continue
@@ -336,8 +365,7 @@ func _validar_piezas(grid_map : GridMap) -> void:
 			avisados[id] = true
 			push_warning(
 				"IsoGrid: la pieza '%s' mide %.2f x %.2f y la celda es %.2f x %.2f. " % [
-					grid_map.mesh_library.get_item_name(id),
-					caja.size.x, caja.size.z, celda_xz.x, celda_xz.y
+					nombre, caja.size.x, caja.size.z, celda_xz.x, celda_xz.y
 				]
 				+ "Solo bloquea la celda donde se pinto, no las que invade. "
 				+ "Escalala a una celda y pintala varias veces."

@@ -239,12 +239,12 @@ res://
   autoloads/            GameManager, SkillManager, InventoryManager,
                          EconomyManager (simulado), SaveManager
   nucleo/               Definiciones compartidas sin escena ni estado: Errores
-                         (codigos de rechazo + mensajes para el jugador)
+                         (codigos de rechazo) y CatalogoPiezas (contrato de MeshLibrary)
   data/
     objetos/             items.json + lista_items.md (fuente) y los .tres de ItemDefinition
     recetas/             Recursos .tres: RecipeDefinition (insumos, resultado, habilidad, xp)
     habilidades/         Recursos .tres: SkillDefinition (curva de xp, desbloqueos por nivel)
-    mesh_librarys/       Escenas fuente de los modelos y las .meshlib que consumen los GridMap
+    mesh_librarys/       Una escena fuente y una .meshlib por capa (D18): suelos y paredes
   escenas/
     mundo/               IsoGrid, RoomController, Mundo y el indicador de celda
       salas/             Una escena por sala: SalaComun, SalaPrivada…

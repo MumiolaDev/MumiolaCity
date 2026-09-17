@@ -1031,11 +1031,12 @@ stateDiagram-v2
 
 ## 7. Índice de clases
 
-44 clases, contra los 32 scripts que detalla `SCRIPTS.md`. Las marcadas **NUEVA** son las que aparecieron al revisar el diseño; `SCRIPTS.md` las nombra en una tabla aparte, pero no las desarrolla.
+45 clases, contra los 32 scripts que detalla `SCRIPTS.md`. Las marcadas **NUEVA** son las que aparecieron al revisar el diseño; `SCRIPTS.md` las nombra en una tabla aparte, pero no las desarrolla.
 
 | # | Clase | Capa | Extends | Fase |
 |---|---|---|---|---|
 | 0 | `Errores` | Transversal | `RefCounted` | 1 |
+| 0b | `CatalogoPiezas` | Transversal | `RefCounted` | 1 |
 | 1 | `IsoGrid` | Mundo | `Node3D` | 1 |
 | 2 | `PlayerController` | Mundo | `CharacterBody3D` | 1 |
 | 3 | `AvatarComposer` | Mundo | `Node3D` | 1 |

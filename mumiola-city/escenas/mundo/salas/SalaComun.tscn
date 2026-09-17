@@ -16,7 +16,6 @@ celda_entrada = Vector2i(8, 9)
 script = ExtResource("2_grid")
 suelo = NodePath("GridSuelo")
 paredes = NodePath("GridParedes")
-piezas_transitables = Array[StringName]([&"espacio_puerta"])
 
 [node name="GridSuelo" type="GridMap" parent="IsoGrid"]
 mesh_library = ExtResource("4_mesh")
