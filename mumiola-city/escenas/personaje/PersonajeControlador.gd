@@ -227,6 +227,30 @@ func _desanotar_de(objeto : WorldObject) -> void:
 			verbo.levantarse(self, objeto)
 
 
+## Para al personaje en una celda concreta, sin caminar.
+##
+## Es lo que usa la carga de partida: el guardado dice en que celda estaba, no
+## como llego. Si la celda no sirve —quedo ocupada por un mueble que se
+## restauro antes— cae en una vecina libre antes que dejarlo dentro de algo.
+func ubicar_en_celda(celda : Vector2i) -> void:
+	if grid == null:
+		return
+
+	detener()
+	if esta_sentado():
+		levantarse()
+
+	var destino := celda
+	if not grid.esta_libre(destino):
+		var alternativa := grid.celda_libre_vecina(celda)
+		if alternativa != IsoGrid.SIN_CELDA:
+			destino = alternativa
+
+	var pos := grid.celda_a_mundo(destino)
+	pos.y = grid.altura_piso
+	global_position = pos
+
+
 ## Ejecuta un verbo sobre un objeto, caminando hasta el primero si hace falta.
 ##
 ## Es lo que evita que interactuar con algo lejano teletransporte al personaje.

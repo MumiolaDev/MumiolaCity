@@ -44,7 +44,7 @@ func _ready() -> void:
 	# funcion, no rompe el juego.
 	if menu != null:
 		menu.verbo_elegido.connect(_al_elegir_verbo)
-	GameManager.mostrar_ayuda("TAB cambiar de sala   Q/E girar la vista   R girar la silla   C colocar   X retirar\nClic izquierdo: caminar   Clic derecho sobre un mueble: menu")
+	GameManager.mostrar_ayuda("TAB cambiar de sala   Q/E girar la vista   R girar la silla   C colocar   X retirar   F5 guardar   F9 cargar\nClic izquierdo: caminar   Clic derecho sobre un mueble: menu")
 
 	for sala in GameManager.salas():
 		sala.objeto_colocado.connect(_atender_clics_de)
@@ -77,6 +77,12 @@ func _unhandled_input(evento : InputEvent) -> void:
 		_colocar_silla_de_prueba(sala)
 	elif evento.keycode == KEY_X:
 		_retirar_bajo_el_mouse(sala)
+	elif evento.keycode == KEY_F5:
+		GameManager.avisar("Partida guardada." if SaveManager.guardar() == OK
+			else "No se pudo guardar.")
+	elif evento.keycode == KEY_F9:
+		GameManager.avisar("Partida cargada." if SaveManager.cargar() == OK
+			else "No hay partida guardada.")
 
 
 ## Coloca una silla en la celda bajo el mouse y reporta el resultado.

@@ -360,7 +360,7 @@ class_name SaveGame extends Resource
 @export var version_formato: int = 1
 @export var timestamp_guardado: int
 @export var sala_actual: String                 # ruta al .tscn
-@export var posicion_jugador: Vector2
+@export var celda_jugador: Vector2i             # la celda, no la posicion de mundo
 @export var apariencia: Dictionary
 @export var inventario: Array[InventorySlot] = []
 @export var equipo: Dictionary = {}             # slot -> ItemInstance
@@ -571,18 +571,20 @@ func from_dict(d: Dictionary) -> void
 ### 2.8 `SaveManager extends Node`
 
 ```gdscript
-extends Node   # autoload: SaveManager, ultimo (D9)
+extends Node   # autoload: SaveManager, ultimo (D9)   # IMPLEMENTADO (paso 10)
 
 signal guardado_completado
 signal carga_completada
 
-const RUTA := "user://partida.tres"
+const RUTA := "user://partida.json"   # D21
+const VERSION_ACTUAL := 1
 
 func guardar() -> Error
 func cargar() -> Error
 func existe_partida() -> bool
 func borrar() -> void
-func _migrar(save: SaveGame) -> SaveGame         # segun version_formato
+func _migrar(datos: Dictionary) -> Dictionary    # segun version_formato
+func _aplicar(partida: SaveGame) -> void
 ```
 
 **Orquesta, no serializa.** Pide `to_dict()` a cada manager y lo mete en el `SaveGame`. Agregar un campo a `InventoryManager` no debería obligar a tocar este archivo.

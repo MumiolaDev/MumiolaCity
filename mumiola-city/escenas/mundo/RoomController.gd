@@ -200,6 +200,57 @@ func retirar_objeto(obj : WorldObject) -> ItemInstance:
 	return inst
 
 
+## Vuelca los objetos colocados a un diccionario serializable.
+##
+## Guarda el id de la definicion y no una referencia al recurso: la definicion se
+## resuelve contra el catalogo del momento de cargar, asi que editar un item no
+## invalida las partidas viejas (1.8 de CLASES.md). Es el mismo criterio que D18
+## aplica a las piezas de escenario.
+##
+## Los Vector2i salen como arrays de dos enteros porque JSON no tiene vectores.
+func to_dict() -> Dictionary:
+	var lista : Array = []
+	for obj in objetos():
+		if obj.instancia == null:
+			continue
+		lista.append({
+			"item": String(obj.instancia.definicion_id),
+			"celda": [obj.celda_origen.x, obj.celda_origen.y],
+			"rotacion": obj.rotacion_grilla,
+			"contenido": String(obj.instancia.contenido_id),
+			"contenido_cantidad": obj.instancia.contenido_cantidad,
+		})
+	return {"objetos": lista}
+
+
+## Repuebla la sala desde un diccionario, reemplazando lo que hubiera.
+##
+## Vacia primero: cargar una partida sobre una sala que ya tiene muebles los
+## sumaria a los guardados en vez de reemplazarlos.
+##
+## Los numeros llegan como float desde JSON, que no distingue enteros, de ahi los
+## int(). Sin eso una celda seria Vector2i(3.0, 4.0) y fallaria el tipado.
+func from_dict(d : Dictionary) -> void:
+	for obj in objetos():
+		retirar_objeto(obj)
+
+	for entrada in d.get("objetos", []):
+		var inst := ItemInstance.new()
+		inst.definicion_id = StringName(entrada.get("item", ""))
+		inst.contenido_id = StringName(entrada.get("contenido", ""))
+		inst.contenido_cantidad = int(entrada.get("contenido_cantidad", 0))
+
+		var celda : Array = entrada.get("celda", [0, 0])
+		if celda.size() != 2:
+			continue
+
+		var resultado := colocar_objeto(
+			inst, Vector2i(int(celda[0]), int(celda[1])), int(entrada.get("rotacion", 0)))
+		if not Errores.ok(resultado):
+			push_warning("RoomController '%s': no se pudo restaurar '%s' en %s: %s"
+				% [nombre_sala, inst.definicion_id, celda, Errores.mensaje(resultado)])
+
+
 ## Crea el nodo del objeto: su escena propia si la tiene, o un WorldObject pelado.
 func _instanciar(def : ItemDefinition) -> WorldObject:
 	if def.escena_mundo != null:

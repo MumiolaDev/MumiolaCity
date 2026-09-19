@@ -349,7 +349,7 @@ La tabla más importante del documento. La mayoría de los bugs de un juego de e
 
 ---
 
-## 6. Decisiones de arquitectura: trece cerradas, siete pendientes
+## 6. Decisiones de arquitectura: catorce cerradas, siete pendientes
 
 Once decisiones que hay que cerrar antes de escribir el sistema correspondiente, ordenadas por lo caro que sale cambiarlas después. **Cinco ya están cerradas** — D1, D2 y D11 aplicadas en `items.json`, D3 resuelta acá abajo, y D7 postergada a la fase 2 a propósito — y **D5 tiene el lado de los datos hecho y el del código pendiente**. Las demás siguen abiertas.
 
@@ -629,6 +629,20 @@ Eran dos cosas distintas y se resolvieron por separado.
 En la práctica eso significa: o el reemplazo se modela sobre el rig de KayKit, o hay que reorientar las animaciones al rig nuevo. Comprar o descargar un modelo «bonito» con otro esqueleto no es un cambio de assets sino de todo el sistema de animación.
 
 **Lo que ya protege esta decisión.** `AvatarComposer.animaciones` traduce nombres lógicos del juego (`&"caminar"`) a nombres del pack (`"Rig_Medium_MovementBasic/Walking_A"`). Ningún otro script del juego nombra una animación de KayKit, así que cambiar de pack —manteniendo el rig— es reescribir ese diccionario y nada más.
+
+---
+
+### D21 — El guardado es JSON, no un `.tres` · **decidida**
+
+**La alternativa era más corta.** `ResourceSaver.save()` sobre un `SaveGame` con todo en `@export` serializa solo, sin escribir una línea de conversión.
+
+**Decisión: JSON.** Un `.tres` cargado desde afuera **puede contener rutas de script**, y este juego apunta a ser en línea (**D17**): algún día el guardado va a llegar de un servidor o de otro jugador. JSON es inspeccionable, portable y no ejecuta nada. El `SaveGame` sigue existiendo como clase tipada en memoria; la conversión a diccionario ocurre solo en el borde, dentro de `SaveManager`.
+
+**El costo conviene tenerlo presente porque es una red que se pierde.** Con `ResourceSaver`, que `estado_runtime` quedara fuera del guardado era *automático*: no lleva `@export`, así que el serializador no lo veía. Con JSON hay que ser deliberado sobre qué se escribe, y la regla de **D3** pasa de estar garantizada por el motor a depender de quien escriba cada `to_dict()`.
+
+**Dos detalles del formato que muerden.** JSON no tiene vectores, así que todo `Vector2i` viaja como array de dos enteros. Y **todo número vuelve como float**, incluso los que se escribieron enteros: sin `int()` al leer, una celda sería `Vector2i(3.0, 4.0)` y fallaría el tipado.
+
+**`version_formato` desde el primer día**, y `_migrar()` existe aunque hoy no migre nada. Cuando cambie el esquema — y va a cambiar, porque quedan siete decisiones abiertas — el lugar donde va el arreglo ya está decidido, y no hay que inventarlo con guardados rotos sobre la mesa.
 
 ---
 
