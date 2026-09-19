@@ -505,44 +505,47 @@ func from_dict(d: Dictionary) -> void
 
 **`agregar_xp` con una habilidad desconocida debe hacer ruido**, no crear la entrada en silencio: es la red que atrapa el desync de tildes de **D4** si alguien pasa `"Minería"` en vez de `&"mineria"`.
 
-### 2.4 `InventoryManager extends Node`
-
-El sistema por el que pasa todo el juego, y por eso el más caro de cambiar tarde.
+### 2.4 `InventoryManager extends Node` — **IMPLEMENTADO (fase 2a)**
 
 ```gdscript
 extends Node   # autoload: InventoryManager
 
-signal inventario_cambiado
-signal item_agregado(id: StringName, cantidad: int)
-signal equipo_cambiado(slot: StringName, instancia: ItemInstance)
-signal inventario_lleno
+signal inventario_cambiado()
 
-var _slots: Array[InventorySlot] = []
-var _equipo: Dictionary = {}             # StringName -> ItemInstance
-@export var capacidad_peso: float = 100.0
+const CASILLAS := 40
+const PESO_MAXIMO := 200.0
 
-func agregar(id: StringName, cantidad: int = 1) -> int    # devuelve lo NO agregado
-func agregar_instancia(inst: ItemInstance) -> bool
-func quitar(id: StringName, cantidad: int = 1) -> bool
-func quitar_instancia(inst: ItemInstance) -> bool
-func cuenta(id: StringName) -> int
-func cuenta_familia(familia: StringName) -> int           # (D2/D10)
-func primera_instancia_de_familia(familia: StringName, vacia: bool = true) -> ItemInstance
-func tiene_espacio(id: StringName, cantidad: int) -> bool
-func peso_actual() -> float
-func equipar(inst: ItemInstance, slot: StringName) -> bool
-func equipado_en(slot: StringName) -> ItemInstance
+# Consulta
+func slots() -> Array[InventorySlot]              # copia, no la lista viva
+func cantidad_de(id: StringName) -> int
+func tiene(id: StringName, cantidad := 1) -> bool
+func cantidad_de_familia(familia: StringName) -> int
+func buscar_familia(familia: StringName) -> InventorySlot
+func peso_total() -> float
+
+# Escritura — todas devuelven Errores.Codigo (D16)
+func agregar(id: StringName, cantidad := 1) -> Errores.Codigo
+func agregar_instancia(inst: ItemInstance) -> Errores.Codigo
+func quitar(id: StringName, cantidad := 1) -> Errores.Codigo
+func quitar_familia(familia: StringName, cantidad := 1) -> Errores.Codigo
+func quitar_instancia(inst: ItemInstance) -> ItemInstance
+func vaciar() -> void
+
 func to_dict() -> Dictionary
 func from_dict(d: Dictionary) -> void
 ```
 
-**`agregar` devuelve `int`, no `bool`.** Recolectar 5 maderas con espacio para 3 no es "éxito" ni "fracaso": son 3 agregadas y 2 que se pierden o se quedan en el suelo. Un `bool` obliga a decidir esa política en cada sitio de llamada; el `int` la deja explícita.
+**Acá aterriza D1.** La lista guarda dos formas distintas: una casilla con `cantidad` para lo apilable, y una casilla con `instancia` para lo que tiene estado propio. Noventa y nueve tomates idénticos son una casilla; *esta* taza servida con café es la suya.
 
-**`tiene_espacio` antes de consumir un nodo de recolección**, no después (§4.1 de `SISTEMAS.md`).
+**`agregar()` decide la forma, no quien llama.** Si el ítem tiene estado propio crea una instancia por unidad en vez de apilarlas, así nadie tiene que acordarse de cuál de los dos métodos corresponde para cada ítem.
 
-**`agregar_instancia` es el punto donde el mundo vuelve a ser inventario (D3).** Recibe la instancia que traía un `WorldObject` y decide su forma: si `definicion.tiene_estado_propio()` es `false`, la colapsa en un stack normal y descarta la instancia; si es `true`, la guarda como slot único. Es el único sitio del juego donde ocurre esa conversión, y por eso es el único que hay que revisar si algún día algo llega al inventario sin su estado.
+**Nada se escribe a medias.** `agregar()` comprueba peso y casillas *antes* de tocar nada, y `quitar()` no saca nada si no hay suficiente: consumir la mitad de una receta y fallar después deja al jugador peor que si no hubiera intentado.
 
-**Toda mutación pasa por estos métodos.** `_slots` es privado y nadie lo escribe desde fuera; si un sistema necesita algo que no está acá, se agrega un método, no se accede al array.
+**`slots()` devuelve una copia.** Si la interfaz recibiera la lista viva, cualquier widget podría modificar el inventario sin pasar por acá ni emitir la señal — y el bug aparecería como «la UI muestra algo distinto a lo que hay».
+
+**`quitar_instancia()` devuelve la misma instancia**, no una copia: es la que va a quedar dentro del `WorldObject` al colocarla, y la propiedad tiene que ser exclusiva (**D3**).
+
+**Las búsquedas por familia** son lo que permite que una receta pida «cualquier taza» sin enumerarlas, y lo que hace que agregar una taza nueva no obligue a tocar ninguna receta.
 
 ### 2.5 `RecipeManager extends Node`
 

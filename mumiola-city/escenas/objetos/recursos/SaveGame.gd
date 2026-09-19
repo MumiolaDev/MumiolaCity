@@ -29,6 +29,9 @@ extends Resource
 ## Ruta de sala -> lo que to_dict() de esa sala devolvio.
 @export var salas : Dictionary = {}
 
+## Lo que el jugador lleva encima, tal como lo devuelve InventoryManager.
+@export var inventario : Dictionary = {}
+
 
 ## Vuelca el estado a un diccionario listo para serializar.
 ##
@@ -40,6 +43,7 @@ func to_dict() -> Dictionary:
 		"sala_actual": sala_actual,
 		"celda_jugador": [celda_jugador.x, celda_jugador.y],
 		"salas": salas,
+		"inventario": inventario,
 	}
 
 
@@ -58,3 +62,4 @@ func from_dict(d : Dictionary) -> void:
 		celda_jugador = Vector2i(int(celda[0]), int(celda[1]))
 
 	salas = d.get("salas", {})
+	inventario = d.get("inventario", {})
