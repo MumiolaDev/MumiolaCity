@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://buo4hi84tqihd"]
+
+[ext_resource type="PackedScene" uid="uid://cvx7dypcjdpgf" path="res://escenas/objetos/generadas/sarten.tscn" id="1_44ed4"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_c4wjn"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_cevgm"]
+
+[resource]
+script = ExtResource("3_cevgm")
+id = &"sarten"
+nombre = "Sarten"
+descripcion = "Requerida para freir."
+categoria = "utensilio"
+peso = 1.5
+apilable = false
+stack_maximo = 1
+valor_base = 40
+escena_mundo = ExtResource("1_44ed4")

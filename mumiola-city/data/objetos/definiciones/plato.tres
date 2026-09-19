@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://b5liyyvhwsykt"]
+
+[ext_resource type="PackedScene" uid="uid://cf7iwfvlvktw8" path="res://escenas/objetos/generadas/plato.tscn" id="1_7imvp"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_30gvv"]
+[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_gfyq4"]
+[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_6d7y6"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_bvtt3"]
+
+[sub_resource type="Resource" id="Resource_24bjc"]
+script = ExtResource("3_gfyq4")
+id = &"plato_sucio"
+
+[sub_resource type="Resource" id="Resource_nn74b"]
+script = ExtResource("4_6d7y6")
+insumos = Array[ExtResource("3_gfyq4")]([SubResource("Resource_24bjc")])
+habilidad = &"cocina"
+xp_otorgada = 1
+tiempo_crafteo_seg = 4.0
+estacion = &"fregadero"
+
+[resource]
+script = ExtResource("5_bvtt3")
+id = &"plato"
+nombre = "Plato"
+descripcion = "Contiene un plato terminado. Se ensucia al usarse."
+categoria = "utensilio"
+peso = 0.4
+apilable = false
+stack_maximo = 1
+valor_base = 12
+familia = &"plato"
+receta = SubResource("Resource_nn74b")
+escena_mundo = ExtResource("1_7imvp")

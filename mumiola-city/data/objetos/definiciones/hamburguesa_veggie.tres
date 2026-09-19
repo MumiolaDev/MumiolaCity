@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://bgdcq5o8c5vgq"]
+
+[ext_resource type="PackedScene" uid="uid://c8shf3744x8e" path="res://escenas/objetos/generadas/hamburguesa_veggie.tscn" id="1_dp8w4"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_hyfp8"]
+[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_noj1o"]
+[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_exbes"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_fjuwj"]
+
+[sub_resource type="Resource" id="Resource_fnpy0"]
+script = ExtResource("3_noj1o")
+id = &"pan_hamburguesa"
+
+[sub_resource type="Resource" id="Resource_sdpgp"]
+script = ExtResource("3_noj1o")
+id = &"papa_pure"
+
+[sub_resource type="Resource" id="Resource_mjhdp"]
+script = ExtResource("3_noj1o")
+id = &"tomate_rodajas"
+
+[sub_resource type="Resource" id="Resource_d382c"]
+script = ExtResource("3_noj1o")
+id = &"lechuga_picada"
+
+[sub_resource type="Resource" id="Resource_3kmxv"]
+script = ExtResource("3_noj1o")
+id = &"queso_fetas"
+
+[sub_resource type="Resource" id="Resource_mo6ce"]
+script = ExtResource("3_noj1o")
+id = &"plato"
+consume = false
+
+[sub_resource type="Resource" id="Resource_5s26e"]
+script = ExtResource("4_exbes")
+insumos = Array[ExtResource("3_noj1o")]([SubResource("Resource_fnpy0"), SubResource("Resource_sdpgp"), SubResource("Resource_mjhdp"), SubResource("Resource_d382c"), SubResource("Resource_3kmxv"), SubResource("Resource_mo6ce")])
+habilidad = &"cocina"
+nivel_requerido = 4
+xp_otorgada = 24
+tiempo_crafteo_seg = 12.0
+
+[resource]
+script = ExtResource("5_fjuwj")
+id = &"hamburguesa_veggie"
+nombre = "Hamburguesa vegetariana"
+descripcion = "Plato terminado sin carne comprada: el mas rentable si tenes huerta."
+categoria = "consumible"
+peso = 0.2
+apilable = false
+stack_maximo = 1
+valor_base = 86
+comprable = false
+receta = SubResource("Resource_5s26e")
+escena_mundo = ExtResource("1_dp8w4")

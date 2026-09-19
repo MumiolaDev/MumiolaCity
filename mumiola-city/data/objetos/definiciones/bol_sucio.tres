@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://c3rx5r4f1fbry"]
+
+[ext_resource type="PackedScene" uid="uid://dhmgaufygxrht" path="res://escenas/objetos/generadas/bol_sucio.tscn" id="1_urw3m"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_hkoxc"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_syyay"]
+
+[resource]
+script = ExtResource("3_syyay")
+id = &"bol_sucio"
+nombre = "Bol sucio"
+descripcion = "Se lava en el fregadero."
+categoria = "utensilio"
+peso = 0.4
+apilable = false
+stack_maximo = 1
+valor_base = 0
+comprable = false
+vendible = false
+escena_mundo = ExtResource("1_urw3m")

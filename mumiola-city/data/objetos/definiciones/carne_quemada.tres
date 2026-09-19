@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://emh523kppaof"]
+
+[ext_resource type="PackedScene" uid="uid://c1fxrh83sej4f" path="res://escenas/objetos/generadas/carne_quemada.tscn" id="1_ernuu"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_i7myv"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_jsvxl"]
+
+[resource]
+script = ExtResource("3_jsvxl")
+id = &"carne_quemada"
+nombre = "Carne quemada"
+descripcion = "El resultado de cocinar sin nivel. No vale nada y no se puede vender."
+categoria = "intermedio"
+peso = 0.2
+valor_base = 0
+comprable = false
+vendible = false
+escena_mundo = ExtResource("1_ernuu")

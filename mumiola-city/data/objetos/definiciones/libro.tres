@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://beaqt0tikow2o"]
+
+[ext_resource type="PackedScene" uid="uid://dj7cpmq4e8s7h" path="res://escenas/objetos/generadas/libro.tscn" id="1_n4517"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_jy2x5"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_os2po"]
+
+[resource]
+script = ExtResource("3_os2po")
+id = &"libro"
+nombre = "Libro"
+descripcion = "Decoracion. Se compra al NPC."
+peso = 2.0
+apilable = false
+stack_maximo = 1
+valor_base = 22
+rotable = true
+escena_mundo = ExtResource("1_n4517")

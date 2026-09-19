@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://dxv4iwn742158"]
+
+[ext_resource type="PackedScene" uid="uid://bx3aebwxytepi" path="res://escenas/objetos/generadas/lechuga.tscn" id="1_trwwn"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_uvxxd"]
+[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_fx56i"]
+[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_adbna"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_ns4l4"]
+
+[sub_resource type="Resource" id="Resource_f382d"]
+script = ExtResource("3_fx56i")
+id = &"semilla_lechuga"
+
+[sub_resource type="Resource" id="Resource_0or4p"]
+script = ExtResource("4_adbna")
+insumos = Array[ExtResource("3_fx56i")]([SubResource("Resource_f382d")])
+habilidad = &"agricultura"
+xp_otorgada = 6
+tiempo_crafteo_seg = 120.0
+estacion = &"parcela"
+
+[resource]
+script = ExtResource("5_ns4l4")
+id = &"lechuga"
+nombre = "Lechuga"
+descripcion = "Cosechada en la parcela. Se puede cortar o dejar a la vista."
+categoria = "materia_prima"
+peso = 0.2
+valor_base = 7
+comprable = false
+receta = SubResource("Resource_0or4p")
+escena_mundo = ExtResource("1_trwwn")

@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://bbow7cisqp0ae"]
+
+[ext_resource type="PackedScene" uid="uid://se6gfqn4b0md" path="res://escenas/objetos/generadas/tomate_rodajas.tscn" id="1_pd5ly"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_q06ee"]
+[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_hvcvk"]
+[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_80jr2"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_el8vq"]
+
+[sub_resource type="Resource" id="Resource_i5yhw"]
+script = ExtResource("3_hvcvk")
+id = &"tomate"
+
+[sub_resource type="Resource" id="Resource_baetu"]
+script = ExtResource("3_hvcvk")
+id = &"cuchillo"
+consume = false
+
+[sub_resource type="Resource" id="Resource_x3ubn"]
+script = ExtResource("3_hvcvk")
+id = &"tabla_cortar"
+consume = false
+
+[sub_resource type="Resource" id="Resource_g62uk"]
+script = ExtResource("4_80jr2")
+insumos = Array[ExtResource("3_hvcvk")]([SubResource("Resource_i5yhw"), SubResource("Resource_baetu"), SubResource("Resource_x3ubn")])
+habilidad = &"cocina"
+xp_otorgada = 4
+tiempo_crafteo_seg = 3.0
+
+[resource]
+script = ExtResource("5_el8vq")
+id = &"tomate_rodajas"
+nombre = "Tomate en rodajas"
+categoria = "intermedio"
+peso = 0.2
+valor_base = 11
+comprable = false
+receta = SubResource("Resource_g62uk")
+escena_mundo = ExtResource("1_pd5ly")

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://dkh8p7tfnftap"]
+
+[ext_resource type="PackedScene" uid="uid://bjk77hebv0nh" path="res://escenas/objetos/generadas/olla.tscn" id="1_iu63a"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_5knie"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_80dn8"]
+
+[resource]
+script = ExtResource("3_80dn8")
+id = &"olla"
+nombre = "Olla"
+descripcion = "Requerida para hervir y para el guiso."
+categoria = "utensilio"
+peso = 2.0
+apilable = false
+stack_maximo = 1
+valor_base = 55
+familia = &"olla"
+escena_mundo = ExtResource("1_iu63a")

@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://b0edw7qcsegce"]
+
+[ext_resource type="PackedScene" uid="uid://c7lqteqc7mfb2" path="res://escenas/objetos/generadas/tomate.tscn" id="1_oap1v"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_uv1h1"]
+[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_fhtby"]
+[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_yc5le"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_n5tsd"]
+
+[sub_resource type="Resource" id="Resource_a1hp3"]
+script = ExtResource("3_fhtby")
+id = &"semilla_tomate"
+
+[sub_resource type="Resource" id="Resource_s4iux"]
+script = ExtResource("4_yc5le")
+insumos = Array[ExtResource("3_fhtby")]([SubResource("Resource_a1hp3")])
+habilidad = &"agricultura"
+xp_otorgada = 6
+tiempo_crafteo_seg = 120.0
+estacion = &"parcela"
+
+[resource]
+script = ExtResource("5_n5tsd")
+id = &"tomate"
+nombre = "Tomate"
+descripcion = "Cosechada en la parcela. Se puede cortar o dejar a la vista."
+categoria = "materia_prima"
+peso = 0.2
+valor_base = 7
+comprable = false
+receta = SubResource("Resource_s4iux")
+escena_mundo = ExtResource("1_oap1v")

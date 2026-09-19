@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://bfh4egjyp7nrh"]
+
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="1_5yeh1"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="2_iey51"]
+
+[resource]
+script = ExtResource("2_iey51")
+id = &"serrucho"
+nombre = "Serrucho"
+descripcion = "Requerido en el taller."
+categoria = "utensilio"
+peso = 1.2
+apilable = false
+stack_maximo = 1
+valor_base = 45
+colocable = false

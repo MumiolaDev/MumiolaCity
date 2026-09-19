@@ -6,12 +6,12 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_0s2hi"]
 size = Vector3(0.9, 1, 0.9)
 
-[node name="Hamburguesa" type="Area3D" unique_id=1830731485]
+[node name="Hamburguesa" type="Area3D" unique_id=597613787]
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("1_ysou7")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=2085830263]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1900372828]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("BoxShape3D_0s2hi")
 

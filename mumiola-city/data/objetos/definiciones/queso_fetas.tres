@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://eoup5v2e8ox0"]
+
+[ext_resource type="PackedScene" uid="uid://lhwkoe7bv4xc" path="res://escenas/objetos/generadas/queso_fetas.tscn" id="1_tc5ps"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_vht5k"]
+[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_ma3q7"]
+[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_cbjdb"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_eg8sx"]
+
+[sub_resource type="Resource" id="Resource_qt2r0"]
+script = ExtResource("3_ma3q7")
+id = &"queso"
+
+[sub_resource type="Resource" id="Resource_44hwg"]
+script = ExtResource("3_ma3q7")
+id = &"cuchillo"
+consume = false
+
+[sub_resource type="Resource" id="Resource_03eqw"]
+script = ExtResource("3_ma3q7")
+id = &"tabla_cortar"
+consume = false
+
+[sub_resource type="Resource" id="Resource_1nj0y"]
+script = ExtResource("4_cbjdb")
+insumos = Array[ExtResource("3_ma3q7")]([SubResource("Resource_qt2r0"), SubResource("Resource_44hwg"), SubResource("Resource_03eqw")])
+habilidad = &"cocina"
+xp_otorgada = 4
+tiempo_crafteo_seg = 3.0
+
+[resource]
+script = ExtResource("5_eg8sx")
+id = &"queso_fetas"
+nombre = "Queso en fetas"
+categoria = "intermedio"
+peso = 0.2
+valor_base = 20
+comprable = false
+receta = SubResource("Resource_1nj0y")
+escena_mundo = ExtResource("1_tc5ps")

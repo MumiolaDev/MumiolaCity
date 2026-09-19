@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://w6vhlesfgox5"]
+
+[ext_resource type="PackedScene" uid="uid://d2dmjnj1wstyf" path="res://escenas/objetos/generadas/lechuga_picada.tscn" id="1_enkg5"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_16nwg"]
+[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_eq8r4"]
+[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_4mfmc"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_o4dmt"]
+
+[sub_resource type="Resource" id="Resource_jykvn"]
+script = ExtResource("3_eq8r4")
+id = &"lechuga"
+
+[sub_resource type="Resource" id="Resource_5obsu"]
+script = ExtResource("3_eq8r4")
+id = &"cuchillo"
+consume = false
+
+[sub_resource type="Resource" id="Resource_f885k"]
+script = ExtResource("3_eq8r4")
+id = &"tabla_cortar"
+consume = false
+
+[sub_resource type="Resource" id="Resource_p3cgc"]
+script = ExtResource("4_4mfmc")
+insumos = Array[ExtResource("3_eq8r4")]([SubResource("Resource_jykvn"), SubResource("Resource_5obsu"), SubResource("Resource_f885k")])
+habilidad = &"cocina"
+xp_otorgada = 4
+tiempo_crafteo_seg = 3.0
+
+[resource]
+script = ExtResource("5_o4dmt")
+id = &"lechuga_picada"
+nombre = "Lechuga picada"
+categoria = "intermedio"
+peso = 0.2
+valor_base = 11
+comprable = false
+receta = SubResource("Resource_p3cgc")
+escena_mundo = ExtResource("1_enkg5")

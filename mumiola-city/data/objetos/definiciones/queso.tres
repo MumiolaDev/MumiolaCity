@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://dr41aqfusa15"]
+
+[ext_resource type="PackedScene" uid="uid://bxcpdvv3x13i5" path="res://escenas/objetos/generadas/queso.tscn" id="1_8eh8k"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_ae25l"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_bspjs"]
+
+[resource]
+script = ExtResource("3_bspjs")
+id = &"queso"
+nombre = "Queso"
+descripcion = "Insumo lacteo. Todavia no se craftea."
+categoria = "intermedio"
+peso = 0.2
+valor_base = 9
+escena_mundo = ExtResource("1_8eh8k")

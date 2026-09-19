@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://dnjlpwyw0mbkc"]
+
+[ext_resource type="PackedScene" uid="uid://hqiwxtwm6bax" path="res://escenas/objetos/generadas/carne_cocida.tscn" id="1_1hsvc"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_0lwn7"]
+[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_djh2d"]
+[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_8t52m"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_dwimi"]
+
+[sub_resource type="Resource" id="Resource_tudey"]
+script = ExtResource("3_djh2d")
+id = &"carne_cruda"
+
+[sub_resource type="Resource" id="Resource_gdj31"]
+script = ExtResource("3_djh2d")
+id = &"sarten"
+consume = false
+
+[sub_resource type="Resource" id="Resource_8r032"]
+script = ExtResource("4_8t52m")
+insumos = Array[ExtResource("3_djh2d")]([SubResource("Resource_tudey"), SubResource("Resource_gdj31")])
+habilidad = &"cocina"
+nivel_requerido = 2
+xp_otorgada = 8
+tiempo_crafteo_seg = 6.0
+estacion = &"estufa"
+resultado_fallo = &"carne_quemada"
+
+[resource]
+script = ExtResource("5_dwimi")
+id = &"carne_cocida"
+nombre = "Carne cocida"
+descripcion = "Se quema si la cocina alguien sin nivel suficiente."
+categoria = "intermedio"
+peso = 0.2
+valor_base = 32
+comprable = false
+receta = SubResource("Resource_8r032")
+escena_mundo = ExtResource("1_1hsvc")

@@ -6,12 +6,12 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_k8h8l"]
 size = Vector3(0.9, 1, 1.9)
 
-[node name="Cama" type="Area3D" unique_id=1384914535]
+[node name="Cama" type="Area3D" unique_id=828118528]
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("1_kttsv")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1331006502]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=257179508]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("BoxShape3D_k8h8l")
 

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://ukfxj4qkojwx"]
+
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="1_droo5"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="2_esktm"]
+
+[resource]
+script = ExtResource("2_esktm")
+id = &"semilla_lechuga"
+nombre = "Semilla de lechuga"
+descripcion = "Se planta en una parcela. La compra el NPC de abastecimiento."
+categoria = "materia_prima"
+peso = 0.05
+valor_base = 2
+colocable = false

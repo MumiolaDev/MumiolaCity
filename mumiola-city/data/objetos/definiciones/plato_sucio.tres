@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://ywpeltl6n7bw"]
+
+[ext_resource type="PackedScene" uid="uid://cde3qhsvy74tr" path="res://escenas/objetos/generadas/plato_sucio.tscn" id="1_cvgt6"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_xis8v"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_fxtmo"]
+
+[resource]
+script = ExtResource("3_fxtmo")
+id = &"plato_sucio"
+nombre = "Plato sucio"
+descripcion = "Se lava en el fregadero."
+categoria = "utensilio"
+peso = 0.4
+apilable = false
+stack_maximo = 1
+valor_base = 0
+comprable = false
+vendible = false
+escena_mundo = ExtResource("1_cvgt6")

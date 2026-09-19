@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://bttgwm70h7ps4"]
+
+[ext_resource type="PackedScene" uid="uid://biag3xab0y4fj" path="res://escenas/objetos/generadas/pan_hamburguesa.tscn" id="1_smh3v"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_3x21t"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_12wms"]
+
+[resource]
+script = ExtResource("3_12wms")
+id = &"pan_hamburguesa"
+nombre = "Pan de hamburguesa"
+descripcion = "Insumo de panaderia. Todavia no se craftea."
+categoria = "intermedio"
+peso = 0.2
+valor_base = 5
+escena_mundo = ExtResource("1_smh3v")
