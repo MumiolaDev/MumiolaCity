@@ -4,7 +4,7 @@
 >
 > **Formato por script:** **Definir** (decisiones de diseño a cerrar antes de escribir código — cambiarlas después de implementado sale caro) → **Implementar** (qué construir) → **Verificar** (cómo comprobar, con tus propios ojos o con un print, que quedó bien antes de pasar al siguiente). "Listo para el siguiente script" es el criterio de salida de cada bloque.
 >
-> Por ahora se detalla en profundidad **solo el primer script** (`IsoGrid`), que es el que estás por empezar. El resto de fase 1 se deja como un adelanto liviano de qué se viene, y se detalla igual de a fondo cuando llegue su turno — hacerlo ahora para los 32 sería trabajo especulativo: varias de esas decisiones (ej. cómo exactamente `PlayerController` habla con `IsoGrid`) se van a terminar de cerrar recién al implementar lo anterior, no antes.
+> Por ahora se detalla en profundidad **solo el primer script** (`IsoGrid`), que es el que estás por empezar. El resto de fase 1 se deja como un adelanto liviano de qué se viene, y se detalla igual de a fondo cuando llegue su turno — hacerlo ahora para los 32 sería trabajo especulativo: varias de esas decisiones (ej. cómo exactamente `PersonajeControlador` habla con `IsoGrid`) se van a terminar de cerrar recién al implementar lo anterior, no antes.
 
 ---
 
@@ -43,7 +43,7 @@ Con el mundo en 3D, **la proyección isométrica dejó de ser un problema de est
   - `celdas_de(origen: Vector2i, tamano: Vector2i) -> Array[Vector2i]` — el helper que expande un 2×1 a sus celdas; tenerlo aparte evita repetir el mismo bucle mal en tres sitios
   - `esta_libre(origen, tamano) -> bool`
   - `ocupar(origen, tamano, obj) -> bool`
-- **Inmediatamente después:** `objeto_en(celda)` (lo necesita `ContextMenuUI`), `liberar_objeto(obj)` (recibe el **objeto**, no la celda: un mueble de 2×1 ocupa dos entradas y liberar por celda deja la otra colgada) y `celdas_bloqueadas()` (ocupadas **más** las celdas sin suelo, para alimentar el `AStarGrid2D`).
+- **Inmediatamente después:** `objeto_en(celda)` (lo necesita `ContextMenuUI`), `liberar_objeto(obj)` (recibe el **objeto**, no la celda: un mueble de 2×1 ocupa dos entradas y liberar por celda deja la otra colgada).
 - El escenario se pinta con la herramienta nativa del `GridMap` desde el editor. No hace falta código para verlo.
 
 ### Verificar
@@ -59,7 +59,7 @@ Los tests 3 a 6 viven en **`escenas/mundo/test/test_isogrid.gd`**: un `Node3D` c
 
 El script no usa `assert()` a propósito — corta en el primer fallo y desaparece en las builds de release — y busca las celdas libres en vez de tenerlas escritas, para que repintar la sala no haga fallar un test sin que nada esté roto.
 
-**Listo para pasar a `PlayerController` cuando:** la sala se ve bien en el editor con la cámara isométrica puesta, y los cuatro tests de ocupación y límites pasan. Todavía no hace falta que nada se mueva — eso es, literalmente, el siguiente script.
+**Listo para pasar a `PersonajeControlador` cuando:** la sala se ve bien en el editor con la cámara isométrica puesta, y los cuatro tests de ocupación y límites pasan. Todavía no hace falta que nada se mueva — eso es, literalmente, el siguiente script.
 
 ---
 
@@ -67,7 +67,7 @@ El script no usa `assert()` a propósito — corta en el primer fallo y desapare
 
 | # | Script | Qué vas a tener que definir antes de implementarlo |
 |---|---|---|
-| 2 | `PlayerController` | Las acciones del **Input Map** (`mover_izq`, `mover_der`, `interactuar`...) se crean en Project Settings, no en un script — no hay `InputController` propio. Definir también si el movimiento es libre (`velocity` + `move_and_slide()`) o click-to-walk con pathfinding: para el estilo Habbo, lo segundo, apoyado en `AStarGrid2D` alimentado con las celdas ocupadas de `IsoGrid`. |
+| 2 | `PersonajeControlador` | Las acciones del **Input Map** (`mover_izq`, `mover_der`, `interactuar`...) se crean en Project Settings, no en un script — no hay `InputController` propio. Definir también si el movimiento es libre (`velocity` + `move_and_slide()`) o click-to-walk con pathfinding: para el estilo Habbo, lo segundo, apoyado en `AStarGrid2D` alimentado con las celdas ocupadas de `IsoGrid`. |
 | 3 | `AvatarComposer` | Importar las animaciones como **Animation Library**, no como escena — si no, terminás con ocho maniquíes y ninguna animación donde la necesitás. El `AnimationPlayer` se agrega a mano (el maniquí no trae uno) y su `root_node` tiene que resolver el prefijo de las pistas, que en el pack de KayKit es el nodo **por encima** de `Rig_Medium`. Definir también la tabla de nombres lógicos a nombres del pack. |
 | 4 | `RoomController` | Cómo se identifica una sala. Como cada sala **es** un `.tscn`, alcanza con referenciar `PackedScene` directamente; un recurso `RoomDefinition` sería sobre-ingeniería en esta fase. |
 | 5 | `WorldObject` | Con qué primer objeto de prueba lo validás — la silla es la candidata obvia, porque ya vas a necesitar `InteractionBehavior` al mismo tiempo. La `CollisionShape3D` del `Area3D` no necesita seguir la malla: como la ocupación la lleva `IsoGrid`, un `BoxShape3D` del tamaño de la celda alcanza y es más barato. |

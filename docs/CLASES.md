@@ -427,7 +427,7 @@ func cargar_sala(escena: PackedScene) -> RoomController
 
 **Un autoload sobrevive a los cambios de escena**, así que todo lo que guarde son referencias que pueden quedar colgando. `registrar_contenedor()` limpia la sala actual y todo acceso pasa por `is_instance_valid()`: una referencia muerta acá no da error, devuelve basura.
 
-**Quién registra a quién.** `GameManager` no busca al jugador con `get_node("/root/...")` — el `PlayerController` se registra a sí mismo en su `_ready()`. Así el manager no depende de la forma del árbol de escenas, que cambia cada vez que se reorganiza una sala.
+**Quién registra a quién.** `GameManager` no busca al jugador con `get_node("/root/...")` — el `PersonajeControlador` se registra a sí mismo en su `_ready()`. Así el manager no depende de la forma del árbol de escenas, que cambia cada vez que se reorganiza una sala.
 
 ### 2.3 `SkillManager extends Node`
 
@@ -636,7 +636,6 @@ func celda_valida(celda: Vector2i) -> bool          # hay suelo pintado?
 func hay_pared(celda: Vector2i) -> bool
 func esta_libre(origen: Vector2i, size := Vector2i.ONE, rotacion := 0) -> bool
 func motivo_bloqueo(origen: Vector2i, size := Vector2i.ONE, rotacion := 0) -> Errores.Codigo
-func celdas_bloqueadas() -> Array[Vector2i]
 func recalcular_paredes() -> void                   # tras repintar paredes en runtime
 
 # Ocupacion
@@ -673,12 +672,12 @@ func ruta(origen: Vector2i, destino: Vector2i) -> Array[Vector2i]
 
 **`liberar_objeto(obj)` y no `liberar(celda)`.** Liberar por celda obliga a quien llama a saber cuántas celdas ocupaba y cuáles; liberar por objeto lo resuelve la grilla, que ya lo sabe. Es un método menos propenso a dejar celdas fantasma ocupadas.
 
-**Todo cambio de ocupación tiene que invalidar el `AStarGrid2D` del `PlayerController`** — el bug más previsible de la fase 4 (§3.1 de `SISTEMAS.md`). Emitir una señal `ocupacion_cambiada(celda)` es más barato que reconstruir la grilla entera.
+**Todo cambio de ocupación tiene que invalidar el `AStarGrid2D` del `PersonajeControlador`** — el bug más previsible de la fase 4 (§3.1 de `SISTEMAS.md`). Emitir una señal `ocupacion_cambiada(celda)` es más barato que reconstruir la grilla entera.
 
-### 3.2 `PlayerController extends CharacterBody3D`
+### 3.2 `PersonajeControlador extends CharacterBody3D`
 
 ```gdscript
-class_name PlayerController extends CharacterBody3D
+class_name PersonajeControlador extends CharacterBody3D
 
 signal llego_a_celda(celda: Vector2i)
 signal estado_cambiado(estado: StringName)
@@ -734,7 +733,7 @@ func to_dict() -> Dictionary                     # apariencia serializable
 
 **Pendiente de contenido, no de estructura.** El maniquí de KayKit son seis mallas separadas pesadas al mismo esqueleto (`ArmLeft`, `ArmRight`, `Body`, `Head`, `LegLeft`, `LegRight`), y el esqueleto expone huesos de enganche tipo `handslot.l` para las herramientas. Intercambiar una parte es asignarle otro `Mesh` a su `MeshInstance3D`. Lo que falta son prendas que ponerle: hasta que existan, `actualizar_parte()` queda sin implementar porque no habría con qué probarla.
 
-**`animaciones` traduce nombres lógicos a nombres del pack.** El juego pide `&"caminar"` y el diccionario decide que eso es `"Rig_Medium_MovementBasic/Walking_A"`. Sin esa capa, el nombre de un archivo de KayKit se filtraría hasta `PlayerController`.
+**`animaciones` traduce nombres lógicos a nombres del pack.** El juego pide `&"caminar"` y el diccionario decide que eso es `"Rig_Medium_MovementBasic/Walking_A"`. Sin esa capa, el nombre de un archivo de KayKit se filtraría hasta `PersonajeControlador`.
 
 ### 3.3b `IndicadorCelda extends MeshInstance3D`
 
@@ -1068,7 +1067,7 @@ stateDiagram-v2
 | 0 | `Errores` | Transversal | `RefCounted` | 1 |
 | 0b | `CatalogoPiezas` | Transversal | `RefCounted` | 1 |
 | 1 | `IsoGrid` | Mundo | `Node3D` | 1 |
-| 2 | `PlayerController` | Mundo | `CharacterBody3D` | 1 |
+| 2 | `PersonajeControlador` | Mundo | `CharacterBody3D` | 1 |
 | 3 | `AvatarComposer` | Mundo | `Node3D` | 1 |
 | 4 | `RoomController` | Mundo | `Node3D` | 1 |
 | 5 | `WorldObject` | Mundo | `Area3D` | 1 |

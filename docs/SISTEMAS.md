@@ -15,7 +15,7 @@ Todo el juego cabe en cuatro capas. La regla que las mantiene sanas es una sola:
 | Capa | Qué vive acá | Puede llamar a | Nunca conoce a |
 |---|---|---|---|
 | **UI** (`res://escenas/ui/`) | `InventoryUI`, `CraftingUI`, `SkillsPanelUI`, `MarketUI`, `RoomBuilderUI`, `ContextMenuUI`, `HUD` | Managers, Datos | — |
-| **Mundo** (`res://escenas/mundo/`, `personaje/`) | `RoomController`, `IsoGrid`, `WorldObject`, `GatherableNode`, `CropPlot`, `CraftingStation`, `MarketStall`, `PlayerController`, `AvatarComposer` | Managers, Datos | La UI |
+| **Mundo** (`res://escenas/mundo/`, `personaje/`) | `RoomController`, `IsoGrid`, `WorldObject`, `GatherableNode`, `CropPlot`, `CraftingStation`, `MarketStall`, `PersonajeControlador`, `AvatarComposer` | Managers, Datos | La UI |
 | **Managers** (`res://autoloads/`) | `GameManager`, `SkillManager`, `InventoryManager`, `RecipeManager`, `TimeManager`, `EconomyManager`, `SaveManager`, `ItemDatabase` | Datos, otros managers | La UI **y** el Mundo |
 | **Datos** (`res://data/`) | `ItemDefinition`, `RecipeDefinition`, `SkillDefinition`, `ItemInstance`, `InteractionBehavior` y sus hijos, `GatherTable` | Nada | Todo lo demás |
 
@@ -29,7 +29,7 @@ flowchart TD
     InventoryUI; CraftingUI; SkillsPanelUI; MarketUI; RoomBuilderUI; ContextMenuUI; HUD
   end
   subgraph mundo[Mundo · escenas/mundo + personaje]
-    RoomController; IsoGrid; WorldObject; GatherableNode; CropPlot; CraftingStation; MarketStall; PlayerController; AvatarComposer
+    RoomController; IsoGrid; WorldObject; GatherableNode; CropPlot; CraftingStation; MarketStall; PersonajeControlador; AvatarComposer
   end
   subgraph mgr[Managers · autoloads]
     GameManager; ItemDatabase; SkillManager; InventoryManager; RecipeManager; TimeManager; EconomyManager; SaveManager
@@ -53,7 +53,7 @@ Quién llama a quién, en concreto. Las flechas continuas son llamadas directas;
 
 ```mermaid
 flowchart LR
-  Player[PlayerController]
+  Player[PersonajeControlador]
   Grid[IsoGrid]
   Room[RoomController]
   WObj[WorldObject]
@@ -118,9 +118,9 @@ Para cada sistema: de qué es **dueño** (el dato que solo él puede mutar), qu�
 - **No le corresponde:** saber *qué* es el objeto que ocupa la celda (eso es `ItemDefinition`), ni si el jugador tiene permiso de construir ahí (eso es `RoomController` + nivel de Construcción), ni cómo se dibuja el escenario.
 - **Cómo está construido (revisado el 2026-09-15):** `IsoGrid` es un `Node3D` con dos `GridMap` hijos, `Suelo` y `Paredes`. Una celda de `GridMap` admite un solo ítem, así que pintar una pared sobre una celda de suelo la reemplazaría; la regla de composición es **suelo por dentro, paredes por fuera**, en el anillo de celdas sin suelo. La consecuencia buena es que el área caminable deja de ser un rectángulo declarado y pasa a ser *lo que está pintado*: `celda_valida()` pregunta `get_cell_item()` al suelo, y las salas irregulares salen gratis.
 - **Lo que un jugador puede tocar no va nunca en un `GridMap`.** Una celda no tiene `ItemInstance`, ni `estado_runtime`, ni verbos, ni recibe clics: el `GridMap` es escenario, y todo lo colocado por un jugador es un `WorldObject` (**D3**).
-- **Entra:** peticiones de ocupar/liberar desde `RoomController` y `RoomBuilderUI`. **Sale:** `esta_libre()`, y la lista de celdas bloqueadas que alimenta el `AStarGrid2D` de `PlayerController`.
-- **Punto de acoplamiento a vigilar:** `IsoGrid` es la única fuente de verdad de la ocupación, pero `AStarGrid2D` mantiene su **propia** copia de celdas sólidas. Hay que reconstruirla (o parchear la celda afectada con `set_point_solid()`) cada vez que se coloca o se quita un objeto, o el jugador va a caminar atravesando muebles. Es el bug más previsible de la fase 4. La forma barata de no depender de recordarlo: que `ocupar()` y `liberar_objeto()` emitan `ocupacion_cambiada` y que `PlayerController` se suscriba. Son dos líneas escritas hoy contra una tarde de depuración dentro de seis meses.
-- **`AStarGrid2D` sigue valiendo con el mundo en 3D:** opera sobre una grilla de enteros y no le importa la dimensión del render. Se le pasa `celdas_bloqueadas()` —ocupadas más las que no tienen suelo— y cada celda del resultado se convierte con `celda_a_mundo()`.
+- **Entra:** peticiones de ocupar/liberar desde `RoomController` y `RoomBuilderUI`. **Sale:** `esta_libre()`, y la lista de celdas bloqueadas que alimenta el `AStarGrid2D` de `PersonajeControlador`.
+- **Punto de acoplamiento a vigilar:** `IsoGrid` es la única fuente de verdad de la ocupación, pero `AStarGrid2D` mantiene su **propia** copia de celdas sólidas. Hay que reconstruirla (o parchear la celda afectada con `set_point_solid()`) cada vez que se coloca o se quita un objeto, o el jugador va a caminar atravesando muebles. Es el bug más previsible de la fase 4. **Resuelto de raiz:** el `AStarGrid2D` se mudó adentro de `IsoGrid`, así que `ocupar()` y `liberar_objeto()` lo parchean desde dentro y no hay nada que nadie tenga que recordar. `ocupacion_cambiada` sigue emitiéndose, pero ya no como mecanismo de sincronización sino como aviso para la interfaz de construcción de la fase 4.
+- **`AStarGrid2D` sigue valiendo con el mundo en 3D:** opera sobre una grilla de enteros y no le importa la dimensión del render. Vive **dentro de `IsoGrid`**, uno por sala, y cada celda del camino se convierte con `celda_a_mundo()`.
 
 ### 3.2 Identidad e inventario — `ItemDatabase` + `InventoryManager`
 
@@ -175,7 +175,7 @@ Los seis recorridos que cubren todo el MVP. Si estos seis funcionan, el juego fu
 ```mermaid
 sequenceDiagram
   actor J as Jugador
-  participant P as PlayerController
+  participant P as PersonajeControlador
   participant G as GatherableNode
   participant B as ModifierStack
   participant T as GatherTable
@@ -264,7 +264,7 @@ sequenceDiagram
   participant W as WorldObject
   participant CM as ContextMenuUI
   participant Be as SentarseBehavior
-  participant P as PlayerController
+  participant P as PersonajeControlador
 
   J->>BU: arrastra Silla desde el inventario
   BU->>Gr: mundo_a_celda(mouse)
@@ -836,7 +836,7 @@ Ninguna habilidad se autoabastece, que es el pilar 3 del GDD: Costura necesita L
 Estas seis ya están corregidas en el repo:
 
 - `IMPLEMENTACION.md` hablaba de "los 34 scripts"; `SCRIPTS.md` detalla **32** (34 era el número anterior a eliminar `InputController` y `CameraController`). Las once clases restantes hasta las 43 de `CLASES.md` ya figuran también en `SCRIPTS.md`, en su propia tabla.
-- `IMPLEMENTACION.md` decía "Listo para pasar a `InputController`/`PlayerController`" en el criterio de salida de `IsoGrid`, nombrando un script que el propio documento declara eliminado dos párrafos más abajo.
+- `IMPLEMENTACION.md` decía "Listo para pasar a `InputController`/`PersonajeControlador`" en el criterio de salida de `IsoGrid`, nombrando un script que el propio documento declara eliminado dos párrafos más abajo.
 - `lista_items.md` daba **10 min** de crecimiento al manzano; `items.json` dice `900` segundos, o sea **15 min**.
 - Los campos de presentación de `items.json` (`nombre`, `descripcion`, `fuente`) estaban sin tildes: "Cafe", "Estanteria", "Plastico", "energia". Son texto que ve el jugador, no identificadores. Ahora la convención está escrita en el `_readme` del propio archivo: **ids en ASCII, presentación con ortografía completa.**
 - `efecto` y `bono` usaban esquemas distintos para lo mismo (**D5**), y `habilidad_origen` estaba duplicado en los 18 ítems crafteados (**D11**).

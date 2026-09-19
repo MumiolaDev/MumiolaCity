@@ -241,23 +241,6 @@ func region_usada() -> Rect2i:
 	return Rect2i(minimo, maximo - minimo + Vector2i.ONE)
 
 
-## Devuelve todas las celdas de la region que no se pueden caminar: las que no
-## tienen suelo, las que tienen pared y las ocupadas por un objeto.
-##
-## Recorre la region en vez de listar el diccionario porque "bloqueada" son tres
-## cosas distintas y solo una vive en _ocupadas. Es el mismo criterio que usa
-## esta_libre(), asi que nunca pueden discrepar.
-func celdas_bloqueadas() -> Array[Vector2i]:
-	var celdas : Array[Vector2i] = []
-	var region := region_usada()
-	for x in region.size.x:
-		for z in region.size.y:
-			var celda := region.position + Vector2i(x, z)
-			if not esta_libre(celda):
-				celdas.append(celda)
-	return celdas
-
-
 ## Devuelve el camino de celdas desde origen hasta destino, sin incluir la celda
 ## de origen. Array vacio si no hay camino o si alguno de los extremos no sirve.
 ##

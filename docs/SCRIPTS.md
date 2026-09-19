@@ -33,7 +33,7 @@ Antes de escribir un sistema, hay que revisar si el motor ya lo resuelve — y s
 | 0 | `Errores` | Definición | Global (`class_name`) | `RefCounted` | 1 (transversal) |
 | 0b | `CatalogoPiezas` | Definición | Global (`class_name`) | `RefCounted` | 1 (transversal) |
 | 1 | `IsoGrid` | Nodo/Escena | Escena | `Node3D` | 1 |
-| 2 | `PlayerController` | Nodo/Escena | Escena | `CharacterBody3D` | 1 |
+| 2 | `PersonajeControlador` | Nodo/Escena | Escena | `CharacterBody3D` | 1 |
 | 3 | `AvatarComposer` | Nodo | Componente | `Node3D` | 1 |
 | 3b | `IndicadorCelda` | Nodo | Componente | `MeshInstance3D` | 1 (ayuda de desarrollo) |
 | 4 | `RoomController` | Nodo/Escena | Escena | `Node3D` | 1 |
@@ -90,7 +90,7 @@ La undécima no es una clase nueva sino un desdoblamiento: la fila 6 de la tabla
 
 | Script propuesto originalmente | Por qué ya no existe |
 |---|---|
-| `InputController` | Godot ya tiene el **Input Map** (Project Settings → Input Map) y el singleton **`Input`**. Leer `Input.get_vector("mover_izq", "mover_der", "mover_arriba", "mover_abajo")` dentro de `PlayerController` cubre todo lo que este script iba a hacer, y el Input Map ya soporta remapeo en runtime (`InputMap.action_erase_events()` / `action_add_event()`) si algún día hace falta configurar controles. Un script intermedio propio solo agregaba una capa sin aportar nada. |
+| `InputController` | Godot ya tiene el **Input Map** (Project Settings → Input Map) y el singleton **`Input`**. Leer `Input.get_vector("mover_izq", "mover_der", "mover_arriba", "mover_abajo")` dentro de `PersonajeControlador` cubre todo lo que este script iba a hacer, y el Input Map ya soporta remapeo en runtime (`InputMap.action_erase_events()` / `action_add_event()`) si algún día hace falta configurar controles. Un script intermedio propio solo agregaba una capa sin aportar nada. |
 | `CameraController` | Sigue eliminado tras el paso a 3D. La cámara es un `Node3D` pivote en el centro de la sala con una `Camera3D` ortográfica como hija, toda configurada desde el inspector (GDD §7). Rotar la sala en pasos de 90° es una interpolación sobre `pivote.rotation.y`, y encuadrar es mover el pivote — ninguna de las dos cosas justifica una clase. Si más adelante hace falta lógica real (transición de cámara entre salas, seguimiento con límites), se agrega ahí y recién entonces vuelve a ser un script. |
 
 ---
@@ -123,15 +123,15 @@ IsoGrid (Node3D)        ← el script
 
 **Godot nativo:** `GridMap` aporta el pintado con herramienta de editor, la conversión de coordenadas (`local_to_map()` / `map_to_local()`), el agrupado en lotes de las mallas y la colisión del escenario. La proyección isométrica **ya no es asunto de este nodo**: es el ángulo de la cámara (§7 del GDD), así que no hay matemática 2:1 ni `TileSet` que configurar, y el orden de dibujo lo resuelve el búfer de profundidad en vez de un y-sort. **Código propio:** la ocupación de gameplay — qué `WorldObject` está parado sobre cada celda, que el motor no modela.
 
-**Convención de coordenadas:** la API pública habla en `Vector2i` (planta del piso) y convierte a `Vector3i` solo para hablar con los `GridMap`. Así `celda_origen` de **D3**, los `tamano_grilla` de `items.json` y el `AStarGrid2D` de `PlayerController` siguen valiendo tal como están escritos.
+**Convención de coordenadas:** la API pública habla en `Vector2i` (planta del piso) y convierte a `Vector3i` solo para hablar con los `GridMap`. Así `celda_origen` de **D3**, los `tamano_grilla` de `items.json` y el `AStarGrid2D` de `PersonajeControlador` siguen valiendo tal como están escritos.
 
 **Invariante:** los dos `GridMap` hijos van con transformación en cero, y el origen de `IsoGrid` es el origen de la sala. `map_to_local()` devuelve coordenadas en el espacio local del `GridMap`: si alguien mueve un hijo, las conversiones empiezan a mentir sin dar error.
 
-**Interactúa con:** vive dentro de cada `RoomController`; `PlayerController` la consulta para moverse celda a celda; `WorldObject` se registra en ella al colocarse; en fase 4, `RoomBuilderUI` la usa para validar dónde se puede construir.
+**Interactúa con:** vive dentro de cada `RoomController`; `PersonajeControlador` la consulta para moverse celda a celda; `WorldObject` se registra en ella al colocarse; en fase 4, `RoomBuilderUI` la usa para validar dónde se puede construir.
 
 **Funciones clave:** `celda_a_mundo()` / `mundo_a_celda()` y `celda_bajo_puntero(camara, pos_pantalla)` para geometría; `celda_valida()`, `hay_pared()` y `esta_libre()` para transitabilidad; `celdas_de()`, `ocupar()`, `liberar_objeto()` y `objeto_en()` para ocupación; y **`ruta(origen, destino)`**, que mantiene el único `AStarGrid2D` de la sala. Firmas completas en [`CLASES.md`](CLASES.md) §3.1.
 
-### 2. `PlayerController` — Nodo/Escena · Escena propia · `extends CharacterBody3D`
+### 2. `PersonajeControlador` — Nodo/Escena · Escena propia · `extends CharacterBody3D`
 **Función:** movimiento del avatar sobre la grilla, estado de personaje (sentado, energía) y los métodos que invocan los `InteractionBehavior` (ej. `sentarse_en`, `reproducir_animacion`).
 **Godot nativo:** `CharacterBody3D` con `move_and_slide()` para el desplazamiento; el singleton **`Input`** + Input Map para el control (sin script intermedio, ver tabla de eliminados); y **`AStarGrid2D`** para el pathfinding click-to-walk estilo Habbo. **`AStarGrid2D` sigue sirviendo aunque el mundo sea 3D**: opera sobre una grilla de enteros y no le importa la dimensión del render — se le pasan las celdas bloqueadas de `IsoGrid` y el resultado se mapea al plano XZ. **Código propio:** la lógica de estado del personaje y las respuestas a los comportamientos de interacción.
 **Interactúa con:** se mueve dentro de la `IsoGrid` de la `RoomController` activa; `GameManager` lo referencia como "el jugador actual"; `SentarseBehavior` y futuros comportamientos llaman a sus métodos para producir el efecto visible.
@@ -140,7 +140,7 @@ IsoGrid (Node3D)        ← el script
 ### 3. `AvatarComposer` — Nodo · Componente · `extends Node3D`
 **Función:** arma el avatar por partes intercambiables (cuerpo/torso/piernas/cabeza/tocado, §7) según apariencia y equipo actual. El requisito no cambió con el render 3D: la ropa de Costura es mercancía comerciable y tiene que verse puesta.
 **Godot nativo:** un único `Skeleton3D` con un `BoneAttachment3D` por slot, y una malla intercambiable colgando de cada uno; el `AnimationPlayer` del rig mueve todo junto sin sistema de sincronización propio. Es menos trabajo que la versión 2D, donde había que componer cada capa en cada uno de los 4–8 ángulos. **Código propio:** solo decidir qué malla corresponde a cada slot según lo equipado.
-**Interactúa con:** componente de `PlayerController`; desde fase 2 lee qué hay equipado en `InventoryManager` para reflejarlo visualmente.
+**Interactúa con:** componente de `PersonajeControlador`; desde fase 2 lee qué hay equipado en `InventoryManager` para reflejarlo visualmente.
 **Pendiente de contenido, no de estructura:** el maniquí de KayKit son seis mallas separadas sobre un mismo esqueleto, así que intercambiar una parte es asignarle otro `Mesh` a su `MeshInstance3D`. Lo que falta son prendas que ponerle — hasta que existan, Costura no tiene efecto visible.
 **Traducción de nombres de animación:** el script guarda un diccionario de nombre lógico (`&"caminar"`) a nombre del pack (`Rig_Medium_MovementBasic/Walking_A`). Es lo que evita que el resto del código conozca a KayKit: cambiar de pack de animaciones es reescribir ese diccionario y nada más.
 **Funciones clave:** `actualizar_parte(slot: StringName, malla: Mesh) -> void`, `aplicar_equipo(item: ItemDefinition) -> void`.
@@ -154,13 +154,13 @@ IsoGrid (Node3D)        ← el script
 ### 5. `WorldObject` — Nodo/Escena · Escena propia · `extends Area3D`
 **Función:** cualquier objeto colocado en una sala. Referencia su `ItemDefinition`, guarda `estado_instancia` (dato propio de esa instancia) y expone `verbos_disponibles()` / `ejecutar()` del sistema de interacción (GDD §6.1).
 **Godot nativo:** `Area3D` aporta la detección de click y de puntero encima mediante su señal `input_event` y una `CollisionShape3D` — no hay que hacer pruebas de picking a mano. Como la ocupación la lleva `IsoGrid`, la forma de colisión no necesita seguir la malla: un `BoxShape3D` del tamaño de la celda alcanza y es más barato. **Código propio:** el sistema de verbos de interacción y el estado por instancia, que son diseño propio del juego (§6.1).
-**Interactúa con:** vive dentro de un `RoomController`; su lista `interacciones` son recursos `InteractionBehavior`; `ContextMenuUI` lo consulta para mostrar verbos; `PlayerController` es el actor que ejecuta comportamientos sobre él.
+**Interactúa con:** vive dentro de un `RoomController`; su lista `interacciones` son recursos `InteractionBehavior`; `ContextMenuUI` lo consulta para mostrar verbos; `PersonajeControlador` es el actor que ejecuta comportamientos sobre él.
 **Funciones clave:** `verbos_disponibles(actor: Node) -> Array[InteractionBehavior]`, `ejecutar(behavior: InteractionBehavior, actor: Node) -> bool` (**D8**), `_on_input_event(...)` (señal nativa de `Area3D`).
 
 ### 6. `InteractionBehavior` (clase base) + `SentarseBehavior` — Resource · Recurso, sin escena · `extends Resource` (`SentarseBehavior extends InteractionBehavior`)
 **Función:** define qué puede hacer un jugador con un `WorldObject` (GDD §6.1), reutilizable y **sin estado propio** — el estado de una instancia concreta vive en `WorldObject.estado_instancia`, nunca en el `Resource`.
 **Godot nativo:** `Resource` es exactamente el mecanismo del motor para esto: da serialización a `.tres`, edición desde el inspector, `@export` de parámetros y compartir la misma instancia entre muchos objetos. No hay nada que reimplementar acá — el patrón ya era el nativo.
-**Interactúa con:** referenciado desde `ItemDefinition.interacciones`; lee/escribe `WorldObject.estado_instancia`; llama métodos de `PlayerController`.
+**Interactúa con:** referenciado desde `ItemDefinition.interacciones`; lee/escribe `WorldObject.estado_instancia`; llama métodos de `PersonajeControlador`.
 **Funciones clave:** `puede_interactuar(actor: Node, objeto: WorldObject) -> bool`, `interactuar(actor: Node, objeto: WorldObject) -> void`.
 
 ### 7. `ContextMenuUI` — UI · Escena propia · `extends PopupMenu`
@@ -173,7 +173,7 @@ IsoGrid (Node3D)        ← el script
 ### 8. `HUD` — UI · Escena propia · `extends CanvasLayer`
 **Función:** capa fija de interfaz (energía, Ducados, notificaciones).
 **Godot nativo:** `CanvasLayer` para que no se mueva con la cámara, `ProgressBar` para la barra de energía y `Label` para los Ducados — nada de dibujado propio.
-**Interactúa con:** desde fase 2 lee energía de `PlayerController` y Ducados de `EconomyManager`.
+**Interactúa con:** desde fase 2 lee energía de `PersonajeControlador` y Ducados de `EconomyManager`.
 **Funciones clave:** `mostrar_sala(sala)`, `avisar(texto)`, `avisar_error(codigo)` — que es donde `Errores.mensaje()` deja de ser texto que nadie lee — y `mostrar_ayuda(texto)`. Más `actualizar_energia(valor)` y `actualizar_ducados(valor)`, cuyos widgets **arrancan ocultos** y aparecen al primer valor: en fase 1 esos datos todavía no existen, y una barra vacía con un cero no informa nada.
 **El texto de la ayuda lo pasa quien llama**, no vive en el HUD: hoy son los atajos provisionales de `Mundo`, y cuando dejen de existir el `Label` se queda sin que haya que tocar esta clase.
 
@@ -181,7 +181,7 @@ IsoGrid (Node3D)        ← el script
 **Función:** orquesta qué `RoomController` está activo (área común vs. sala privada) y mantiene la referencia global al jugador.
 **Godot nativo:** el sistema de **autoloads** es el patrón singleton propio del motor, y `SceneTree.change_scene_to_packed()` / `change_scene_to_file()` ya maneja el cambio de escena con su liberación de memoria.
 **Interactúa con:** instancia/destruye escenas de `RoomController`; es el punto central que el resto de los managers consultan para saber "quién es el jugador actual".
-**Funciones clave:** `cambiar_sala(sala: PackedScene) -> void`, `jugador_actual() -> PlayerController`.
+**Funciones clave:** `cambiar_sala(sala: PackedScene) -> void`, `jugador_actual() -> PersonajeControlador`.
 
 ### 10. `SaveManager` (versión mínima) — Autoload · `extends Node`
 **Función:** en fase 1 guarda/carga posición del jugador y última sala visitada; después se le suma el resto del estado.
@@ -313,7 +313,7 @@ IsoGrid (Node3D)        ← el script
 ### 29. `EquiparBehavior` — Resource · Recurso, sin escena · `extends InteractionBehavior`
 **Función:** "equipar" herramientas (Pala de hierro, Pico de minería) — mueve el ítem a un slot del jugador y aplica su bono.
 **Godot nativo:** `Resource` con `@export`, igual que el resto de comportamientos; el reflejo visual del equipo lo resuelve `AvatarComposer`.
-**Interactúa con:** modifica un slot en `PlayerController`/`InventoryManager`; su bono lo lee `GatherableNode` al calcular velocidad.
+**Interactúa con:** modifica un slot en `PersonajeControlador`/`InventoryManager`; su bono lo lee `GatherableNode` al calcular velocidad.
 **Funciones clave:** `interactuar(actor: Node, objeto: WorldObject) -> void`, `quitar_equipo(actor: Node, slot: String) -> void`.
 
 ---
