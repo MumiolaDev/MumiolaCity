@@ -25,7 +25,6 @@ extends Node3D
 
 @onready var contenedor_salas : Node3D = $Salas
 @onready var menu : ContextMenuUI = $UI/ContextMenuUI
-@onready var hud : HUD = $UI/HUD
 
 ## Con que rotacion se coloca la proxima silla de prueba. Gira con R, no con el
 ## encuadre, para poder comprobar que la rotacion de la huella y la visual
@@ -41,8 +40,11 @@ func _ready() -> void:
 	# responden.
 	get_viewport().physics_object_picking = true
 
-	menu.verbo_elegido.connect(_al_elegir_verbo)
-	hud.mostrar_ayuda("TAB cambiar de sala   Q/E girar la vista   R girar la silla   C colocar   X retirar\nClic izquierdo: caminar   Clic derecho sobre un mueble: menu")
+	# La interfaz es opcional por contrato: borrar el menu del arbol quita la
+	# funcion, no rompe el juego.
+	if menu != null:
+		menu.verbo_elegido.connect(_al_elegir_verbo)
+	GameManager.mostrar_ayuda("TAB cambiar de sala   Q/E girar la vista   R girar la silla   C colocar   X retirar\nClic izquierdo: caminar   Clic derecho sobre un mueble: menu")
 
 	for sala in GameManager.salas():
 		sala.objeto_colocado.connect(_atender_clics_de)
@@ -70,7 +72,7 @@ func _unhandled_input(evento : InputEvent) -> void:
 		sala.rotar(1)
 	elif evento.keycode == KEY_R:
 		_rotacion_silla = posmod(_rotacion_silla + 1, 4)
-		hud.avisar("Rotacion de colocacion: %d" % _rotacion_silla)
+		GameManager.avisar("Rotacion de colocacion: %d" % _rotacion_silla)
 	elif evento.keycode == KEY_C:
 		_colocar_silla_de_prueba(sala)
 	elif evento.keycode == KEY_X:
@@ -92,9 +94,9 @@ func _colocar_silla_de_prueba(sala : RoomController) -> void:
 
 	var resultado := sala.colocar_objeto(inst, celda, _rotacion_silla)
 	if Errores.ok(resultado):
-		hud.avisar("Colocaste: %s" % sala.grid.objeto_en(celda).nombre_mostrado())
+		GameManager.avisar("Colocaste: %s" % sala.grid.objeto_en(celda).nombre_mostrado())
 	else:
-		hud.avisar_error(resultado)
+		GameManager.avisar_error(resultado)
 
 
 ## Retira el objeto que haya en la celda bajo el mouse.
@@ -105,12 +107,12 @@ func _retirar_bajo_el_mouse(sala : RoomController) -> void:
 
 	var obj := sala.grid.objeto_en(celda)
 	if obj == null:
-		hud.avisar_error(Errores.Codigo.NO_TIENE_ITEM)
+		GameManager.avisar_error(Errores.Codigo.NO_TIENE_ITEM)
 		return
 
 	var inst := sala.retirar_objeto(obj)
 	if inst != null:
-		hud.avisar("Retiraste: %s" % inst.nombre_mostrado())
+		GameManager.avisar("Retiraste: %s" % inst.nombre_mostrado())
 
 
 ## Engancha el clic derecho de un mueble al menu contextual.
@@ -124,8 +126,10 @@ func _atender_clics_de(obj : WorldObject) -> void:
 
 ## Abre el menu contextual de un mueble para el personaje.
 func _abrir_menu(obj : WorldObject) -> void:
+	if menu == null:
+		return
 	if not menu.mostrar_para(obj, GameManager.jugador_actual()):
-		hud.avisar("%s: nada que hacer ahora." % obj.nombre_mostrado())
+		GameManager.avisar("%s: nada que hacer ahora." % obj.nombre_mostrado())
 
 
 ## Ejecuta el verbo elegido en el menu.

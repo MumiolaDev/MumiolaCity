@@ -31,7 +31,13 @@ func _ready() -> void:
 	# Se suscribe y nadie lo consulta: por eso el HUD se puede borrar del arbol y
 	# el juego sigue andando.
 	GameManager.sala_cambiada.connect(mostrar_sala)
+	GameManager.aviso.connect(avisar)
+	GameManager.ayuda_cambiada.connect(mostrar_ayuda)
+
+	# Ponerse al dia con lo que ya paso: un HUD que entra tarde al arbol tiene
+	# que mostrar la sala y la ayuda vigentes, no esperar al proximo cambio.
 	mostrar_sala(GameManager.sala_actual())
+	mostrar_ayuda(GameManager.ayuda())
 
 
 ## Escribe en que sala esta el jugador.

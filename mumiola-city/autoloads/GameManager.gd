@@ -19,9 +19,16 @@ signal sala_cambiada(sala : RoomController)
 ## Se emite cuando un jugador se registra, para lo que necesite engancharse a el.
 signal jugador_registrado(jugador : PersonajeControlador)
 
+## Un aviso pasajero para el jugador. Quien lo emite no sabe ni le importa si hay
+## alguien mostrandolo.
+signal aviso(texto : String)
+## Cambio el texto de ayuda fijo.
+signal ayuda_cambiada(texto : String)
+
 var _jugador : PersonajeControlador = null
 var _contenedor : Node = null
 var _sala_actual : RoomController = null
+var _ayuda : String = ""
 
 
 ## El jugador se anota solo desde su _ready().
@@ -119,3 +126,33 @@ func cargar_sala(escena : PackedScene) -> RoomController:
 	_contenedor.add_child(nodo)
 	ir_a_sala(nodo)
 	return nodo
+
+
+## Avisa algo al jugador, si hay interfaz que lo muestre.
+##
+## Es un canal y no una llamada a la UI: quien avisa no tiene que saber si el HUD
+## existe. Con una llamada directa, borrar el HUD rompe a quien lo llamaba, que
+## es exactamente lo que la capa de interfaz promete que no pasa.
+##
+## Si algun dia este canal crece —niveles de aviso, cola, historial— se muda a su
+## propio autoload. Por ahora son tres lineas y no justifican uno.
+func avisar(texto : String) -> void:
+	aviso.emit(texto)
+
+
+## Avisa el mensaje que le corresponde a un codigo de rechazo. Un OK no avisa
+## nada, porque no hay nada que explicar.
+func avisar_error(codigo : Errores.Codigo) -> void:
+	if not Errores.ok(codigo):
+		aviso.emit(Errores.mensaje(codigo))
+
+
+## Fija el texto de ayuda de la esquina.
+func mostrar_ayuda(texto : String) -> void:
+	_ayuda = texto
+	ayuda_cambiada.emit(texto)
+
+
+## Devuelve la ayuda vigente, para una interfaz que aparezca despues de fijada.
+func ayuda() -> String:
+	return _ayuda
