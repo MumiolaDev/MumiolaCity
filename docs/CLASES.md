@@ -550,31 +550,32 @@ func from_dict(d: Dictionary) -> void
 
 **Las búsquedas por familia** son lo que permite que una receta pida «cualquier taza» sin enumerarlas, y lo que hace que agregar una taza nueva no obligue a tocar ninguna receta.
 
-### 2.5 `RecipeManager extends Node`
+### 2.5 `RecipeManager extends Node` — **IMPLEMENTADO (fase 2a)**
 
 ```gdscript
 extends Node   # autoload: RecipeManager
 
-signal crafteo_iniciado(receta: RecipeDefinition)
-signal crafteo_progreso(t: float)                 # 0..1
-signal crafteo_completado(resultado: ItemDefinition, cantidad: int)
-signal crafteo_cancelado(motivo: String)
+signal crafteo_empezado(resultado_id: StringName, segundos: float)
+signal crafteo_terminado(resultado_id: StringName, cantidad: int, fallo: bool)
 
-var _en_curso: RecipeDefinition
-var _insumos_reservados: Array = []
+const XP_AL_FALLAR := 0.5
 
-func puede_craftear(receta: RecipeDefinition) -> bool
-func faltantes(receta: RecipeDefinition) -> Array[Dictionary]   # [{id, faltan}] para la UI
-func craftear(receta: RecipeDefinition, contenedor: ItemInstance = null) -> bool   # obligatorio si el resultado es liquido/solido (D2)
-func cancelar() -> void
-func recetas_disponibles(habilidad: StringName) -> Array[RecipeDefinition]
+func recetas_disponibles(estacion := &"") -> Array[ItemDefinition]
+func puede_craftear(resultado: ItemDefinition, estacion := &"") -> Errores.Codigo
+func craftear(resultado: ItemDefinition, estacion := &"") -> Errores.Codigo
 ```
 
-**La transacción tiene que ser atómica.** Orden propuesto: validar nivel → validar insumos → **consumir y reservar** → esperar `tiempo_crafteo_seg` → entregar resultado. Consumir al inicio y no al final evita que dos crafteos lanzados en paralelo gasten la misma harina; `cancelar()` es entonces una devolución explícita de lo reservado.
+**El crafteo es en dos tiempos.** `craftear()` valida, consume y devuelve si la acción fue **aceptada**; el producto llega después por `crafteo_terminado`. Devolverlo directamente obligaría a que todo crafteo fuera instantáneo, y entonces `tiempo_crafteo_seg` no serviría para nada.
 
-**`faltantes()` existe para la UI**, y es lo que separa un botón gris de un botón gris que dice *"te faltan 2 Harina"*.
+**El tiempo va por temporizador de escena, no por marca de tiempo.** Un crafteo dura segundos y no tiene sentido que siga corriendo con el juego cerrado. Lo que sí debe sobrevivir —un cultivo creciendo— es de `TimeManager`.
 
-**El parámetro `contenedor` sale de D2, ya decidida.** Craftear un café exige decir *en qué taza*: `RecipeManager` muta esa instancia a `{contenido_id: &"cafe"}` en vez de crear un ítem suelto, y `puede_craftear` devuelve `false` si el jugador no tiene ningún utensilio vacío de la familia pedida. Es el punto donde la dependencia entre Cocina y Carpintería/Manufactura deja de ser una intención del GDD y pasa a ser código.
+**El hueco del inventario se comprueba antes de consumir**, midiendo contra el estado de *después* de consumir, porque los insumos que se van liberan peso. Quedarse sin los insumos y sin el producto porque no entraba es la peor forma de fallar.
+
+**Equivocarse da xp, la mitad.** Sin eso, alguien que solo tiene insumos de una receta que todavía no domina los quema una y otra vez sin avanzar nunca.
+
+**El orden de las comprobaciones es el orden en que se le explican al jugador:** si existe la receta, si está en el lugar correcto, si sabe hacerlo, y recién al final si tiene con qué. De ahí salen `FALTA_ESTACION` y `FALTA_UTENSILIO`, dos códigos nuevos — «te falta la sartén» y «te falta la carne» son cosas distintas.
+
+**Cuando un insumo se pide por familia se gasta el primero que aparezca.** Da igual cuál mientras ninguno tenga estado propio; el día que el jugador tenga que poder elegir —una taza servida y una vacía— la elección va a llegar como parámetro, no como una regla escondida en el manager.
 
 ### 2.6 `TimeManager extends Node`
 

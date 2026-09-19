@@ -14,9 +14,12 @@ extends Node
 var _pasados : int = 0
 var _fallados : int = 0
 var _niveles_vistos : Array = []
+var _ultimo_crafteo : Dictionary = {}
 
 
 func _ready() -> void:
+	# Este _ready es asincrono: los crafteos tardan lo que dice la receta, asi que
+	# la prueba espera de verdad en vez de suponer que ya paso.
 	# El estado arranca limpio: estas pruebas escriben en los autoloads reales.
 	InventoryManager.vaciar()
 	SkillManager.reiniciar()
@@ -28,6 +31,7 @@ func _ready() -> void:
 	_probar_limites()
 	_probar_serializacion_inventario()
 	_probar_habilidades()
+	await _probar_crafteo()
 
 	print("\n--- %d pasados, %d fallados ---" % [_pasados, _fallados])
 
@@ -184,3 +188,62 @@ func _probar_habilidades() -> void:
 
 func _anotar_nivel(_habilidad : StringName, nivel : int) -> void:
 	_niveles_vistos.append(nivel)
+
+
+## El crafteo de punta a punta: validar, consumir, esperar, entregar y dar xp.
+func _probar_crafteo() -> void:
+	print("crafteo")
+	InventoryManager.vaciar()
+	SkillManager.reiniciar()
+	RecipeManager.crafteo_terminado.connect(_anotar_crafteo)
+
+	var rodajas := ItemDatabase.obtener(&"tomate_rodajas")
+	var cocida := ItemDatabase.obtener(&"carne_cocida")
+
+	verificar(RecipeManager.puede_craftear(rodajas) == Errores.Codigo.FALTA_UTENSILIO,
+		"sin cuchillo ni tabla, falta el utensilio")
+
+	InventoryManager.agregar(&"cuchillo", 1)
+	InventoryManager.agregar(&"tabla_cortar", 1)
+	verificar(RecipeManager.puede_craftear(rodajas) == Errores.Codigo.FALTAN_MATERIALES,
+		"con utensilios pero sin tomate, faltan materiales")
+
+	verificar(RecipeManager.puede_craftear(cocida) == Errores.Codigo.FALTA_ESTACION,
+		"la carne pide estufa y no se dijo estar en una")
+
+	InventoryManager.agregar(&"tomate", 2)
+	verificar(Errores.ok(RecipeManager.puede_craftear(rodajas)), "ahora si se puede")
+
+	verificar(Errores.ok(RecipeManager.craftear(rodajas)), "el crafteo se acepta")
+	verificar(InventoryManager.cantidad_de(&"tomate") == 1, "el insumo se consume al empezar")
+	verificar(InventoryManager.cantidad_de(&"tomate_rodajas") == 0, "el producto todavia no esta")
+
+	await RecipeManager.crafteo_terminado
+	verificar(InventoryManager.cantidad_de(&"tomate_rodajas") == 1, "el producto llega al terminar")
+	verificar(_ultimo_crafteo.get("fallo") == false, "y sale bien")
+	verificar(InventoryManager.cantidad_de(&"cuchillo") == 1, "el utensilio no se consume")
+	verificar(SkillManager.xp_de(Habilidades.COCINA) > 0, "se gano xp de Cocina")
+
+	# La carne pide nivel 2 de Cocina; con una sola rodaja hecha no alcanza.
+	print("crafteo fallido")
+	InventoryManager.agregar(&"carne_cruda", 1)
+	InventoryManager.agregar(&"sarten", 1)
+	var xp_antes := SkillManager.xp_de(Habilidades.COCINA)
+	verificar(SkillManager.nivel_de(Habilidades.COCINA) < 2, "todavia no se sabe cocinar carne")
+	verificar(Errores.ok(RecipeManager.puede_craftear(cocida, &"estufa")),
+		"se puede intentar igual, porque la receta tiene resultado de fallo")
+
+	RecipeManager.craftear(cocida, &"estufa")
+	await RecipeManager.crafteo_terminado
+	verificar(InventoryManager.cantidad_de(&"carne_quemada") == 1, "sale carne quemada")
+	verificar(InventoryManager.cantidad_de(&"carne_cocida") == 0, "y no carne cocida")
+	verificar(InventoryManager.cantidad_de(&"carne_cruda") == 0, "el insumo se gasto igual")
+	verificar(InventoryManager.cantidad_de(&"sarten") == 1, "la sarten no")
+	verificar(SkillManager.xp_de(Habilidades.COCINA) > xp_antes,
+		"equivocarse tambien ensena: se gana algo de xp")
+
+	RecipeManager.crafteo_terminado.disconnect(_anotar_crafteo)
+
+
+func _anotar_crafteo(id : StringName, cantidad : int, fallo : bool) -> void:
+	_ultimo_crafteo = {"id": id, "cantidad": cantidad, "fallo": fallo}

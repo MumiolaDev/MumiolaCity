@@ -48,6 +48,8 @@ enum Codigo {
 	NIVEL_INSUFICIENTE = 401,
 	FALTAN_MATERIALES = 402,
 	ESTACION_OCUPADA = 403,
+	FALTA_ESTACION = 404,
+	FALTA_UTENSILIO = 405,
 
 	# 5xx — permisos y salas
 	SIN_PERMISO = 501,
@@ -80,6 +82,8 @@ const MENSAJES := {
 	Codigo.NIVEL_INSUFICIENTE: "Todavia no tenes el nivel para esto.",
 	Codigo.FALTAN_MATERIALES: "Te faltan materiales.",
 	Codigo.ESTACION_OCUPADA: "La estacion esta ocupada.",
+	Codigo.FALTA_ESTACION: "Necesitas acercarte al lugar donde se hace esto.",
+	Codigo.FALTA_UTENSILIO: "Te falta una herramienta para esto.",
 
 	Codigo.SIN_PERMISO: "No tenes permiso para hacer eso aca.",
 	Codigo.SALA_LLENA: "La sala esta llena.",
