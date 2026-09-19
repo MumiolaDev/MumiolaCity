@@ -249,11 +249,14 @@ res://
     recetas/             Recursos .tres: RecipeDefinition (insumos, resultado, habilidad, xp)
     habilidades/         Recursos .tres: SkillDefinition (curva de xp, desbloqueos por nivel)
     mesh_librarys/       Una escena fuente y una .meshlib por capa (D18): suelos y paredes
+  herramientas/         Scripts de editor (EditorScript), no corren en el juego
   escenas/
     mundo/               IsoGrid, RoomController, Mundo y el indicador de celda
       salas/             Una escena por sala: SalaComun, SalaPrivada…
     personaje/           Avatar y animaciones
     ui/                  Inventario, panel de habilidades, mercado, crafteo
+    objetos/
+      generadas/         Una escena por item colocable, generada por el importador
   arte/
     modelos_3d/          Modelos glTF por familia: prototipo, muebles, restoran, avatar
     sprites/             Reservada por si vuelve el pipeline de pre-renderizado (§7)
@@ -262,6 +265,7 @@ res://
 Puntos de diseño de datos clave:
 
 - **No reimplementar lo que Godot ya trae.** Antes de escribir cualquier sistema, revisar si el motor ya lo resuelve con un nodo, un recurso o una API, y apoyarse en eso; se escribe a mano únicamente la lógica específica de este juego (inventario, recetas, economía, ocupación de celdas) o lo que el motor genuinamente no cubre. Esto no es solo ahorro de trabajo: lo nativo ya está probado, integrado con el editor y mantenido por el motor. `docs/SCRIPTS.md` declara, script por script, qué parte le delega a Godot y qué parte es código propio; `docs/SISTEMAS.md` desarrolla cómo se comunican esos sistemas entre sí y qué decisiones de arquitectura siguen abiertas, y `docs/CLASES.md` fija la firma de cada clase.
+- **`items.json` es la única fuente del catálogo.** Los `.tres` de `data/objetos/definiciones/` y las escenas de `escenas/objetos/generadas/` **se generan** con `herramientas/ImportarItems.gd`, un `EditorScript` que se corre desde el editor. Editarlos a mano funciona hasta la próxima importación, que los pisa — y eso es intencional. Con dos fuentes, editar una y olvidar la otra es cuestión de tiempo, y el desfase no da error: el juego simplemente usa valores viejos. Además `herramientas/generar_items.py` valida el JSON entero antes de escribirlo, y esa validación se perdería si el catálogo se editara después en el inspector.
 - **Items, recetas y habilidades como `Resource` personalizados**, no hardcodeados: agregar contenido nuevo (una prenda, una receta) no debería requerir tocar código, solo crear un `.tres`.
 - **`EconomyManager` desacoplado del transporte**: en el prototipo corre en local contra NPCs simulados; cuando llegue el multijugador real, la misma interfaz debería poder hablar con un servidor autoritativo sin rediseñar el resto del juego.
 
