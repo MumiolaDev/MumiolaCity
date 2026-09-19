@@ -407,18 +407,25 @@ func validar_catalogo() -> Array[String]     # ids duplicados, insumos rotos, et
 ### 2.2 `GameManager extends Node`
 
 ```gdscript
-extends Node   # autoload: GameManager
+extends Node   # autoload: GameManager   # IMPLEMENTADO (paso 9)
 
 signal sala_cambiada(sala: RoomController)
+signal jugador_registrado(jugador: PersonajeControlador)
 
-var _sala_actual: RoomController
-var _jugador: PlayerController
-
-func cambiar_sala(escena: PackedScene) -> void
+func registrar_jugador(jugador: PersonajeControlador) -> void
+func registrar_contenedor(nodo: Node) -> void      # de donde cuelgan las salas
+func jugador_actual() -> PersonajeControlador
 func sala_actual() -> RoomController
-func jugador_actual() -> PlayerController
-func registrar_jugador(p: PlayerController) -> void
+func salas() -> Array[RoomController]
+func ir_a_sala(sala: RoomController) -> bool
+func ir_a_indice(indice: int) -> bool
+func siguiente_sala() -> void
+func cargar_sala(escena: PackedScene) -> RoomController
 ```
+
+**No usa `change_scene_to_packed()`, aunque este documento lo proponía.** Esa llamada reemplaza el árbol entero — jugador incluido — y obligaría a reconstruirlo y reubicarlo en cada puerta. Las salas conviven en un contenedor y se encienden de a una con `RoomController.activar()`, lo que además permite volver a la anterior sin recargarla. `cargar_sala()` queda para las que no están puestas de antemano — las viviendas de otros jugadores, que no tiene sentido tener todas cargadas.
+
+**Un autoload sobrevive a los cambios de escena**, así que todo lo que guarde son referencias que pueden quedar colgando. `registrar_contenedor()` limpia la sala actual y todo acceso pasa por `is_instance_valid()`: una referencia muerta acá no da error, devuelve basura.
 
 **Quién registra a quién.** `GameManager` no busca al jugador con `get_node("/root/...")` — el `PlayerController` se registra a sí mismo en su `_ready()`. Así el manager no depende de la forma del árbol de escenas, que cambia cada vez que se reorganiza una sala.
 

@@ -38,6 +38,9 @@ var _pendiente_verbo : InteractionBehavior = null
 
 
 func _ready() -> void:
+	# Se anota el mismo en vez de que el manager lo busque por ruta: asi cambiar
+	# de lugar al personaje en el arbol no rompe nada.
+	GameManager.registrar_jugador(self)
 	avatar.reproducir(&"idle")
 
 

@@ -7,9 +7,8 @@
 [ext_resource type="PackedScene" path="res://escenas/ui/ContextMenuUI.tscn" id="5_menu"]
 [ext_resource type="PackedScene" path="res://escenas/ui/HUD.tscn" id="6_hud"]
 
-[node name="Mundo" type="Node3D" unique_id=1075680758 node_paths=PackedStringArray("personaje")]
+[node name="Mundo" type="Node3D" unique_id=1075680758]
 script = ExtResource("1_mundo")
-personaje = NodePath("PersonajeControlador")
 
 [node name="Salas" type="Node3D" parent="." unique_id=2058956931]
 

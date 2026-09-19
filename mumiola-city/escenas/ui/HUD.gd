@@ -28,6 +28,11 @@ func _ready() -> void:
 	_estado.visible = false
 	_reloj.timeout.connect(_ocultar_mensaje)
 
+	# Se suscribe y nadie lo consulta: por eso el HUD se puede borrar del arbol y
+	# el juego sigue andando.
+	GameManager.sala_cambiada.connect(mostrar_sala)
+	mostrar_sala(GameManager.sala_actual())
+
 
 ## Escribe en que sala esta el jugador.
 func mostrar_sala(sala : RoomController) -> void:
