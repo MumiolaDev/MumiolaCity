@@ -32,6 +32,10 @@ extends Resource
 ## Lo que el jugador lleva encima, tal como lo devuelve InventoryManager.
 @export var inventario : Dictionary = {}
 
+## La xp por habilidad. Solo la xp: el nivel se recalcula al cargar, porque
+## guardar los dos seria tener dos fuentes para un solo hecho.
+@export var habilidades : Dictionary = {}
+
 
 ## Vuelca el estado a un diccionario listo para serializar.
 ##
@@ -44,6 +48,7 @@ func to_dict() -> Dictionary:
 		"celda_jugador": [celda_jugador.x, celda_jugador.y],
 		"salas": salas,
 		"inventario": inventario,
+		"habilidades": habilidades,
 	}
 
 
@@ -63,3 +68,4 @@ func from_dict(d : Dictionary) -> void:
 
 	salas = d.get("salas", {})
 	inventario = d.get("inventario", {})
+	habilidades = d.get("habilidades", {})

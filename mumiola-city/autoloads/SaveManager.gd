@@ -49,6 +49,7 @@ func guardar() -> Error:
 		partida.celda_jugador = sala.grid.mundo_a_celda(jugador.global_position)
 
 	partida.inventario = InventoryManager.to_dict()
+	partida.habilidades = SkillManager.to_dict()
 
 	# Se guardan todas las salas y no solo la actual: los muebles de tu casa
 	# siguen ahi mientras estas en la plaza.
@@ -109,6 +110,7 @@ func _aplicar(partida : SaveGame) -> void:
 	# El inventario primero: si una sala guardada trae un mueble cuyo item ya no
 	# existe, conviene que el jugador tenga su mochila intacta igual.
 	InventoryManager.from_dict(partida.inventario)
+	SkillManager.from_dict(partida.habilidades)
 
 	for sala in GameManager.salas():
 		if partida.salas.has(sala.scene_file_path):

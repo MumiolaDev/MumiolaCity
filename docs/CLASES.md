@@ -480,30 +480,33 @@ func cargar_sala(escena: PackedScene) -> RoomController
 
 **Quién registra a quién.** `GameManager` no busca al jugador con `get_node("/root/...")` — el `PersonajeControlador` se registra a sí mismo en su `_ready()`. Así el manager no depende de la forma del árbol de escenas, que cambia cada vez que se reorganiza una sala.
 
-### 2.3 `SkillManager extends Node`
+### 2.3 `SkillManager extends Node` — **IMPLEMENTADO (fase 2a)**
 
 ```gdscript
 extends Node   # autoload: SkillManager
 
-signal xp_ganada(habilidad: StringName, cantidad: int)
+signal xp_ganada(habilidad: StringName, cantidad: int, total: int)
 signal nivel_subido(habilidad: StringName, nivel: int)
-signal desbloqueo(habilidad: StringName, contenido_id: StringName)
 
-var _xp: Dictionary = {}                 # StringName -> int  (unica fuente de verdad)
-var _definiciones: Dictionary = {}       # StringName -> SkillDefinition
-
-func agregar_xp(habilidad: StringName, cantidad: int) -> void
-func nivel_de(habilidad: StringName) -> int          # derivado, nunca almacenado
-func xp_de(habilidad: StringName) -> int
-func progreso_nivel(habilidad: StringName) -> float  # 0..1 para la barra
-func cumple_nivel(habilidad: StringName, minimo: int) -> bool
+func definicion(id: StringName) -> SkillDefinition
+func xp_de(id: StringName) -> int
+func nivel_de(id: StringName) -> int
+func progreso_de(id: StringName) -> Vector2i      # {llevado, tamano del nivel}
+func alcanza_nivel(id: StringName, nivel: int) -> bool
+func agregar_xp(id: StringName, cantidad: int) -> void
+func todos_los_niveles() -> Dictionary
+func reiniciar() -> void
 func to_dict() -> Dictionary
 func from_dict(d: Dictionary) -> void
 ```
 
-**Invariante:** el nivel es siempre `definicion.nivel_para_xp(_xp[habilidad])`. No hay un campo `nivel`. Guardar los dos es garantizar que algún día discrepen.
+**Guarda xp y nunca el nivel.** El nivel se deriva de la xp contra la curva de la habilidad. Guardar los dos sería tener dos fuentes para un solo hecho, y el día que una se actualice sin la otra el jugador tendría nivel 7 con la xp de nivel 3 y nadie sabría cuál creer.
 
-**`agregar_xp` con una habilidad desconocida debe hacer ruido**, no crear la entrada en silencio: es la red que atrapa el desync de tildes de **D4** si alguien pasa `"Minería"` en vez de `&"mineria"`.
+**`nivel_subido` se emite una vez por cada nivel alcanzado**, no una sola por la ganancia: si un crafteo da para subir tres niveles, quien escuche se entera de los tres. Una interfaz que anuncie «¡nivel 5!» sin haber anunciado el 3 y el 4 se siente rota.
+
+**Una habilidad desconocida devuelve nivel 0, no 1.** Así la diferencia entre «no la tiene todavía» y «está en el primer nivel» es visible en vez de confundirse.
+
+**`alcanza_nivel()` existe aunque sea un `>=`.** Para que el criterio viva en un solo lugar el día que deje de serlo, y para que quien valide una receta no escriba la comparación cada vez.
 
 ### 2.4 `InventoryManager extends Node` — **IMPLEMENTADO (fase 2a)**
 
