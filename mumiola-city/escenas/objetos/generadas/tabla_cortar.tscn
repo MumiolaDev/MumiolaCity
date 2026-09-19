@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://bow0t5mtwf7yi"]
+
+[ext_resource type="Script" uid="uid://ciucb8xus6nnu" path="res://escenas/objetos/WorldObject.gd" id="1_twuls"]
+[ext_resource type="PackedScene" uid="uid://ndu2br8q8jx0" path="res://arte/modelos_3d/restoran/cuttingboard.gltf" id="2_3gmt5"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1b53u"]
+size = Vector3(0.9, 1, 0.9)
+
+[node name="TablaCortar" type="Area3D" unique_id=32991720]
+collision_layer = 2
+collision_mask = 0
+script = ExtResource("1_twuls")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1217660731]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape3D_1b53u")
+
+[node name="Visual" type="Node3D" parent="." unique_id=1523322760 instance=ExtResource("2_3gmt5")]

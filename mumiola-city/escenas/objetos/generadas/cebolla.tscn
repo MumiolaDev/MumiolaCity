@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://binom0rf4yg23"]
+
+[ext_resource type="Script" uid="uid://ciucb8xus6nnu" path="res://escenas/objetos/WorldObject.gd" id="1_ataq2"]
+[ext_resource type="PackedScene" uid="uid://57ikl0yl4pbm" path="res://arte/modelos_3d/restoran/food_ingredient_onion.gltf" id="2_slyj3"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bvtbc"]
+size = Vector3(0.9, 1, 0.9)
+
+[node name="Cebolla" type="Area3D" unique_id=587879152]
+collision_layer = 2
+collision_mask = 0
+script = ExtResource("1_ataq2")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=245361046]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape3D_bvtbc")
+
+[node name="Visual" type="Node3D" parent="." unique_id=139451421 instance=ExtResource("2_slyj3")]

@@ -42,7 +42,11 @@ func _run() -> void:
 	var n_hab := _generar_habilidades(habilidades)
 
 	print("\n--- importacion terminada ---")
-	print("  %d definiciones, %d escenas, %d habilidades" % [n_items, escenas.size(), n_hab])
+	print("  reportado: %d definiciones, %d escenas, %d habilidades" % [n_items, escenas.size(), n_hab])
+	print("  en disco:  %d definiciones, %d escenas, %d habilidades"
+		% [_contar(DIR_ITEMS, ".tres"), _contar(DIR_ESCENAS, ".tscn"), _contar(DIR_HABILIDADES, ".tres")])
+	if _contar(DIR_ITEMS, ".tres") < items.size():
+		push_error("ImportarItems: faltan definiciones en disco. Mirar los errores de arriba.")
 	for a in _avisos:
 		print("  aviso: " + a)
 	if _avisos.is_empty():
@@ -139,32 +143,54 @@ func _armar_escena(d : Dictionary, malla : PackedScene) -> PackedScene:
 func _generar_items(items : Array, escenas : Dictionary) -> int:
 	var hechos := 0
 	for d in items:
-		var def := ItemDefinition.new()
-		def.id = StringName(d["id"])
-		def.nombre = str(d.get("nombre", ""))
-		def.descripcion = str(d.get("descripcion", ""))
-		def.categoria = str(d.get("categoria", "decorativo"))
-		def.peso = float(d.get("peso", 0.1))
-		def.apilable = bool(d.get("apilable", true))
-		def.stack_maximo = int(d.get("stack_maximo", 99))
-		def.valor_base = int(d.get("valor_base", 1))
-		def.comprable = bool(d.get("comprable", false))
-		def.vendible = bool(d.get("vendible", true))
-		def.familia = StringName(d.get("familia", ""))
-		def.colocable = bool(d.get("colocable", true))
-		def.rotable = bool(d.get("rotable", false))
-
-		var huella : Array = d.get("tamano_grilla", [1, 1])
-		def.tamano_grilla = Vector2i(int(huella[0]), int(huella[1]))
-
-		if escenas.has(d["id"]):
-			def.escena_mundo = load(escenas[d["id"]])
-		def.interacciones = _resolver_interacciones(d)
-		def.receta = _armar_receta(d)
-
+		var def : ItemDefinition = _armar_definicion(d, escenas)
+		if def == null:
+			continue
 		if _guardar(def, "%s/%s.tres" % [DIR_ITEMS, d["id"]]):
 			hechos += 1
+		else:
+			_avisos.append("%s: no se pudo guardar la definicion" % d["id"])
 	return hechos
+
+
+## Arma la definicion de un item del catalogo.
+##
+## Devuelve null si algo no cierra, para que un item roto no se lleve puesta la
+## tanda entera: en una herramienta de contenido conviene importar 51 y decir
+## cual fallo, antes que no importar ninguno.
+func _armar_definicion(d : Dictionary, escenas : Dictionary) -> ItemDefinition:
+	if not d.has("id"):
+		_avisos.append("hay una entrada sin id en el catalogo")
+		return null
+
+	var def := ItemDefinition.new()
+	def.id = StringName(d["id"])
+	def.nombre = str(d.get("nombre", ""))
+	def.descripcion = str(d.get("descripcion", ""))
+	def.categoria = str(d.get("categoria", "decorativo"))
+	def.peso = float(d.get("peso", 0.1))
+	def.apilable = bool(d.get("apilable", true))
+	def.stack_maximo = int(d.get("stack_maximo", 99))
+	def.valor_base = int(d.get("valor_base", 1))
+	def.comprable = bool(d.get("comprable", false))
+	def.vendible = bool(d.get("vendible", true))
+	def.familia = _texto(d, "familia")
+	def.colocable = bool(d.get("colocable", true))
+	def.rotable = bool(d.get("rotable", false))
+
+	var huella : Array = d.get("tamano_grilla", [1, 1])
+	def.tamano_grilla = Vector2i(int(huella[0]), int(huella[1]))
+
+	if escenas.has(d["id"]):
+		var escena = load(escenas[d["id"]])
+		if escena is PackedScene:
+			def.escena_mundo = escena
+		else:
+			_avisos.append("%s: la escena generada no cargo como PackedScene" % d["id"])
+
+	def.interacciones = _resolver_interacciones(d)
+	def.receta = _armar_receta(d)
+	return def
 
 
 ## Traduce la lista de verbos del JSON a los comportamientos que existen.
@@ -248,16 +274,37 @@ func _texto(d : Dictionary, clave : String) -> StringName:
 	return StringName("") if valor == null else StringName(str(valor))
 
 
-## Guarda un recurso y avisa si falla.
+## Guarda un recurso y comprueba que el archivo haya aparecido.
+##
+## No alcanza con mirar el codigo de retorno: la primera version confiaba en el y
+## reporto 52 guardados que nunca llegaron al disco. Un fallo silencioso en una
+## herramienta de contenido es peor que uno ruidoso, porque el error aparece
+## mucho despues, en forma de catalogo vacio.
 func _guardar(recurso : Resource, ruta : String) -> bool:
 	if recurso == null:
+		push_error("ImportarItems: recurso nulo para %s" % ruta)
 		return false
-	recurso.take_over_path(ruta)
-	var error := ResourceSaver.save(recurso, ruta)
+
+	var error := ResourceSaver.save(recurso, ruta, ResourceSaver.FLAG_CHANGE_PATH)
 	if error != OK:
-		_avisos.append("no se pudo guardar %s (error %d)" % [ruta, error])
+		push_error("ImportarItems: ResourceSaver fallo en %s con error %d" % [ruta, error])
+		return false
+	if not FileAccess.file_exists(ruta):
+		push_error("ImportarItems: ResourceSaver dijo OK pero %s no existe" % ruta)
 		return false
 	return true
+
+
+## Cuenta los archivos de una carpeta con esa extension.
+func _contar(carpeta : String, extension : String) -> int:
+	var dir := DirAccess.open(carpeta)
+	if dir == null:
+		return 0
+	var n := 0
+	for archivo in dir.get_files():
+		if archivo.trim_suffix(".remap").ends_with(extension):
+			n += 1
+	return n
 
 
 ## silla_madera -> SillaMadera, para que el nodo raiz tenga nombre de nodo.

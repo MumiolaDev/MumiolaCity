@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="SkillDefinition" format=3 uid="uid://b1vbdxrfsy7e4"]
+
+[ext_resource type="Script" uid="uid://x7tm0yc0hkqv" path="res://escenas/objetos/recursos/SkillDefinition.gd" id="1_yvqit"]
+
+[resource]
+script = ExtResource("1_yvqit")
+id = &"agricultura"
+nombre_display = "Agricultura"

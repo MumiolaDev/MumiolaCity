@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://cn8hchj4a1lfk"]
+
+[ext_resource type="Script" uid="uid://ciucb8xus6nnu" path="res://escenas/objetos/WorldObject.gd" id="1_dikml"]
+[ext_resource type="PackedScene" uid="uid://bk4vpj14d40wq" path="res://arte/modelos_3d/restoran/food_ingredient_carrot.gltf" id="2_seg78"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_kpltf"]
+size = Vector3(0.9, 1, 0.9)
+
+[node name="Zanahoria" type="Area3D" unique_id=1934380059]
+collision_layer = 2
+collision_mask = 0
+script = ExtResource("1_dikml")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1333720743]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape3D_kpltf")
+
+[node name="Visual" type="Node3D" parent="." unique_id=605383506 instance=ExtResource("2_seg78")]

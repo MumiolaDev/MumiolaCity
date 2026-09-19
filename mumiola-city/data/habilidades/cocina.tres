@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="SkillDefinition" format=3 uid="uid://fuwyhc0yriyo"]
+
+[ext_resource type="Script" uid="uid://x7tm0yc0hkqv" path="res://escenas/objetos/recursos/SkillDefinition.gd" id="1_v61cv"]
+
+[resource]
+script = ExtResource("1_v61cv")
+id = &"cocina"
+nombre_display = "Cocina"

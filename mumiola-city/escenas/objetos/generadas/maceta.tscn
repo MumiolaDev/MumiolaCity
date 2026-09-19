@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://2lasx8dvi67n"]
+
+[ext_resource type="Script" uid="uid://ciucb8xus6nnu" path="res://escenas/objetos/WorldObject.gd" id="1_241ja"]
+[ext_resource type="PackedScene" uid="uid://bmkijxuonhmxv" path="res://arte/modelos_3d/muebles/cactus_small_A.gltf" id="2_ycvpg"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1tmwa"]
+size = Vector3(0.9, 1, 0.9)
+
+[node name="Maceta" type="Area3D" unique_id=438834385]
+collision_layer = 2
+collision_mask = 0
+script = ExtResource("1_241ja")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=2014828830]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape3D_1tmwa")
+
+[node name="Visual" type="Node3D" parent="." unique_id=2042395920 instance=ExtResource("2_ycvpg")]
