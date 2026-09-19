@@ -12,6 +12,10 @@ extends Area3D
 ## Se emite despues de que un verbo se ejecuto de verdad.
 signal interactuado(behavior : InteractionBehavior, actor : Node)
 
+## Se emite al hacerle clic derecho. Lleva el objeto consigo para que un solo
+## manejador pueda atender a todos los muebles de la sala.
+signal clickeado(objeto : WorldObject)
+
 ## El estado persistente de este objeto concreto. Nunca es null, ni siquiera para
 ## una silla que no tiene estado propio.
 ##
@@ -42,6 +46,8 @@ var estado_runtime : Dictionary = {}
 
 
 func _ready() -> void:
+	input_event.connect(_al_recibir_clic)
+
 	if instancia == null:
 		push_error(
 			"WorldObject en %s: 'instancia' es null. Todo objeto del mundo tiene la suya, " % name
@@ -119,7 +125,21 @@ func ejecutar(behavior : InteractionBehavior, actor : Node) -> bool:
 	return true
 
 
-# El clic sobre el objeto —Area3D.input_event— llega con el paso 7, junto con
-# ContextMenuUI. Hoy no se conecta a proposito: PersonajeControlador consume el
-# clic izquierdo para caminar, asi que cablearlo ahora seria pelearse con el
-# movimiento sin tener todavia menu que mostrar.
+## Avisa de un clic derecho sobre el objeto.
+##
+## El izquierdo se deja pasar a proposito: lo usa el personaje para caminar, y
+## que clickear un mueble lo dejara clavado seria peor que no poder clickearlo.
+##
+## Marca el evento como atendido para que _unhandled_input() no vea tambien ese
+## clic. El sorteo de colisiones del viewport corre antes, asi que aca todavia se
+## llega a tiempo. Requiere que el viewport tenga physics_object_picking activado,
+## que en 3D viene apagado por defecto y no avisa de nada cuando falta.
+func _al_recibir_clic(_camara : Node, evento : InputEvent, _pos : Vector3,
+		_normal : Vector3, _indice : int) -> void:
+	if not (evento is InputEventMouseButton):
+		return
+	if not evento.pressed or evento.button_index != MOUSE_BUTTON_RIGHT:
+		return
+
+	get_viewport().set_input_as_handled()
+	clickeado.emit(self)

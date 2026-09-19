@@ -306,6 +306,7 @@ class_name InteractionBehavior extends Resource
 @export var icono: Texture2D
 @export var requiere_adyacencia: bool = true
 
+func etiqueta_para(actor: Node, objeto: WorldObject) -> String   # por defecto, etiqueta
 func puede_interactuar(actor: Node, objeto: WorldObject) -> bool
 func interactuar(actor: Node, objeto: WorldObject) -> bool      # (D8)
 ```
@@ -324,6 +325,8 @@ func interactuar(actor: Node, objeto: WorldObject) -> bool      # (D8)
 
 ```gdscript
 class_name SentarseBehavior extends InteractionBehavior   # IMPLEMENTADO (paso 6)
+@export var etiqueta_levantarse: String = "Levantarse"
+@export_range(-180, 180, 90) var giro_asiento: float = 180.0
 const CLAVE_OCUPANTES := &"sentarse_ocupantes"
 @export var capacidad: int = 1                  # 1 silla, 3 banco
 @export var offset_visual: Vector2              # metros, para asientos descentrados
@@ -944,11 +947,13 @@ Todas se suscriben a señales y ninguna es consultada por un manager. Todas se p
 | `InventoryUI` | `Control` | `inventario_cambiado` | `GridContainer` + drag & drop nativo de `Control` |
 | `SkillsPanelUI` | `Control` | `nivel_subido`, `xp_ganada` | `VBoxContainer` + `ProgressBar` |
 | `CraftingUI` | `Control` | `crafteo_progreso`, `inventario_cambiado` | `ItemList` / `Tree`, `ProgressBar` |
-| `ContextMenuUI` | `PopupMenu` | — (se puebla al abrirse) | `PopupMenu` completo |
+| `ContextMenuUI` **(implementado, paso 7)** | `PopupMenu` | — (se puebla al abrirse) | `PopupMenu` completo |
 | `RoomBuilderUI` | `Control` | `objeto_colocado` | drag & drop nativo + `modulate.a` como fantasma |
 | `MarketUI` | `Control` | `transaccion` | `Tree` (columnas ordenables) |
 
 **El drag & drop no se implementa a mano.** `_get_drag_data()`, `_can_drop_data()` y `_drop_data()` de `Control` ya resuelven el arrastre, la previsualización y el destino — y son los mismos tres métodos para arrastrar dentro del inventario y para arrastrar del inventario a la sala.
+
+**Un verbo puede llamarse distinto según quién pregunte.** `etiqueta_para(actor, objeto)` existe porque el recurso lo comparten cincuenta muebles y la etiqueta no puede guardarse en `self`: se calcula cada vez. Es lo que deja que la misma silla ofrezca «Sentarse» o «Levantarse» con **un solo comportamiento**. Separarlos en dos obligaría a que el menú mostrara siempre uno de los dos en gris.
 
 **`ContextMenuUI` no conoce ningún verbo.** Se puebla con lo que devuelve `WorldObject.verbos_disponibles(actor)` y mapea el índice elegido de vuelta al `InteractionBehavior`. Agregar un verbo nuevo al juego no toca este archivo — que es la prueba de que el sistema del GDD §6.1 está bien planteado.
 

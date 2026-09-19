@@ -21,6 +21,16 @@ extends Resource
 @export var requiere_adyacencia : bool = true
 
 
+## Devuelve como se llama este verbo para un actor concreto.
+##
+## Por defecto es la etiqueta fija, pero un comportamiento puede cambiarla segun
+## el estado: la misma silla dice "Sentarse" o "Levantarse" segun quien pregunte.
+## El recurso es compartido por cincuenta muebles, asi que la etiqueta no se puede
+## guardar en self: se calcula cada vez que alguien la pide.
+func etiqueta_para(_actor : Node, _objeto : WorldObject) -> String:
+	return etiqueta
+
+
 ## Devuelve si el actor puede ejecutar este verbo sobre el objeto, ahora mismo.
 ##
 ## Se llama para armar el menu contextual y otra vez dentro de ejecutar(): entre

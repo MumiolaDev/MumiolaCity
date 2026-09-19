@@ -7,9 +7,12 @@ extends Node3D
 ## en RoomController —activar(), desactivar(), rotar()—: lo unico desechable que
 ## hay aca es el disparador.
 ##
-## Teclas: TAB cambia de sala, Q y E giran el encuadre un cuarto de vuelta,
-## R gira la silla que se va a colocar, C la coloca en la celda bajo el mouse,
-## X retira lo que haya ahi y S sienta o levanta al personaje.
+## Interactuar con un mueble es clic derecho sobre el: abre el menu contextual.
+## El clic izquierdo sigue siendo caminar.
+##
+## Teclas de prueba, todas provisionales: TAB cambia de sala, Q y E giran el
+## encuadre un cuarto de vuelta, R gira la silla que se va a colocar, C la coloca
+## en la celda bajo el mouse y X retira lo que haya ahi.
 ##
 ## Girar el encuadre y girar el objeto son dos cosas distintas y por eso son dos
 ## teclas distintas: la camara orbita y los objetos se quedan donde estan, asi
@@ -25,6 +28,7 @@ extends Node3D
 @export var personaje : PersonajeControlador
 
 @onready var contenedor_salas : Node3D = $Salas
+@onready var menu : ContextMenuUI = $UI/ContextMenuUI
 
 var _actual : int = -1
 
@@ -41,6 +45,18 @@ func _ready() -> void:
 	if salas().is_empty():
 		push_error("Mundo: no hay ninguna RoomController colgando de Salas.")
 		return
+
+	# En 3D viene apagado por defecto, y sin esto los Area3D nunca reciben clics.
+	# No da error de ningun tipo cuando falta: los muebles simplemente no
+	# responden.
+	get_viewport().physics_object_picking = true
+
+	menu.verbo_elegido.connect(_al_elegir_verbo)
+	for sala in salas():
+		sala.objeto_colocado.connect(_atender_clics_de)
+		for obj in sala.objetos():
+			_atender_clics_de(obj)
+
 	ir_a_sala(0)
 
 
@@ -113,8 +129,6 @@ func _unhandled_input(evento : InputEvent) -> void:
 		_colocar_silla_de_prueba(sala)
 	elif evento.keycode == KEY_X:
 		_retirar_bajo_el_mouse(sala)
-	elif evento.keycode == KEY_S:
-		_sentarse_o_levantarse(sala)
 
 
 ## Coloca una silla en la celda bajo el mouse y reporta el resultado.
@@ -152,32 +166,26 @@ func _retirar_bajo_el_mouse(sala : RoomController) -> void:
 	print("Retirado de %s: %s" % [celda, "nada" if inst == null else inst.nombre_mostrado()])
 
 
-## Sienta al personaje en el objeto bajo el mouse, o lo levanta si ya esta
-## sentado.
+## Engancha el clic derecho de un mueble al menu contextual.
 ##
-## Provisional: cuando exista ContextMenuUI (paso 7), sentarse va a ser un verbo
-## mas del menu que se abre al clickear el mueble, y este atajo sobra.
-func _sentarse_o_levantarse(sala : RoomController) -> void:
-	if personaje.esta_sentado():
-		personaje.levantarse()
-		print("De pie.")
-		return
+## Se llama al colocar cada objeto, y no una vez al arrancar, porque los muebles
+## aparecen y desaparecen durante la partida.
+func _atender_clics_de(obj : WorldObject) -> void:
+	if obj != null and not obj.clickeado.is_connected(_abrir_menu):
+		obj.clickeado.connect(_abrir_menu)
 
-	var celda := sala.grid.celda_bajo_puntero(sala.camara, get_viewport().get_mouse_position())
-	if celda == IsoGrid.SIN_CELDA:
-		return
 
-	var obj := sala.grid.objeto_en(celda)
-	if obj == null:
-		print("No hay nada en %s donde sentarse." % celda)
-		return
-
-	var verbos := obj.verbos_disponibles(personaje)
-	if verbos.is_empty():
+## Abre el menu contextual de un mueble para el personaje.
+func _abrir_menu(obj : WorldObject) -> void:
+	if not menu.mostrar_para(obj, personaje):
 		print("%s no ofrece nada que se pueda hacer ahora." % obj.nombre_mostrado())
-		return
 
-	# interactuar_con() y no ejecutar(): si el verbo pide adyacencia, el personaje
-	# camina hasta el mueble y recien ahi se sienta.
-	print("%s: %s" % [obj.nombre_mostrado(),
-		"en camino" if personaje.interactuar_con(obj, verbos[0]) else "no se pudo"])
+
+## Ejecuta el verbo elegido en el menu.
+##
+## Pasa por interactuar_con() y no por ejecutar(): si el verbo pide adyacencia,
+## el personaje camina hasta el mueble y actua recien al llegar. El menu no sabe
+## nada de distancias ni de rutas.
+func _al_elegir_verbo(verbo : InteractionBehavior, obj : WorldObject, actor : Node) -> void:
+	if actor == personaje:
+		personaje.interactuar_con(obj, verbo)

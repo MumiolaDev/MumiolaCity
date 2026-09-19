@@ -26,6 +26,8 @@ const CLAVE_OCUPANTES := &"sentarse_ocupantes"
 ## queda mirando hacia afuera del respaldo. Ademas decide por donde se baja, que
 ## es siempre la celda que tiene enfrente.
 @export_range(-180.0, 180.0, 90.0) var giro_asiento : float = 180.0
+## Como se llama el verbo cuando quien pregunta ya esta sentado.
+@export var etiqueta_levantarse : String = "Levantarse"
 
 
 ## Devuelve quienes estan sentados ahora mismo en el objeto.
@@ -49,7 +51,17 @@ func ocupantes(objeto : WorldObject) -> Array:
 	return vivos
 
 
-## Devuelve si el actor puede sentarse en el objeto ahora mismo.
+## Devuelve como se llama el verbo para este actor: sentarse, o levantarse si ya
+## lo esta.
+func etiqueta_para(actor : Node, objeto : WorldObject) -> String:
+	return etiqueta_levantarse if actor in ocupantes(objeto) else etiqueta
+
+
+## Devuelve si el actor puede usar el asiento ahora mismo.
+##
+## Estar sentado tambien cuenta: es la unica forma de que el menu contextual
+## ofrezca levantarse. Es el mismo gesto que en Habbo, donde volver a hacer clic
+## sobre la silla te para.
 func puede_interactuar(actor : Node, objeto : WorldObject) -> bool:
 	if actor == null or objeto == null:
 		return false
@@ -60,7 +72,7 @@ func puede_interactuar(actor : Node, objeto : WorldObject) -> bool:
 
 	var sentados := ocupantes(objeto)
 	if actor in sentados:
-		return false
+		return true
 	return sentados.size() < capacidad
 
 
@@ -73,6 +85,13 @@ func puede_interactuar(actor : Node, objeto : WorldObject) -> bool:
 func interactuar(actor : Node, objeto : WorldObject) -> bool:
 	if not puede_interactuar(actor, objeto):
 		return false
+
+	# Un solo verbo que alterna, y no dos comportamientos: sentarse y levantarse
+	# son el mismo gesto sobre el mismo mueble, y separarlos obligaria a que el
+	# menu mostrara siempre uno de los dos en gris.
+	if actor in ocupantes(objeto):
+		return levantarse(actor, objeto)
+
 	if not actor.sentarse_en(objeto, offset_visual, animacion, giro_asiento):
 		return false
 

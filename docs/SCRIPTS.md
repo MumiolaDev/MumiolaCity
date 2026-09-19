@@ -167,7 +167,8 @@ IsoGrid (Node3D)        ← el script
 **Función:** menú contextual que aparece al interactuar con un `WorldObject`, listando sus verbos disponibles.
 **Godot nativo:** **`PopupMenu`** ya resuelve el posicionamiento en pantalla, la lista de ítems con `add_item()`, la navegación por teclado, el cierre al hacer click afuera y la señal `id_pressed`. **Código propio:** solo poblarlo con los verbos que devuelve el objeto y mapear el id elegido al comportamiento correspondiente.
 **Interactúa con:** llama `WorldObject.verbos_disponibles(actor)` para poblarse; al elegir una opción, invoca `WorldObject.ejecutar(behavior, actor)`.
-**Funciones clave:** `mostrar_para(objeto: WorldObject, actor: Node) -> void`, `_on_id_pressed(id: int) -> void`.
+**Funciones clave:** `mostrar_para(objeto: WorldObject, actor: Node) -> bool` — devuelve `false` y no abre nada si el objeto no ofrece verbos, porque un menú vacío se lee como un bug — y la señal `verbo_elegido`, que el menú emite en vez de ejecutar: quien escucha decide, y hoy es el personaje, que camina hasta el mueble antes de actuar.
+**Requisito fácil de olvidar:** `Viewport.physics_object_picking` viene **apagado** en 3D. Sin activarlo, ningún `Area3D` recibe clics y no hay error que lo delate — los muebles simplemente no responden. `Mundo` lo enciende en `_ready()`.
 
 ### 8. `HUD` — UI · Escena propia · `extends CanvasLayer`
 **Función:** capa fija de interfaz (energía, Ducados, notificaciones).
