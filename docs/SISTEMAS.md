@@ -349,7 +349,7 @@ La tabla más importante del documento. La mayoría de los bugs de un juego de e
 
 ---
 
-## 6. Decisiones de arquitectura: catorce cerradas, siete pendientes
+## 6. Decisiones de arquitectura: dieciséis cerradas, cinco pendientes
 
 Once decisiones que hay que cerrar antes de escribir el sistema correspondiente, ordenadas por lo caro que sale cambiarlas después. **Cinco ya están cerradas** — D1, D2 y D11 aplicadas en `items.json`, D3 resuelta acá abajo, y D7 postergada a la fase 2 a propósito — y **D5 tiene el lado de los datos hecho y el del código pendiente**. Las demás siguen abiertas.
 
@@ -424,9 +424,11 @@ InventoryManager (slot único)
 
 **Escenas que no vienen de un ítem.** `CraftingStation` y `MarketStall` heredan de `WorldObject`, y una mesada pública de la plaza no la colocó ningún jugador. Para que la invariante «`instancia` nunca es `null`» se sostenga sin excepciones, esas escenas llevan su `ItemInstance` creado dentro del propio `.tscn`.
 
-### D4 — Las habilidades no pueden ser `String` sueltos · **bloquea `SkillManager` (fase 2)**
+### D4 — Las habilidades no pueden ser `String` sueltos · **datos ya corregidos · falta el código**
 
-`SCRIPTS.md` define `agregar_xp(habilidad: String, ...)`. Ya hay un desync latente: el GDD escribe **Minería, Carpintería, Ganadería** con tilde, e `items.json` escribe **Mineria, Carpinteria, Ganaderia** sin tilde. El día que alguien pase el nombre del GDD, la xp se acumula silenciosamente en una habilidad que no existe, sin error.
+`SCRIPTS.md` define `agregar_xp(habilidad: String, ...)`. El catálogo viejo tenía un desync latente: el GDD escribía **Minería** con tilde e `items.json` **Mineria** sin tilde, y el día que alguien pasara el nombre del GDD la xp se habría acumulado en una habilidad inexistente, sin error.
+
+**Del lado de los datos ya está resuelto:** el catálogo v0.5 declara las habilidades en un bloque propio, con `id` en minúscula y sin tildes (`agricultura`, `cocina`, `carpinteria`) y `nombre` aparte para mostrar. Ninguna receta escribe otra cosa.
 
 **Propuesta:** un `const Habilidades` con `StringName` en snake_case sin tildes (`&"mineria"`) como clave única de todo el sistema, y `SkillDefinition.nombre_display` con la tilde para mostrar. Ninguna cadena literal de habilidad se escribe fuera de ese archivo.
 
@@ -440,19 +442,21 @@ InventoryManager (slot único)
 ```
 **Lo que queda por decidir es el lado del código:** un único punto de consulta, `ModifierStack.multiplicador_para(habilidad) -> float`, que suma el equipo equipado y los buffs activos. Hoy `GatherableNode` tendría que consultar dos sistemas distintos (el slot de herramienta y el controlador de buffs, que antes de esta decisión eran dos clases separadas) y combinarlos a mano en cada sitio donde importe la velocidad.
 
-### D6 — Falta la tabla de drops · **bloquea `GatherableNode` (fase 2)**
+### D6 — Falta la tabla de drops · **disuelta por el catálogo v0.5**
 
 `lista_items.md` dice que la Semilla de manzana se obtiene "en baja proporción" al cosechar Manzana. **Esa proporción no tiene dónde vivir:** no es un campo de `items.json` ni un recurso de `SCRIPTS.md`. Terminaría hardcodeada en un script, que es exactamente lo que el GDD §8 prohíbe.
 
-**Propuesta:** un recurso nuevo `GatherTable` con `Array[GatherDrop]{item_id, cantidad_min, cantidad_max, probabilidad}`, y `GatherableNode.@export var tabla: GatherTable`. Es una de las once clases que `SCRIPTS.md` lista pero no detalla (firma completa en [`CLASES.md`](CLASES.md) §1.10).
+**Ya no hace falta.** El catálogo v0.5 **no tiene recolección aleatoria**: plantar una semilla da siempre su verdura, y no hay ningún ítem que caiga por probabilidad. Sin azar no hay tabla de drops que modelar, y `GatherTable` / `GatherDrop` salen del plan.
 
-### D7 — La energía no tiene sumidero · **postergada a fase 2, a propósito**
+La propuesta queda registrada por si vuelve el azar: un recurso `GatherTable` con `Array[GatherDrop]{item_id, cantidad_min, cantidad_max, probabilidad}`. El día que exista un árbol o una veta, es lo primero que va a hacer falta.
 
-Tres de los cinco consumibles restauran energía, el `HUD` muestra una barra de energía, y **nada en todo el diseño la gasta**. Tal como está, Pan, Jugo de manzana y Huevo cocido no sirven para nada y el 60 % de la habilidad de Cocina queda sin propósito.
+### D7 — La energía no tiene sumidero · **disuelta: no hay energía**
 
-**Decisión: no se resuelve todavía.** La barra sigue existiendo en el `HUD` y los tres consumibles siguen restaurándola, pero nada la gasta hasta que haya un ciclo económico real que balancear. Es una postergación consciente, no un olvido: poner un coste de energía antes de saber cuántas acciones por minuto hace un jugador es elegir un número a ciegas. **La consecuencia hay que tenerla presente: hasta que se cierre, Pan, Jugo de manzana, Huevo cocido y Pescado a la plancha no tienen uso real** — se craftean, se venden y se comen sin que comer cambie nada.
+En el catálogo viejo, tres consumibles restauraban energía, el `HUD` mostraba una barra y **nada en todo el diseño la gastaba**, con lo cual el 60 % de la habilidad de Cocina quedaba sin propósito.
 
-**La propuesta que quedó registrada para cuando llegue el momento:** cada acción de recolección cuesta energía (≈2 puntos sobre 100), y por debajo de 20 la velocidad de recolección cae un 50 % — **penaliza, no bloquea**. Bloquear al jugador por una barra vacía es la mecánica más odiada de los juegos sociales y no hace falta: basta con que comer sea claramente mejor que no comer. Con ~50 acciones por barra llena y +20 por Pan, la comida se vuelve un consumo constante y real, que es lo que sostiene la demanda de Cocina en el mercado. El momento natural para cerrarlo es junto con el primer balanceo de la fase 2, cuando ya se pueda medir el ritmo real de juego.
+**Decisión: la energía sale del MVP.** El catálogo v0.5 no tiene ningún ítem que la restaure, así que tampoco hace falta nada que la gaste. El sumidero de la economía pasa a ser **los muebles**: cocinar genera ducados y decorar tu sala los consume, que es el bucle de Habbo y sale de los assets sin inventar nada.
+
+La barra sigue declarada en el `HUD`, oculta, y `actualizar_energia()` existe. Si alguna vez vuelve, la propuesta que quedó registrada es que cada acción cueste ~2 puntos sobre 100 y que por debajo de 20 la velocidad caiga a la mitad — **penalizar, no bloquear**. Bloquear al jugador por una barra vacía es la mecánica más odiada de los juegos sociales.
 
 ### D8 — Cómo se prepara la interacción para el servidor · **decisión barata ahora, cara después**
 
@@ -648,210 +652,206 @@ En la práctica eso significa: o el reemplazo se modela sobre el rig de KayKit, 
 
 ## 7. Estado de los datos
 
-Calculado sobre las 27 recetas de `items.json` v0.4, comparando `valor_base` del resultado contra la suma de `valor_base` de los insumos que sí se consumen.
+> **Reescrito para el catálogo v0.5.** El anterior partía de una economía imaginada
+> —trigo, manzanas, mineral, pescado— que después habría habido que ilustrar con modelos
+> que el proyecto no tiene. El actual se construyó al revés: partiendo de los modelos 3D
+> disponibles. Esta sección **se genera** con `herramientas/generar_seccion_datos.py`.
+
+52 ítems, 26 con receta, 25 comprables al NPC, 3 habilidades y 4 estaciones.
+El NPC paga **60 %** del valor base y cobra **100 %**.
 
 ### 7.0 El grafo real de la economía
 
-Generado directamente desde `items.json`, no dibujado a mano. Flecha continua = insumo consumido (con la cantidad); flecha punteada = utensilio requerido pero **no** consumido; flecha gruesa = se planta y madura con el tiempo. Los nodos redondeados son materia prima.
+Generado desde `items.json`, no dibujado a mano. Los nodos redondeados se compran al NPC;
+las flechas punteadas son utensilios requeridos pero **no** consumidos.
 
 ```mermaid
 flowchart LR
-  subgraph agri[Agricultura]
-    trigo([Trigo])
-    semilla_manzana([Semilla de manzana])
-    manzana([Manzana])
-    semilla_cafe([Semilla de café])
-    granos_cafe([Granos de café])
+  subgraph agricultura[Agricultura]
+    tomate[Tomate]
+    lechuga[Lechuga]
+    papa[Papa]
+    cebolla[Cebolla]
+    zanahoria[Zanahoria]
   end
-  subgraph pesc[Pesca]
-    pescado([Pescado])
-    marisco([Marisco])
+  subgraph cocina[Cocina]
+    tomate_rodajas[Tomate en rodajas]
+    lechuga_picada[Lechuga picada]
+    queso_fetas[Queso en fetas]
+    cebolla_aros[Cebolla en aros]
+    zanahoria_trozos[Zanahoria en trozos]
+    papa_pure[Pure de papa]
+    carne_cocida[Carne cocida]
+    jamon_cocido[Jamon cocido]
+    hamburguesa[Hamburguesa]
+    hamburguesa_veggie[Hamburguesa vegetariana]
+    guiso[Guiso]
+    plato_del_dia[Plato del dia]
+    plato[Plato]
+    bol[Bol]
   end
-  subgraph mine[Minería]
-    mineral_hierro([Mineral de hierro])
-    piedra([Piedra])
-  end
-  subgraph silv[Silvicultura]
-    madera([Madera])
-    resina([Resina])
-    fibra_vegetal([Fibra vegetal])
-  end
-  subgraph gana[Ganadería]
-    leche([Leche])
-    huevo([Huevo])
-    lana([Lana])
-  end
-  subgraph coci[Cocina]
-    harina[Harina]
-    pan[Pan]
-    cafe[Café]
-    jugo_manzana[Jugo de manzana]
-    cafe_con_leche[Café con leche]
-    huevo_cocido[Huevo cocido]
-    pescado_plancha[Pescado a la plancha]
-    caldo_marisco[Caldo de marisco]
-  end
-  subgraph carp[Carpintería]
-    taza_madera[Taza de madera]
-    taza_piedra[Taza de piedra]
-    plato_madera[Plato de madera]
-    plato_piedra[Plato de piedra]
+  subgraph carpinteria[Carpinteria]
+    banqueta[Banqueta]
     silla_madera[Silla de madera]
-    mesa_madera[Mesa de madera]
-    estanteria[Estantería]
+    mesa_chica[Mesa chica]
+    estante[Estante]
+    mesa[Mesa]
+    alacena[Alacena]
+    cama[Cama]
   end
-  subgraph manu[Manufactura]
-    plastico[Plástico]
-    taza_plastico[Taza de plástico]
-    plato_plastico[Plato de plástico]
-    pala_hierro[Pala de hierro]
-    pico_mineria[Pico de minería]
-    cana_pescar[Caña de pescar]
-  end
-  subgraph cost[Costura]
-    hilo_lana[Hilo de lana]
-    tela_fibra[Tela de fibra]
-    gorro_lana[Gorro de lana]
-    chaleco_lana[Chaleco de lana]
-    camiseta_fibra[Camiseta de fibra]
-    pantalon_fibra[Pantalón de fibra]
-  end
-  semilla_manzana ==>|planta 15min| manzana
-  semilla_cafe ==>|planta 18min| granos_cafe
-  trigo -->|3| harina
-  resina -->|3| plastico
-  lana -->|3| hilo_lana
-  fibra_vegetal -->|3| tela_fibra
-  madera -->|1| taza_madera
-  piedra -->|1| taza_piedra
-  plastico -->|1| taza_plastico
-  madera -->|1| plato_madera
-  piedra -->|1| plato_piedra
-  plastico -->|1| plato_plastico
-  harina -->|2| pan
-  granos_cafe -->|2| cafe
-  taza_madera -.->|no consume| cafe
-  taza_piedra -.->|no consume| cafe
-  taza_plastico -.->|no consume| cafe
-  manzana -->|2| jugo_manzana
-  taza_madera -.->|no consume| jugo_manzana
-  taza_piedra -.->|no consume| jugo_manzana
-  taza_plastico -.->|no consume| jugo_manzana
-  granos_cafe -->|2| cafe_con_leche
-  leche -->|1| cafe_con_leche
-  taza_madera -.->|no consume| cafe_con_leche
-  taza_piedra -.->|no consume| cafe_con_leche
-  taza_plastico -.->|no consume| cafe_con_leche
-  huevo -->|2| huevo_cocido
-  plato_madera -.->|no consume| huevo_cocido
-  plato_piedra -.->|no consume| huevo_cocido
-  plato_plastico -.->|no consume| huevo_cocido
-  pescado -->|2| pescado_plancha
-  plato_madera -.->|no consume| pescado_plancha
-  plato_piedra -.->|no consume| pescado_plancha
-  plato_plastico -.->|no consume| pescado_plancha
-  marisco -->|2| caldo_marisco
-  taza_madera -.->|no consume| caldo_marisco
-  taza_piedra -.->|no consume| caldo_marisco
-  taza_plastico -.->|no consume| caldo_marisco
-  mineral_hierro -->|2| pala_hierro
-  madera -->|1| pala_hierro
-  mineral_hierro -->|2| pico_mineria
-  madera -->|1| pico_mineria
-  madera -->|2| cana_pescar
-  fibra_vegetal -->|1| cana_pescar
-  hilo_lana -->|2| gorro_lana
-  hilo_lana -->|3| chaleco_lana
-  tela_fibra -->|2| camiseta_fibra
-  tela_fibra -->|3| pantalon_fibra
-  madera -->|2| silla_madera
-  madera -->|4| mesa_madera
-  madera -->|3| estanteria
-  piedra -->|2| estanteria
+  carne_cruda([Carne cruda])
+  jamon([Jamon])
+  pan_hamburguesa([Pan de hamburguesa])
+  queso([Queso])
+  semilla_cebolla([Semilla de cebolla])
+  semilla_lechuga([Semilla de lechuga])
+  semilla_papa([Semilla de papa])
+  semilla_tomate([Semilla de tomate])
+  semilla_zanahoria([Semilla de zanahoria])
+  tabla_madera([Tabla de madera])
+  semilla_tomate -->|1| tomate
+  semilla_lechuga -->|1| lechuga
+  semilla_papa -->|1| papa
+  semilla_cebolla -->|1| cebolla
+  semilla_zanahoria -->|1| zanahoria
+  tomate -->|1| tomate_rodajas
+  cuchillo -.-> tomate_rodajas
+  tabla_cortar -.-> tomate_rodajas
+  lechuga -->|1| lechuga_picada
+  cuchillo -.-> lechuga_picada
+  tabla_cortar -.-> lechuga_picada
+  queso -->|1| queso_fetas
+  cuchillo -.-> queso_fetas
+  tabla_cortar -.-> queso_fetas
+  cebolla -->|1| cebolla_aros
+  cuchillo -.-> cebolla_aros
+  tabla_cortar -.-> cebolla_aros
+  zanahoria -->|1| zanahoria_trozos
+  cuchillo -.-> zanahoria_trozos
+  tabla_cortar -.-> zanahoria_trozos
+  papa -->|2| papa_pure
+  olla -.-> papa_pure
+  carne_cruda -->|1| carne_cocida
+  sarten -.-> carne_cocida
+  jamon -->|1| jamon_cocido
+  sarten -.-> jamon_cocido
+  pan_hamburguesa -->|1| hamburguesa
+  carne_cocida -->|1| hamburguesa
+  tomate_rodajas -->|1| hamburguesa
+  lechuga_picada -->|1| hamburguesa
+  plato -.-> hamburguesa
+  pan_hamburguesa -->|1| hamburguesa_veggie
+  papa_pure -->|1| hamburguesa_veggie
+  tomate_rodajas -->|1| hamburguesa_veggie
+  lechuga_picada -->|1| hamburguesa_veggie
+  queso_fetas -->|1| hamburguesa_veggie
+  plato -.-> hamburguesa_veggie
+  papa_pure -->|1| guiso
+  zanahoria_trozos -->|1| guiso
+  cebolla_aros -->|1| guiso
+  jamon_cocido -->|1| guiso
+  olla -.-> guiso
+  bol -.-> guiso
+  hamburguesa -->|1| plato_del_dia
+  guiso -->|1| plato_del_dia
+  plato -.-> plato_del_dia
+  plato_sucio -->|1| plato
+  bol_sucio -->|1| bol
+  tabla_madera -->|2| banqueta
+  serrucho -.-> banqueta
+  martillo -.-> banqueta
+  tabla_madera -->|3| silla_madera
+  serrucho -.-> silla_madera
+  martillo -.-> silla_madera
+  tabla_madera -->|4| mesa_chica
+  serrucho -.-> mesa_chica
+  martillo -.-> mesa_chica
+  tabla_madera -->|5| estante
+  serrucho -.-> estante
+  martillo -.-> estante
+  tabla_madera -->|6| mesa
+  serrucho -.-> mesa
+  martillo -.-> mesa
+  tabla_madera -->|8| alacena
+  serrucho -.-> alacena
+  martillo -.-> alacena
+  tabla_madera -->|10| cama
+  serrucho -.-> cama
+  martillo -.-> cama
 ```
 
-Con las nueve habilidades cubiertas, se ven de un vistazo dos cosas. **Madera sigue siendo el material más demandado** — ocho recetas dependen de ella, contra tres de Piedra. Y **Cocina es la única habilidad que consume de otras cinco** (Agricultura, Pesca, Ganadería, Carpintería y Manufactura), lo que la convierte en el nudo del comercio: nadie cocina sin comprarle a alguien.
+### 7.1 Los precios salen de tres reglas, no de la intuición
 
-### 7.1 Los precios ya no se eligen: salen de una regla
+`herramientas/generar_items.py` no escribe el catálogo si alguna no se cumple:
 
-En la v0.2 cuatro recetas **destruían valor** — craftearlas empobrecía al jugador respecto de vender los materiales sueltos:
+| Categoría | Regla | Por qué |
+|---|---|---|
+| Cadena productiva | Vender el resultado **deja ganancia** sobre reponer los insumos | Si transformar no paga, nadie produce |
+| Muebles | Venderlos al NPC **da pérdida** | Si no, craftear y revender imprime dinero y dejan de ser el sumidero |
+| Vajilla | Lavar **recicla**, no produce valor | Queda fuera de la regla a propósito |
 
-| Receta | Coste insumos | `valor_base` v0.2 | Margen v0.2 | `valor_base` v0.4 | Margen v0.4 |
-|---|---:|---:|---:|---:|---:|
-| **Pan** | 18 Dc (2 Harina) | 8 | **−4** | 25 | +7 |
-| **Plástico** | 9 Dc (3 Resina) | 8 | **−1** | 13 | +4 |
-| **Taza de plástico** | 13 Dc | 7 | **−1** | 18 | +5 |
-| Harina | 6 Dc (3 Trigo) | 6 | 0 | 9 | +3 |
-| Plato de plástico | 13 Dc | 8 | 0 | 18 | +5 |
+Los márgenes que salen hoy, con el NPC pagando 60 %:
 
-La causa no era ninguna de esas cinco cifras en particular: era que **cada `valor_base` se había elegido a mano**, así que nada garantizaba que el precio de un producto superara el de sus insumos. Con 42 ítems eso se sostiene revisando; con 200 no.
+| Ítem | Regla | Valor | NPC paga | Reponer | Margen |
+|---|---|---:|---:|---:|---:|
+| `tomate` | ganancia | 7 | 4 | 2 | **+2** |
+| `lechuga` | ganancia | 7 | 4 | 2 | **+2** |
+| `papa` | ganancia | 10 | 6 | 3 | **+3** |
+| `cebolla` | ganancia | 10 | 6 | 3 | **+3** |
+| `zanahoria` | ganancia | 12 | 7 | 4 | **+3** |
+| `tomate_rodajas` | ganancia | 11 | 7 | 2 | **+5** |
+| `lechuga_picada` | ganancia | 11 | 7 | 2 | **+5** |
+| `queso_fetas` | ganancia | 20 | 12 | 9 | **+3** |
+| `cebolla_aros` | ganancia | 15 | 9 | 3 | **+6** |
+| `zanahoria_trozos` | ganancia | 18 | 11 | 4 | **+7** |
+| `papa_pure` | ganancia | 26 | 16 | 6 | **+10** |
+| `carne_cocida` | ganancia | 32 | 19 | 14 | **+5** |
+| `jamon_cocido` | ganancia | 40 | 24 | 18 | **+6** |
+| `hamburguesa` | ganancia | 78 | 47 | 23 | **+24** |
+| `hamburguesa_veggie` | ganancia | 86 | 52 | 24 | **+28** |
+| `guiso` | ganancia | 140 | 84 | 31 | **+53** |
+| `plato_del_dia` | ganancia | 260 | 156 | 54 | **+102** |
+| `plato` | recicla | 12 | 7 | 0 | **+7** |
+| `bol` | recicla | 14 | 8 | 0 | **+8** |
+| `banqueta` | pérdida | 28 | 17 | 20 | **-3** |
+| `silla_madera` | pérdida | 45 | 27 | 30 | **-3** |
+| `mesa_chica` | pérdida | 60 | 36 | 40 | **-4** |
+| `estante` | pérdida | 75 | 45 | 50 | **-5** |
+| `mesa` | pérdida | 90 | 54 | 60 | **-6** |
+| `alacena` | pérdida | 120 | 72 | 80 | **-8** |
+| `cama` | pérdida | 150 | 90 | 100 | **-10** |
 
-**La regla que sustituye a la elección a mano** (documentada en el `_readme` de `items.json`, para que sobreviva a este documento):
+### 7.2 Lo que este catálogo hizo desaparecer
 
-```
-coste  = Σ valor_base(insumo) × cantidad     # solo los que se consumen; para una familia, el miembro más barato
-margen = max(redondear(coste × 0.4), 3)      # todo crafteo agrega valor, con un piso de 3 Dc
-valor_base = coste + margen × prima          # prima 3 para equipable y decorativo, 1 para el resto
-```
+Tres problemas abiertos dejaron de existir, no por resolverse sino porque el diseño
+que los causaba ya no está:
 
-Solo la materia prima conserva un precio elegido a mano — es la única capa que no se deriva de nada. Los tres términos dicen algo concreto: **el 40 %** hace que transformar siempre convenga y que las cadenas profundas paguen más (dos pasos rinden 1.4² ≈ 1.96× sobre la materia prima); **el piso de 3 Dc** evita que craftear algo barato sea trabajar gratis, que es lo que le pasaba a la Harina; y **la prima 3 sobre el margen** para bienes durables reconoce que una mesa o una pala se compran una vez, y los deja siendo el sumidero de Ducados que pide el GDD §5.
+- **D6, la tabla de drops.** Salía de que la semilla de manzana caía «en baja proporción»
+  al cosechar. En el catálogo v0.5 **no hay recolección aleatoria**: plantar una semilla da
+  siempre su verdura. Sin azar no hace falta `GatherTable`.
+- **D7, el sumidero de energía.** Ningún ítem restaura energía y nada la gasta. El sumidero
+  de la economía son los muebles, que se compran con lo que rinde cocinar. La barra del
+  `HUD` sigue existiendo, oculta, por si vuelve.
+- **El desfase de tildes de D4.** Las habilidades son `agricultura`, `cocina` y `carpinteria`,
+  en minúscula y sin tildes, con `nombre` aparte para mostrar. Del lado de los datos ya está;
+  falta el `const Habilidades` que impida escribir una cadena suelta desde el código.
 
-### 7.2 El orden de los materiales quedó derecho
+### 7.3 Lo que el catálogo todavía no cubre
 
-| Material | `valor_base` | Taza que produce (v0.2 → v0.4) |
-|---|---:|---|
-| Piedra | 1 | 9 → **4** |
-| Madera | 2 | 5 → **5** |
-| Resina → Plástico | 3 → 13 | 7 → **18** |
-
-Antes la Piedra era el material más barato del juego y producía el utensilio más caro, mientras el Plástico —el más caro— producía uno más barato: un jugador racional hacía *solo* piedra y la rama del plástico quedaba muerta. Ahora el precio del producto sigue al de su material, y el plástico es el utensilio premium que el GDD §1 dice que debería ser.
-
-**Lo que sigue abierto es de contenido, no de precios:** el único eje que diferencia madera, piedra y plástico es cuánto cuestan. Si se quiere que los tres coexistan de verdad, la diferencia tiene que ser otra — peso, capacidad del contenedor, durabilidad — y eso hay que agregarlo a mano.
-
-### 7.3 El desbalance que queda, y por qué no es de precios
-
-Por minuto de crafteo, Costura parece desbocada: **Chaleco de lana 576 Dc/min**, Pantalón 396, contra 180 de la Pala. Pero ese número engaña, porque mide solo el paso de crafteo y no el tiempo de conseguir los insumos — y un chaleco se lleva 9 Lana. Medido por **Ducado de materia prima invertido**, que es la comparación honesta, los dos oficios rinden casi igual: **chaleco ×1.23, pala ×1.25**. La brecha aparente es profundidad de cadena, no un error de la regla.
-
-Lo que sí queda raro es que **un Pan (25 Dc) valga más que una Mesa (17 Dc)**. Sale de que la cadena del pan es la más profunda del juego — 6 Trigo → 2 Harina → 1 Pan, dos pasos de 40 % — mientras la mesa es un solo paso desde la madera. La palanca para corregirlo son **las cantidades de la receta**, no los precios: bajar Harina a 2 Trigo y Pan a 2 Harina deja el pan en 20 Dc. Vale la pena decidirlo cuando se pruebe el ritmo real de juego, no antes.
-
-### 7.4 Las nueve habilidades del GDD ya tienen contenido
-
-La v0.2 cubría siete habilidades: faltaban **Pesca** —una de las cinco de recolección— y **Costura**, que el GDD §3.2 califica de «núcleo Habbo» por ser el cosmético de avatar. Las dos entraron en la v0.4, y el catálogo pasó de 29 a 42 ítems:
-
-| Habilidad | Ítems nuevos |
-|---|---|
-| Pesca | Pescado, Marisco |
-| Silvicultura | Fibra vegetal |
-| Ganadería | Lana |
-| Costura | Hilo de lana, Tela de fibra, Gorro de lana, Chaleco de lana, Camiseta de fibra, Pantalón de fibra |
-| Cocina | Pescado a la plancha, Caldo de marisco |
-| Manufactura | Caña de pescar |
-
-Costura era el hueco más caro de dejar abierto: es la habilidad que le da contenido económico al `AvatarComposer`, que ya está planificado para la fase 1. Sus prendas son `categoria: "equipable"` con `slot` (`tocado`, `torso`, `piernas`) y **sin campo `bono`** — un equipable sin bono es cosmético puro y solo cambia una capa del avatar, sin tocar el balance.
-
-Ninguna habilidad se autoabastece, que es el pilar 3 del GDD: Costura necesita Lana de Ganadería y Fibra vegetal de Silvicultura, y Cocina necesita a un pescador, un granjero o un ganadero **y** a un carpintero o un manufacturero por el utensilio. Y no queda ninguna materia prima ni intermedio sin una receta que lo consuma.
-
-### 7.5 Inconsistencias menores
-
-Estas seis ya están corregidas en el repo:
-
-- `IMPLEMENTACION.md` hablaba de "los 34 scripts"; `SCRIPTS.md` detalla **32** (34 era el número anterior a eliminar `InputController` y `CameraController`). Las once clases restantes hasta las 43 de `CLASES.md` ya figuran también en `SCRIPTS.md`, en su propia tabla.
-- `IMPLEMENTACION.md` decía "Listo para pasar a `InputController`/`PersonajeControlador`" en el criterio de salida de `IsoGrid`, nombrando un script que el propio documento declara eliminado dos párrafos más abajo.
-- `lista_items.md` daba **10 min** de crecimiento al manzano; `items.json` dice `900` segundos, o sea **15 min**.
-- Los campos de presentación de `items.json` (`nombre`, `descripcion`, `fuente`) estaban sin tildes: "Cafe", "Estanteria", "Plastico", "energia". Son texto que ve el jugador, no identificadores. Ahora la convención está escrita en el `_readme` del propio archivo: **ids en ASCII, presentación con ortografía completa.**
-- `efecto` y `bono` usaban esquemas distintos para lo mismo (**D5**), y `habilidad_origen` estaba duplicado en los 18 ítems crafteados (**D11**).
-- Los seis utensilios eran `apilable: true, stack_maximo: 10` teniendo estado de contenedor. Corregido al cerrar **D1** y **D2**: los seis son ahora `apilable: false, stack_maximo: 1`, porque una taza vacía y una servida no pueden compartir stack.
-
-No queda ninguna inconsistencia de datos abierta. Lo que sigue pendiente en `items.json` es una migración, no un error: los nombres de habilidad todavía se escriben `"Carpinteria"`, `"Mineria"` (capitalizados y sin tilde) donde **D4** pide `StringName` en snake_case (`&"carpinteria"`). Se aplica al implementar `SkillManager` en la fase 2, junto con la decisión.
-
----
+- **Pan, queso, carne y jamón se compran.** No tienen cadena propia porque no hay modelos
+  de panadería ni de ganadería. El día que los haya, alcanza con darles receta y poner
+  `comprable: false`.
+- **La madera se compra.** No hay árbol en ningún pack, así que talar no puede ser la fuente.
+- **La pesca y la minería quedan fuera** pese a tener sus animaciones completas: sin modelo
+  de pez, de agua ni de veta, el resultado sería un ítem invisible sacado de un lugar que
+  no existe.
 
 ## 8. Qué cerrar antes de cada fase
 
 | Antes de empezar | Hay que tener resuelto |
 |---|---|
 | **Fase 1** (mundo base) | **D8** (firma de `interactuar`) y **D9** (orden de autoloads) — **D3** ya decidida |
-| **Fase 2** (ciclo económico) | **D4** (id de habilidad), **D5** (el `ModifierStack`; el esquema de datos ya está hecho), **D6** (`GatherTable`), **D10** (`ItemDatabase`) — **D1**, **D2** y **D11** ya decididas |
-| **Fase 2, balance** | **D7** (sumidero de energía), postergada aquí a propósito. Los precios ya están corregidos (§7.1) |
+| **Fase 2** (ciclo económico) | **D4**, solo el lado del código: el `const Habilidades` que impida escribir una cadena suelta. **D1** (stacks) al escribir `InventoryManager`. **D5** queda en suspenso mientras no haya buffs ni bonos. **D6**, **D7** y **D10** ya no aplican |
+| **Fase 2, balance** | Los márgenes los verifica `herramientas/generar_items.py` en cada regeneración del catálogo (§7.1), así que el balance dejó de ser una revisión manual |
 | **Fase 4** (construcción) | **D13** (revestimiento por sala o por celda) y **D14** (una colocación no puede partir la sala, dentro de `colocar_objeto()` y no después). Cerrar el detalle del área editable de **D12**. La sincronización del `AStarGrid2D` (§3.1) ya está resuelta: vive dentro de `IsoGrid.ocupar()` |
 | **Fase 5** (mercado) | Relación `valor_base` ↔ precio piso NPC (§3.7) |

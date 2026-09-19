@@ -82,7 +82,11 @@ Dos familias: **Recolección** (obtienen materia prima del mundo) y **Producció
 
 Ninguna habilidad de producción se autoabastece: Cocina necesita a un pescador o granjero, Costura necesita a un ganadero o leñador, etc. Esto es intencional — es lo que obliga a comerciar.
 
-> **Estado de los datos:** las nueve habilidades de §3.1–§3.2 tienen contenido real en `items.json` desde la v0.4 — Pesca aporta Pescado y Marisco, y Costura la cadena Lana/Fibra vegetal → Hilo y Tela → prendas. Las prendas son `equipable` con `slot` (`tocado`, `torso`, `piernas`) y **sin bono**: cosmético puro, que es lo que le da contenido económico al avatar por capas de §7 sin tocar el balance. Comercio y Construcción siguen sin contenido, y es correcto: no producen ítems, modifican reglas.
+> **Estado de los datos (catálogo v0.5).** Las nueve habilidades siguen siendo el alcance de diseño, pero **el MVP implementa tres**: Agricultura, Cocina y Carpintería. No es un recorte de ambición sino de assets — el catálogo se reconstruyó partiendo de los modelos 3D que el proyecto tiene, y no hay árbol, veta, pez ni animal que modele el origen de las otras seis.
+>
+> Pesca y Minería son las que más cerca están: sus animaciones completas ya vienen en el pack, y les falta solo el modelo del recurso. Silvicultura, Ganadería, Manufactura y Costura esperan contenido. Comercio y Construcción siguen sin ítems y es correcto: no producen, modifican reglas.
+>
+> Las cadenas que el MVP no cubre se resuelven comprando al NPC — pan, queso, carne, jamón y madera. A medida que una habilidad consiga sus modelos, alcanza con darle receta a esos ítems y ponerles `comprable: false`.
 
 ### 3.4 Competencia entre jugadores (PvP sin combate)
 
