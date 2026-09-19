@@ -941,9 +941,11 @@ func activos() -> Array[Modificador]
 
 Todas se suscriben a señales y ninguna es consultada por un manager. Todas se pueden borrar del árbol y el juego sigue funcionando — ese es el test de que la capa está bien puesta.
 
+**Todo `Control` de la capa va con `mouse_filter = IGNORE`.** Un `Label` transparente que ocupa el ancho de la pantalla se come los clics del mundo 3D sin dejar rastro: no se ve, no da error, y el síntoma es «el personaje no camina si hago clic abajo».
+
 | Clase | Extends | Se suscribe a | Nodo nativo que hace el trabajo |
 |---|---|---|---|
-| `HUD` | `CanvasLayer` | `ducados_cambiaron`, energía del jugador | `ProgressBar`, `Label` |
+| `HUD` **(implementado, paso 8)** | `CanvasLayer` | `ducados_cambiaron`, energía del jugador | `ProgressBar`, `Label`, `Timer` |
 | `InventoryUI` | `Control` | `inventario_cambiado` | `GridContainer` + drag & drop nativo de `Control` |
 | `SkillsPanelUI` | `Control` | `nivel_subido`, `xp_ganada` | `VBoxContainer` + `ProgressBar` |
 | `CraftingUI` | `Control` | `crafteo_progreso`, `inventario_cambiado` | `ItemList` / `Tree`, `ProgressBar` |

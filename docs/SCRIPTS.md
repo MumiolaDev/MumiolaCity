@@ -174,7 +174,8 @@ IsoGrid (Node3D)        ← el script
 **Función:** capa fija de interfaz (energía, Ducados, notificaciones).
 **Godot nativo:** `CanvasLayer` para que no se mueva con la cámara, `ProgressBar` para la barra de energía y `Label` para los Ducados — nada de dibujado propio.
 **Interactúa con:** desde fase 2 lee energía de `PlayerController` y Ducados de `EconomyManager`.
-**Funciones clave:** `actualizar_energia(valor: float) -> void`, `actualizar_ducados(valor: int) -> void`.
+**Funciones clave:** `mostrar_sala(sala)`, `avisar(texto)`, `avisar_error(codigo)` — que es donde `Errores.mensaje()` deja de ser texto que nadie lee — y `mostrar_ayuda(texto)`. Más `actualizar_energia(valor)` y `actualizar_ducados(valor)`, cuyos widgets **arrancan ocultos** y aparecen al primer valor: en fase 1 esos datos todavía no existen, y una barra vacía con un cero no informa nada.
+**El texto de la ayuda lo pasa quien llama**, no vive en el HUD: hoy son los atajos provisionales de `Mundo`, y cuando dejen de existir el `Label` se queda sin que haya que tocar esta clase.
 
 ### 9. `GameManager` — Autoload · `extends Node`
 **Función:** orquesta qué `RoomController` está activo (área común vs. sala privada) y mantiene la referencia global al jugador.

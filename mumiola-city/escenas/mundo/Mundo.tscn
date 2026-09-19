@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" path="res://escenas/mundo/salas/SalaPrivada.tscn" id="3_priv"]
 [ext_resource type="PackedScene" uid="uid://bm4tsb3ny2ow4" path="res://escenas/personaje/PersonajeControlador.tscn" id="4_pers"]
 [ext_resource type="PackedScene" path="res://escenas/ui/ContextMenuUI.tscn" id="5_menu"]
+[ext_resource type="PackedScene" path="res://escenas/ui/HUD.tscn" id="6_hud"]
 
 [node name="Mundo" type="Node3D" unique_id=1075680758 node_paths=PackedStringArray("personaje")]
 script = ExtResource("1_mundo")
@@ -21,3 +22,5 @@ personaje = NodePath("PersonajeControlador")
 [node name="UI" type="CanvasLayer" parent="."]
 
 [node name="ContextMenuUI" parent="UI" instance=ExtResource("5_menu")]
+
+[node name="HUD" parent="UI" instance=ExtResource("6_hud")]

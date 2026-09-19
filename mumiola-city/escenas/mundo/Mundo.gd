@@ -29,6 +29,7 @@ extends Node3D
 
 @onready var contenedor_salas : Node3D = $Salas
 @onready var menu : ContextMenuUI = $UI/ContextMenuUI
+@onready var hud : HUD = $UI/HUD
 
 var _actual : int = -1
 
@@ -52,6 +53,7 @@ func _ready() -> void:
 	get_viewport().physics_object_picking = true
 
 	menu.verbo_elegido.connect(_al_elegir_verbo)
+	hud.mostrar_ayuda("TAB cambiar de sala   Q/E girar la vista   R girar la silla   C colocar   X retirar\nClic izquierdo: caminar   Clic derecho sobre un mueble: menu")
 	for sala in salas():
 		sala.objeto_colocado.connect(_atender_clics_de)
 		for obj in sala.objetos():
@@ -96,6 +98,7 @@ func ir_a_sala(indice : int) -> bool:
 	var destino := lista[indice]
 	destino.activar()
 	personaje.entrar_en(destino)
+	hud.mostrar_sala(destino)
 	_actual = indice
 	return true
 
@@ -124,7 +127,7 @@ func _unhandled_input(evento : InputEvent) -> void:
 		sala.rotar(1)
 	elif evento.keycode == KEY_R:
 		_rotacion_silla = posmod(_rotacion_silla + 1, 4)
-		print("La proxima silla se coloca con rotacion %d." % _rotacion_silla)
+		hud.avisar("Rotacion de colocacion: %d" % _rotacion_silla)
 	elif evento.keycode == KEY_C:
 		_colocar_silla_de_prueba(sala)
 	elif evento.keycode == KEY_X:
@@ -146,9 +149,9 @@ func _colocar_silla_de_prueba(sala : RoomController) -> void:
 
 	var resultado := sala.colocar_objeto(inst, celda, _rotacion_silla)
 	if Errores.ok(resultado):
-		print("Colocada en %s: %s" % [celda, sala.grid.objeto_en(celda).nombre_mostrado()])
+		hud.avisar("Colocaste: %s" % sala.grid.objeto_en(celda).nombre_mostrado())
 	else:
-		print("No se pudo colocar en %s: %s" % [celda, Errores.mensaje(resultado)])
+		hud.avisar_error(resultado)
 
 
 ## Retira el objeto que haya en la celda bajo el mouse.
@@ -159,11 +162,12 @@ func _retirar_bajo_el_mouse(sala : RoomController) -> void:
 
 	var obj := sala.grid.objeto_en(celda)
 	if obj == null:
-		print("No hay nada en %s." % celda)
+		hud.avisar_error(Errores.Codigo.NO_TIENE_ITEM)
 		return
 
 	var inst := sala.retirar_objeto(obj)
-	print("Retirado de %s: %s" % [celda, "nada" if inst == null else inst.nombre_mostrado()])
+	if inst != null:
+		hud.avisar("Retiraste: %s" % inst.nombre_mostrado())
 
 
 ## Engancha el clic derecho de un mueble al menu contextual.
@@ -178,7 +182,7 @@ func _atender_clics_de(obj : WorldObject) -> void:
 ## Abre el menu contextual de un mueble para el personaje.
 func _abrir_menu(obj : WorldObject) -> void:
 	if not menu.mostrar_para(obj, personaje):
-		print("%s no ofrece nada que se pueda hacer ahora." % obj.nombre_mostrado())
+		hud.avisar("%s: nada que hacer ahora." % obj.nombre_mostrado())
 
 
 ## Ejecuta el verbo elegido en el menu.
