@@ -468,6 +468,8 @@ El GDD §6.1 dice que `interactuar()` "queda listo para multijugador sin redise�
 
 Los autoloads se inicializan en el orden del Project Settings, y `_ready()` de uno puede necesitar a otro ya listo.
 
+**Trampa al agregar uno: `project.godot` es de Godot.** Editarlo por fuera con el editor abierto es una carrera que se puede perder — el editor guarda la copia que tiene en memoria y se lleva puesto el autoload recién agregado. El síntoma es un `Identifier "X" not declared in the current scope` en cualquier script que lo use, que **parece** un error de ese script y no lo es. Al agregar un autoload: hacerlo desde Project Settings, o cerrar el editor antes de tocar el archivo, o recargar el proyecto inmediatamente después.
+
 **Propuesta:** `ItemDatabase` → `TimeManager` → `SkillManager` → `InventoryManager` → `RecipeManager` → `EconomyManager` → `GameManager` → `SaveManager`. `ItemDatabase` primero porque todos leen definiciones; `SaveManager` último porque restaura sobre todos los demás; `GameManager` penúltimo porque cambiar de sala presupone que los managers ya existen.
 
 ### D10 — Falta `ItemDatabase` · **resuelta**
