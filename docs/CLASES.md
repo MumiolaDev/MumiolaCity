@@ -24,6 +24,25 @@
 
 ---
 
+### 0.0 `Habilidades` — los ids, y el único lugar donde se escriben
+
+```gdscript
+class_name Habilidades extends RefCounted
+
+const AGRICULTURA := &"agricultura"
+const COCINA := &"cocina"
+const CARPINTERIA := &"carpinteria"
+const TODAS : Array[StringName] = [AGRICULTURA, COCINA, CARPINTERIA]
+
+static func existe(id: StringName) -> bool
+```
+
+Cierra el lado del código de **D4**. La regla es que **ninguna cadena literal de habilidad se escribe fuera de este archivo**; el nombre con tilde para mostrar sale de `SkillDefinition.nombre_display`.
+
+Las otras seis habilidades del GDD no están declaradas a propósito: una constante para algo que ningún ítem produce invita a escribir código que nunca se puede ejecutar. Se agregan cuando tengan contenido.
+
+---
+
 ### 0.1 `Errores` — códigos de rechazo
 
 ```gdscript
@@ -110,7 +129,11 @@ func tiene_interaccion(verbo: StringName) -> bool
 func requiere_contenedor() -> StringName         # &"liquido" | &"solido" | &"" (D2)
 ```
 
-**Lo implementado en fase 1 es un subconjunto.** `receta`, `plantable`, `contenedor`, `efecto` y `bono` nombran tipos de la fase 2 que todavía no existen, y GDScript no compila un script que nombre un tipo inexistente: esos campos llegan con sus clases. `tiene_estado_propio()` y `requiere_contenedor()` dependen de `contenedor`, así que esperan con ellos. Lo que la fase 1 necesita —`tamano_grilla`, `rotable`, `interacciones`, `id`, `nombre`, `escena_mundo`— ya está.
+**Cuatro campos del plan original no existen, y no es que falten.** El catálogo v0.5 los volvió innecesarios: `plantable` porque plantar es una receta cuya estación es la parcela; `contenedor` porque servir y vaciar son verbos, y el tipo y la capacidad viven en el `ContenedorBehavior` del ítem; `efecto` y `bono` porque no hay buffs ni energía en el MVP. Si alguno vuelve, vuelve con su clase.
+
+**Y tres campos nuevos que el catálogo sí usa:** `comprable` y `vendible` para el comercio con el NPC — poner `comprable: false` saca un ítem de la tienda el día que su cadena se complete, sin tocar código — y `colocable`, porque una semilla no se deja en el suelo y un tomate sí.
+
+`tiene_estado_propio()` se implementa como «no es apilable»: hoy la única fuente de estado por unidad es contener algo, y un contenedor nunca se apila, así que las dos condiciones coinciden. Si alguna vez divergen, ese método es el único lugar a corregir.
 
 **Invariantes.**
 - `id` único en todo el catálogo — `ItemDatabase` debe fallar ruidosamente ante un duplicado, no quedarse con el último.
@@ -156,7 +179,12 @@ func es_por_familia() -> bool
 
 **Invariante:** exactamente uno de `id` o `familia` está poblado. Ambos vacíos o ambos llenos es un error de contenido y `ItemDatabase` debería detectarlo al cargar, no `RecipeManager` en medio de un crafteo.
 
-### 1.4 `PlantableData extends Resource`
+### 1.4 `PlantableData` — **disuelta en el catálogo v0.5**
+
+Plantar es una receta cuyo insumo es la semilla y cuya estación es la parcela, con su `tiempo_crafteo_seg` haciendo de tiempo de crecimiento. No hace falta un tipo aparte.
+
+<details><summary>La definición original, por si vuelve</summary>
+
 
 ```gdscript
 class_name PlantableData extends Resource
@@ -171,7 +199,14 @@ class_name PlantableData extends Resource
 
 `sprites_etapas` es el campo que hace que una parcela se vea crecer en vez de aparecer madura de golpe: `CropPlot` interpola el índice contra el progreso que le da `TimeManager`.
 
-### 1.5 `ContenedorData extends Resource`
+</details>
+
+### 1.5 `ContenedorData` — **disuelta: vive en el comportamiento**
+
+Servir y vaciar son verbos, así que el tipo aceptado y la capacidad son `@export` de `ContenedorBehavior` y no de un recurso de datos aparte. El contrato de **D2** no cambia: un consumible con contenedor no existe suelto, ocupa una instancia concreta de utensilio hasta que alguien lo consume.
+
+<details><summary>La definición original, por si vuelve</summary>
+
 
 ```gdscript
 class_name ContenedorData extends Resource
@@ -184,7 +219,14 @@ func acepta(item: ItemDefinition) -> bool       # item.requiere_contenedor() == 
 
 **Contrato del contenedor (D2, decidida).** Un consumible con `es_liquido` o `es_solido` **no existe suelto en el inventario**: craftearlo ocupa una instancia concreta de utensilio de la familia pedida, y esa instancia queda servida hasta que alguien la consume, momento en que vuelve a estar vacía. De ahí sale la invariante de `ItemDefinition` (`contenedor` ⇒ no apilable) y el precio del conjunto: `valor_base(utensilio) + valor_base(contenido)`.
 
-### 1.6 `Modificador extends Resource` — **NUEVA (D5)**
+</details>
+
+### 1.6 `Modificador` — **disuelta mientras no haya buffs**
+
+El catálogo v0.5 no tiene consumibles con efecto ni equipo con bono, así que no hay nada que modificar. **D5** queda en suspenso con su esquema de datos ya resuelto: el día que vuelvan los buffs, la forma está decidida y solo falta `ModifierStack`.
+
+<details><summary>La definición original, por si vuelve</summary>
+
 
 Unifica el `efecto` de los consumibles y el `bono` de los equipables, que hoy tienen esquemas distintos para hacer lo mismo.
 
@@ -202,6 +244,8 @@ func multiplicador() -> float                   # 1.0 + magnitud / 100.0
 ```
 
 **Por qué importa.** Con este tipo, la pala equipada y el café son el mismo objeto para el sistema de velocidad, y agregar una habilidad nueva no obliga a inventar un `tipo` nuevo ni a tocar un solo `match`. El esquema actual del café (`tipo: "buff_velocidad_manufactura"`) codifica la habilidad dentro del nombre del tipo y no escala.
+
+</details>
 
 ### 1.7 `SkillDefinition extends Resource`
 
@@ -271,7 +315,12 @@ func puede_apilar_con(otro: InventorySlot) -> bool
 
 **Invariante central del inventario:** `es_unico()` ⇒ `cantidad == 1`. Y `puede_apilar_con` devuelve `false` en cuanto cualquiera de los dos slots tiene instancia — una taza servida nunca se apila con una vacía, aunque compartan `definicion_id`.
 
-### 1.10 `GatherTable` + `GatherDrop extends Resource` — **NUEVAS (D6)**
+### 1.10 `GatherTable` + `GatherDrop` — **disueltas con D6**
+
+El catálogo v0.5 no tiene recolección aleatoria: plantar una semilla da siempre su verdura. Sin azar no hay tabla de drops que modelar.
+
+<details><summary>La definición original, por si vuelve</summary>
+
 
 Donde vive "la semilla de manzana sale en baja proporción", que hoy no tiene dónde vivir.
 
@@ -293,6 +342,8 @@ func tirar(rng: RandomNumberGenerator) -> Array[Dictionary]   # [{id, cantidad}]
 ```
 
 Cada drop se tira de forma independiente, no como tabla de peso único: cosechar un manzano da **siempre** la manzana (`probabilidad: 1.0`) y **a veces** la semilla (`probabilidad: 0.05`), que es exactamente lo que describe `lista_items.md`.
+
+</details>
 
 ### 1.11 `InteractionBehavior extends Resource` y su jerarquía
 
@@ -1060,12 +1111,13 @@ stateDiagram-v2
 
 ## 7. Índice de clases
 
-45 clases, contra los 32 scripts que detalla `SCRIPTS.md`. Las marcadas **NUEVA** son las que aparecieron al revisar el diseño; `SCRIPTS.md` las nombra en una tabla aparte, pero no las desarrolla.
+46 clases, contra los 32 scripts que detalla `SCRIPTS.md`. Las marcadas **NUEVA** son las que aparecieron al revisar el diseño; `SCRIPTS.md` las nombra en una tabla aparte, pero no las desarrolla.
 
 | # | Clase | Capa | Extends | Fase |
 |---|---|---|---|---|
 | 0 | `Errores` | Transversal | `RefCounted` | 1 |
 | 0b | `CatalogoPiezas` | Transversal | `RefCounted` | 1 |
+| 0c | `Habilidades` | Transversal | `RefCounted` | 2 |
 | 1 | `IsoGrid` | Mundo | `Node3D` | 1 |
 | 2 | `PersonajeControlador` | Mundo | `CharacterBody3D` | 1 |
 | 3 | `AvatarComposer` | Mundo | `Node3D` | 1 |
