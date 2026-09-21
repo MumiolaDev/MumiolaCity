@@ -59,6 +59,7 @@ enum Codigo {
 	SALDO_INSUFICIENTE = 301, PRECIO_INVALIDO = 302,
 	# 4xx  habilidades y produccion
 	NIVEL_INSUFICIENTE = 401, FALTAN_MATERIALES = 402, ESTACION_OCUPADA = 403,
+	FALTA_ESTACION = 404, FALTA_UTENSILIO = 405,
 	# 5xx  permisos y salas
 	SIN_PERMISO = 501, SALA_LLENA = 502,
 }
@@ -77,6 +78,46 @@ Vive en `res://nucleo/Errores.gd`. **No es autoload**: `class_name` ya lo hace g
 **Los números son explícitos y están agrupados por sistema.** Así se puede reordenar, insertar y borrar sin que un código viejo cambie de significado en un guardado o en un log.
 
 **`FUERA_DEL_AREA` (D12) y `PARTIRIA_LA_SALA` (D14) ya existen aunque esas decisiones sigan abiertas.** Ese es el punto: **D14** advierte que agregar un motivo de rechazo cuando ya hay comportamientos escritos encima obliga a tocar todas las llamadas. El hueco está hecho y la fase 4 solo tiene que llenarlo.
+
+---
+
+### 0.2 `OperacionSala extends Resource` — **NUEVA (D23)**
+
+Un cambio a una sala, como dato en vez de como llamada. Es la costura por donde va a entrar la red.
+
+```gdscript
+class_name OperacionSala extends Resource
+
+enum Tipo { COLOCAR, RETIRAR, PINTAR, BORRAR }
+
+@export var tipo: Tipo
+@export var celda: Vector2i
+@export var item: StringName             # COLOCAR
+@export var rotacion: int                # COLOCAR
+@export var estado: Dictionary           # COLOCAR
+@export var capa: StringName             # PINTAR / BORRAR
+@export var pieza: StringName            # PINTAR
+@export var orientacion: int             # PINTAR
+
+static func colocar(item_id: StringName, en_celda: Vector2i, giro := 0, estado_inicial := {}) -> OperacionSala
+static func retirar(en_celda: Vector2i) -> OperacionSala
+static func pintar(en_capa: StringName, en_celda: Vector2i, que_pieza: StringName, giro := 0) -> OperacionSala
+static func borrar(en_capa: StringName, en_celda: Vector2i) -> OperacionSala
+
+func to_dict() -> Dictionary                          # solo los campos que su tipo usa
+static func desde_dict(d: Dictionary) -> OperacionSala   # null si esta mal formada
+func descripcion() -> String
+```
+
+Vive en `res://nucleo/OperacionSala.gd`, al lado de `Errores`. **No es autoload:** se instancia una por gesto del editor.
+
+**Por qué un dato y no tres llamadas.** Si el editor llamara directo a `colocar_objeto()`, `retirar_objeto()` y `IsoGrid.pintar()`, el día que haya servidor habría **tres formas distintas que interceptar** y el editor habría que reescribirlo. Con una operación hay un solo punto: local se aplica en el acto, online se manda, el servidor valida y retransmite, y el mismo `aplicar()` corre en todos los clientes.
+
+**No es previsión gratuita.** Un registro de operaciones da **deshacer y rehacer casi gratis**, y eso lo necesita el editor hoy, no el servidor mañana. La costura online sale de yapa; si no fuera así, no estaría acá.
+
+**`desde_dict()` devuelve `null` en vez de una operación a medias.** Lo que llega de un archivo —o algún día de la red— no es confiable, y una operación con la celda puesta pero el tipo en basura es peor que ninguna: se aplicaría.
+
+**Los constructores estáticos y no `OperacionSala.new()` suelto.** Cada tipo usa un subconjunto distinto de los campos, y `colocar(&"silla_madera", Vector2i(3, 4))` no deja lugar a una operación de colocar con `capa` llena y `item` vacío.
 
 ---
 
@@ -447,11 +488,14 @@ func _ready() -> void                    # escanea res://data/objetos/
 func obtener(id: StringName) -> ItemDefinition
 func items_de_familia(familia: StringName) -> Array[ItemDefinition]
 func items_de_categoria(categoria: String) -> Array[ItemDefinition]
+func colocables() -> Array[ItemDefinition]   # colocable y con escena, ordenados por id
 func recetas_de(habilidad: StringName) -> Array[ItemDefinition]
 func validar_catalogo() -> Array[String]     # ids duplicados, insumos rotos, etc.
 ```
 
 **`validar_catalogo()` es la pieza que más tiempo ahorra a mediano plazo.** Recorre el catálogo al arrancar en modo debug y reporta: ids duplicados, recetas que apuntan a un `id` inexistente, insumos con `id` y `familia` a la vez, familias vacías, e ítems con `contenedor` marcados como apilables. Sin eso, un id mal escrito en un `.tres` se manifiesta como un crafteo que silenciosamente no hace nada.
+
+**`colocables()` ordena por id a propósito.** El catálogo se arma recorriendo una carpeta, y ese recorrido no promete ningún orden: sin ordenar, la paleta del editor cambiaría de orden entre un arranque y el siguiente. Filtra además por `escena_mundo != null`, porque un ítem sin malla no se puede previsualizar ni colocar.
 
 **Primero en el orden de autoloads (D9).**
 
@@ -462,6 +506,11 @@ extends Node   # autoload: GameManager   # IMPLEMENTADO (paso 9)
 
 signal sala_cambiada(sala: RoomController)
 signal jugador_registrado(jugador: PersonajeControlador)
+signal aviso(texto: String)
+signal ayuda_cambiada(texto: String)
+signal modo_cambiado(modo: Modo)
+
+enum Modo { JUGANDO, EDITANDO }
 
 func registrar_jugador(jugador: PersonajeControlador) -> void
 func registrar_contenedor(nodo: Node) -> void      # de donde cuelgan las salas
@@ -472,7 +521,23 @@ func ir_a_sala(sala: RoomController) -> bool
 func ir_a_indice(indice: int) -> bool
 func siguiente_sala() -> void
 func cargar_sala(escena: PackedScene) -> RoomController
+
+func avisar(texto: String) -> void
+func avisar_error(codigo: Errores.Codigo) -> void
+func mostrar_ayuda(texto: String) -> void
+func ayuda() -> String
+
+func modo() -> Modo
+func editando() -> bool
+func cambiar_modo(nuevo: Modo) -> bool
+func alternar_modo() -> void
 ```
+
+**El modo vive acá y no en el editor.** Ya es la autoridad de «dónde estamos», y quienes tienen que cambiar de conducta al editar —`PersonajeControlador`, que deja de caminar al clic, y `WorldObject`, que deja de abrir el menú contextual— no deberían conocer al editor para preguntárselo. Los dos consultan `GameManager.editando()` y salen temprano.
+
+**`cambiar_modo(JUGANDO)` olvida el historial de la sala.** Deshacer sirve mientras estás editando; una vez que volviste a jugar, un `Ctrl+Z` que retire un mueble que ya usaste es una fuente de estados imposibles.
+
+**El aviso y la ayuda son señales, no llamadas al HUD.** Así el HUD se puede borrar del árbol sin que nada se rompa: nadie lo nombra, solo se suscribe.
 
 **No usa `change_scene_to_packed()`, aunque este documento lo proponía.** Esa llamada reemplaza el árbol entero — jugador incluido — y obligaría a reconstruirlo y reubicarlo en cada puerta. Las salas conviven en un contenedor y se encienden de a una con `RoomController.activar()`, lo que además permite volver a la anterior sin recargarla. `cargar_sala()` queda para las que no están puestas de antemano — las viviendas de otros jugadores, que no tiene sentido tener todas cargadas.
 
@@ -671,6 +736,7 @@ class_name IsoGrid extends Node3D
 const SIN_CELDA := Vector2i.MAX                     # celda_bajo_puntero() sin impacto
 
 signal ocupacion_cambiada(celdas : Array[Vector2i])
+signal estructura_cambiada(capa : StringName)       # tras pintar o borrar escenario
 
 @export var suelo : GridMap                         # define que celdas existen
 @export var paredes : GridMap                       # bloquean, no definen celdas
@@ -702,19 +768,33 @@ func liberar_objeto(obj: WorldObject) -> bool      # false si no ocupaba nada
 func objeto_en(celda: Vector2i) -> WorldObject
 func celda_libre_vecina(celda: Vector2i) -> Vector2i   # SIN_CELDA si esta rodeada
 
+# Estructura (fase 3)
+func pieza_en(capa: StringName, celda: Vector2i) -> Dictionary   # {pieza, orientacion} o {}
+func pintar(capa: StringName, celda: Vector2i, pieza: StringName, orientacion := 0) -> bool
+func borrar_celda(capa: StringName, celda: Vector2i) -> bool
+func celdas_en_rectangulo(desde: Vector2i, hasta: Vector2i) -> Array[Vector2i]
+
 # Rutas
 func ruta(origen: Vector2i, destino: Vector2i) -> Array[Vector2i]
 ```
 
 **`Node3D` y no `extends GridMap`.** El script podría colgar del `GridMap` del suelo y heredar las conversiones gratis, pero eso haría de las paredes un apéndice de la capa de suelo cuando son dos vistas de la misma sala. `IsoGrid` es dueño de la ocupación y del área construible (`SISTEMAS.md` §3.1), no de dibujar el piso. El costo es un `suelo.` por conversión; la ganancia es que una tercera capa —techos, decoración fija— entra sin reorganizar nada.
 
-**Dos `GridMap` y no uno.** Una celda de `GridMap` admite **un solo ítem**: pintar una pared sobre una celda de suelo la reemplaza. Regla de composición: **suelo por dentro, paredes por fuera**, en el anillo de celdas sin suelo.
+**Dos `GridMap` y no uno.** Una celda de `GridMap` admite **un solo ítem**: pintar una pared sobre una celda de suelo la reemplazaría. Con dos capas, una celda puede tener losa *y* muro a la vez, que es justo lo que hace falta.
+
+**El suelo se pinta entero, también debajo de las paredes.** Sin losa abajo, la pieza de muro queda flotando y la sala se ve desconectada del piso. Vale para el perímetro, para los tabiques interiores y para el vano de una puerta, que si no queda intransitable por falta de suelo. La consecuencia importante es que **«¿se puede caminar acá?» no es «¿hay suelo pintado acá?»**: es «hay suelo **y** no hay una pieza de pared que bloquee», que es exactamente lo que combina `esta_libre()`.
 
 **`celda_valida()` pregunta por el suelo, no por un rectángulo.** `get_cell_item(...) != GridMap.INVALID_CELL_ITEM` hace que el área caminable sea *lo que pintaste*: salas en L o irregulares salen gratis. Por eso desapareció el `@export var grid_size` del diseño original — con el suelo como fuente de verdad, sobra.
 
 **La API pública habla en `Vector2i`** (planta del piso) y convierte a `Vector3i` solo para hablar con los `GridMap`. Así `celda_origen` (**D3**), los `tamano_grilla` de `items.json` y el `AStarGrid2D` siguen valiendo sin cambios.
 
 **El `AStarGrid2D` vive acá, no en cada personaje.** Es un índice derivado de la grilla, no un dato de quien camina: cincuenta NPCs en una sala comparten este mismo mapa de celdas sólidas en vez de mantener cincuenta copias. Se construye de forma perezosa —la primera vez que alguien pide una `ruta()`— para no depender del orden de `_ready()` entre nodos, y `ocupar()` lo parchea desde dentro. Esto último es lo que convierte el bug más previsible de la fase 4 (§3.1 de `SISTEMAS.md`) en algo imposible: ya no hay nada que un personaje nuevo pueda olvidarse de conectar.
+
+**`pintar()` recibe el nombre de la pieza, no su id (D18).** Los ids de una `MeshLibrary` se asignan por orden de los hijos de la escena de origen y no sobreviven a un re-export, así que un documento de sala que los guardara quedaría inservible al agregar una pieza. `CatalogoPiezas.id_de()` traduce nombre → id contra la biblioteca cargada, y ése es el único lugar donde un id existe. Online la razón se vuelve más fuerte todavía: dos clientes tienen que coincidir en qué es `suelo_base` sin compartir la misma biblioteca en memoria.
+
+**Un cambio de estructura tira el `AStarGrid2D` entero en vez de parchearlo.** `ocupar()` sí lo parchea, porque mueve una celda o cuatro; pintar arrastrando toca cientos, y recalcular el camino por cada una sería más caro que reconstruirlo una vez de forma perezosa cuando alguien vuelva a pedir una `ruta()`.
+
+**`celdas_en_rectangulo()` existe para pintar arrastrando**, que es la diferencia entre hacer un suelo de 20×20 en un gesto o en cuatrocientos clics. Normaliza las esquinas, así que da igual hacia dónde se arrastre.
 
 **`ruta()` devuelve el camino sin la celda de origen.** Que `get_id_path()` incluya el punto de partida es un detalle del motor, y conviene que lo sepa un solo lugar en vez de cada quien que pida una ruta.
 
@@ -795,21 +875,49 @@ func to_dict() -> Dictionary                     # apariencia serializable
 
 ### 3.3b `IndicadorCelda extends MeshInstance3D`
 
-Resalta la celda bajo el puntero, coloreada según su estado. Es una ayuda de desarrollo —ver de un vistazo qué está libre y qué bloqueado, sin deducirlo del comportamiento del personaje— y el germen de la vista previa de colocación que va a necesitar `RoomBuilderUI` en la fase 4.
+Resalta las celdas que ocuparía algo y muestra un fantasma translúcido de lo que se va a colocar. Dejó de ser la ayuda de desarrollo que era —una celda, dos colores— para ser la vista previa del editor, que es lo mismo mirado con más resolución.
 
 ```gdscript
 class_name IndicadorCelda extends MeshInstance3D
 
+signal motivo_cambiado(codigo : Errores.Codigo)
+
+const CELDAS_RESERVADAS := 16
+const NODO_VISUAL := ^"Visual"
+
 @export var grid : IsoGrid
 @export var camara : Camera3D
+@export var seguir_puntero : bool                   # false cuando manda el editor
 @export var color_libre : Color
 @export var color_bloqueado : Color
+@export var transparencia : float                   # del fantasma, 0 a 1
 @export var alzado : float                          # separacion del piso, anti z-fighting
+
+func elegir(definicion: ItemDefinition, rotacion := 0) -> void    # que mostrar
+func mostrar(definicion: ItemDefinition, celda: Vector2i, rotacion := 0) -> void  # y donde
+func ocultar() -> void
+func motivo() -> Errores.Codigo
+func celda() -> Vector2i
+func huella() -> Vector2i
 ```
 
-**Ya encontró un bug que era invisible de otro modo:** una pieza de puerta bloqueaba la celda del hueco y dejaba libres las dos de muro, exactamente al revés de lo correcto. Sin el indicador eso se manifestaba solo como "el personaje camina raro por ahí" (**D15**).
+**Dos modos, un solo cuerpo.** Con `seguir_puntero` en `true` se maneja solo y lee el mouse cada cuadro: es como funciona hoy en `SalaComun` y `SalaPrivada`. Con `seguir_puntero` en `false` se queda quieto hasta que alguien le dice qué mostrar, que es como lo va a usar el editor, donde quien decide la celda puede estar arrastrando o acabar de hacer scroll en la paleta.
 
-**Lo que le falta para ser la vista previa de la fase 4:** mostrar el conjunto de celdas de `celdas_de()` en vez de una sola, y colorear según si el objeto entero cabe, no celda por celda.
+**`elegir()` y `mostrar()` están separadas a propósito.** Cambiar de mueble en la paleta no debería moverlo de lugar, y mover el cursor no debería cambiar de mueble. Son dos ejes independientes y por eso son dos métodos.
+
+**El color sale de `motivo_bloqueo()` y no de `esta_libre()`.** Con un booleano, rojo solo significa «no». Con un código, el `signal motivo_cambiado` le permite al HUD escribir *por qué*, y el motivo se calcula **celda por celda**: en una mesa de 2×2 se ve cuál de las cuatro es la que estorba, que es la diferencia entre «no cabe» y «no cabe por ese lado».
+
+**El fantasma no instancia la escena del objeto entera.** La raíz de una escena generada es un `Area3D` con `WorldObject.gd`, que en `_ready()` se conecta a `input_event` y exige una `instancia` no nula: instanciarla dejaría un objeto de mundo a medias, clickeable y quejándose por consola. Como `instantiate()` **no corre `_ready()` hasta que el nodo entra al árbol**, `_extraer_visual()` le saca el hijo `Visual` y libera el resto sin haberlo agregado nunca. Las 45 escenas colocables tienen ese hijo.
+
+**Se transparenta con `GeometryInstance3D.transparency`, no con `modulate`.** `modulate` es de `CanvasItem` y no hace absolutamente nada sobre una malla 3D. Se recorre el subárbol porque un modelo de KayKit trae varias `MeshInstance3D`, y transparentar una sola se ve peor que no transparentar ninguna.
+
+**El giro del fantasma usa `RoomController.PASO_ROTACION`**, la misma constante que aplica `colocar_objeto()`. Una vista previa que pudiera desfasarse de lo que termina colocado no sirve para lo único para lo que sirve.
+
+**La raíz es `top_level` y con transformación identidad.** Todo lo que este nodo ubica lo ubica en coordenadas de mundo; componerlo además con la transformación de la sala dejaría el fantasma girado respecto del objeto real. Sigue siendo `MeshInstance3D` —con `mesh` en `null`, porque dibujan sus hijos— por una razón menor pero real: es el tipo con el que está declarado el nodo en las dos escenas de sala, y cambiarlo obligaría a editarlas a mano.
+
+**Los recuadros se reciclan.** Dieciséis creados una vez y mostrados u ocultados según la huella; nada se crea ni se destruye por cuadro. El objeto más grande del catálogo ocupa 2×2, así que sobra de lejos.
+
+**Ya encontró un bug que era invisible de otro modo:** una pieza de puerta bloqueaba la celda del hueco y dejaba libres las dos de muro, exactamente al revés de lo correcto. Sin el indicador eso se manifestaba solo como «el personaje camina raro por ahí» (**D15**).
 
 ### 3.4 `RoomController extends Node3D`
 
@@ -820,6 +928,7 @@ signal activada()
 signal desactivada()
 signal objeto_colocado(obj: WorldObject)
 signal objeto_retirado(obj: WorldObject)
+signal operacion_aplicada(op: OperacionSala)
 
 const PASO_ROTACION := PI / 2.0
 
@@ -832,6 +941,7 @@ const PASO_ROTACION := PI / 2.0
 @onready var contenedor_objetos: Node3D = $Objetos
 @onready var pivote: Node3D = $Pivote
 @onready var camara: Camera3D = $Pivote/Camera3D
+@onready var indicador: IndicadorCelda = get_node_or_null(^"IndicadorCelda")
 
 # Ciclo de vida
 func activar() -> void
@@ -848,11 +958,30 @@ func colocar_objeto(inst: ItemInstance, celda: Vector2i, rotacion: int = 0) -> E
 func retirar_objeto(obj: WorldObject) -> ItemInstance
 func to_dict() -> Dictionary
 func from_dict(d: Dictionary) -> void
+
+# Operaciones (D23)
+func puede_editar(actor: Node) -> bool           # hoy siempre true
+func aplicar(op: OperacionSala, registrar := true) -> Errores.Codigo
+func deshacer() -> bool
+func rehacer() -> bool
+func puede_deshacer() -> bool
+func puede_rehacer() -> bool
+func olvidar_historial() -> void
 ```
+
+**`aplicar()` es el único punto que muta una sala.** Colocar, retirar, pintar y borrar siguen existiendo por separado, pero el editor no los llama: construye una `OperacionSala` y la entrega acá. Con un solo punto de entrada, el día del servidor hay **una** cosa que interceptar.
+
+**Cada operación se guarda junto con su inversa, no sola.** La inversa no se puede deducir de la operación: deshacer un pintado necesita saber *qué había antes*, y eso solo se sabe mirando la sala justo antes de aplicarlo. Por eso `_inversa_de()` corre **antes** que `_ejecutar()`.
+
+**Deshacer y rehacer viven en un array con un cursor**, y aplicar algo nuevo trunca en el cursor: la rama que habías deshecho se pierde, igual que en cualquier editor. `registrar := false` es por donde entran las operaciones que ya son parte del historial —las del propio deshacer— sin volver a anotarse.
+
+**`puede_editar(actor)` devuelve siempre `true` hoy, y está bien.** Lo importante no es la comprobación sino que exista el lugar donde va (la costura 4 del replan). `Errores.Codigo.NO_ES_TUYO` y `SIN_PERMISO` ya están en el enum esperándola, y `propietario_id` ya existe.
+
+**`indicador` es opcional por contrato**, como la interfaz: sacar el nodo del árbol quita la ayuda visual y no rompe nada.
 
 **La sala no conoce al personaje.** `activar()` enciende la sala y le da la cámara; quien cambia de sala es el que ubica al jugador con `PersonajeControlador.entrar_en(sala)`. Si `RoomController` importara `PersonajeControlador`, una sala no podría existir sin un jugador adentro — y eso rompe los NPCs, el guardado y cualquier previsualización de sala. Es la regla de dirección de dependencias de `SISTEMAS.md` §1.
 
-**`desactivar()` apaga, no solo oculta.** Pone `process_mode` en `DISABLED` además de `visible = false`, porque si no el `IndicadorCelda` de la sala dormida sigue corriendo su `_process()` y persiguiendo el mouse desde una sala que nadie mira. `activar()` rehabilita el procesamiento **antes** de tomar la cámara, porque una sala deshabilitada no puede.
+**`desactivar()` apaga, no solo oculta.** Pone `process_mode` en `DISABLED` además de `visible = false`, porque si no la vista previa de la sala dormida sigue corriendo su `_process()` y persiguiendo el mouse desde una sala que nadie mira. `activar()` rehabilita el procesamiento **antes** de tomar la cámara, porque una sala deshabilitada no puede.
 
 **`celda_entrada` no es comodidad.** **D14** define la validación de que un tabique no parta la sala como «todas las celdas con suelo siguen siendo alcanzables *desde la entrada*». Sin una entrada declarada, esa comprobación no tiene desde dónde medir.
 
@@ -1016,7 +1145,7 @@ Todas se suscriben a señales y ninguna es consultada por un manager. Todas se p
 | `SkillsPanelUI` | `Control` | `nivel_subido`, `xp_ganada` | `VBoxContainer` + `ProgressBar` |
 | `CraftingUI` | `Control` | `crafteo_progreso`, `inventario_cambiado` | `ItemList` / `Tree`, `ProgressBar` |
 | `ContextMenuUI` **(implementado, paso 7)** | `PopupMenu` | — (se puebla al abrirse) | `PopupMenu` completo |
-| `RoomBuilderUI` | `Control` | `objeto_colocado` | drag & drop nativo + `modulate.a` como fantasma |
+| `RoomBuilderUI` | `Control` | `objeto_colocado` | drag & drop nativo; el fantasma lo pone `IndicadorCelda` |
 | `MarketUI` | `Control` | `transaccion` | `Tree` (columnas ordenables) |
 
 **El drag & drop no se implementa a mano.** `_get_drag_data()`, `_can_drop_data()` y `_drop_data()` de `Control` ya resuelven el arrastre, la previsualización y el destino — y son los mismos tres métodos para arrastrar dentro del inventario y para arrastrar del inventario a la sala.
@@ -1118,13 +1247,14 @@ stateDiagram-v2
 
 ## 7. Índice de clases
 
-46 clases, contra los 32 scripts que detalla `SCRIPTS.md`. Las marcadas **NUEVA** son las que aparecieron al revisar el diseño; `SCRIPTS.md` las nombra en una tabla aparte, pero no las desarrolla.
+47 clases, contra los 34 scripts que detalla `SCRIPTS.md`. Las marcadas **NUEVA** son las que aparecieron al revisar el diseño; `SCRIPTS.md` las nombra en una tabla aparte, pero no las desarrolla.
 
 | # | Clase | Capa | Extends | Fase |
 |---|---|---|---|---|
 | 0 | `Errores` | Transversal | `RefCounted` | 1 |
 | 0b | `CatalogoPiezas` | Transversal | `RefCounted` | 1 |
 | 0c | `Habilidades` | Transversal | `RefCounted` | 2 |
+| 0d | `OperacionSala` | Transversal | `Resource` | 3 |
 | 1 | `IsoGrid` | Mundo | `Node3D` | 1 |
 | 2 | `PersonajeControlador` | Mundo | `CharacterBody3D` | 1 |
 | 3 | `AvatarComposer` | Mundo | `Node3D` | 1 |

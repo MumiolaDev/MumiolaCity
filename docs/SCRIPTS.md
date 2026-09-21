@@ -32,10 +32,11 @@ Antes de escribir un sistema, hay que revisar si el motor ya lo resuelve — y s
 |---|---|---|---|---|---|
 | 0 | `Errores` | Definición | Global (`class_name`) | `RefCounted` | 1 (transversal) |
 | 0b | `CatalogoPiezas` | Definición | Global (`class_name`) | `RefCounted` | 1 (transversal) |
+| 0c | `OperacionSala` | Definición | Global (`class_name`) | `Resource` | 3 (costura de red, D23) |
 | 1 | `IsoGrid` | Nodo/Escena | Escena | `Node3D` | 1 |
 | 2 | `PersonajeControlador` | Nodo/Escena | Escena | `CharacterBody3D` | 1 |
 | 3 | `AvatarComposer` | Nodo | Componente | `Node3D` | 1 |
-| 3b | `IndicadorCelda` | Nodo | Componente | `MeshInstance3D` | 1 (ayuda de desarrollo) |
+| 3b | `IndicadorCelda` | Nodo | Componente | `MeshInstance3D` | 1 como ayuda, 3 como vista previa |
 | 4 | `RoomController` | Nodo/Escena | Escena | `Node3D` | 1 |
 | 5 | `WorldObject` | Nodo/Escena | Escena | `Area3D` | 1 |
 | 6 | `InteractionBehavior` (+ `SentarseBehavior`) | Resource | Recurso | `Resource` | 1 |
@@ -60,7 +61,8 @@ Antes de escribir un sistema, hay que revisar si el motor ya lo resuelve — y s
 | 25 | `SkillsPanelUI` (sin ranking) | UI | Escena | `Control` | 3 |
 | 26 | `CraftingUI` | UI | Escena | `Control` | 3 |
 | 27 | `CraftingStation` | Nodo/Escena | Escena | `WorldObject` | 3 |
-| 28 | `RoomBuilderUI` | UI | Escena | `Control` | 4 |
+| 28 | `RoomBuilderUI` | UI | Escena | `Control` | 3 (paleta del editor) |
+| 28b | `EditorSala` | Nodo | Componente | `Node3D` | 3 |
 | 29 | `EquiparBehavior` | Resource | Recurso | `InteractionBehavior` | 4 |
 | 30 | `MarketStall` | Nodo/Escena | Escena | `WorldObject` | 5 |
 | 31 | `NPCTrader` | Nodo | Componente | `Node` | 5 |
@@ -274,6 +276,11 @@ IsoGrid (Node3D)        ← el script
 
 ---
 
+> **Las fases 3 a 5 de abajo son anteriores al replan del 21-09.** El MVP pasó a
+> ser el editor de sala: fase 3 es el editor, fase 4 las interacciones y fase 5 la
+> economía como contenido. La tabla de arriba ya está corregida; estas secciones
+> y `GDD.md` §9 todavía no, y hay que reescribirlas antes de cerrar la fase 3.
+
 ## Fase 3 — Inventario + UI de crafteo genérica
 
 ### 24. `InventoryUI` — UI · Escena propia · `extends Control`
@@ -306,7 +313,7 @@ IsoGrid (Node3D)        ← el script
 
 ### 28. `RoomBuilderUI` — UI · Escena propia · `extends Control`
 **Función:** modo construcción: colocar, rotar y eliminar `WorldObject` sobre la `IsoGrid`.
-**Godot nativo:** el "snap" a celda sale de `IsoGrid.mundo_a_celda(get_global_mouse_position())`, sin matemática propia; el fantasma de previsualización es el mismo `WorldObject` con `modulate.a` bajado; arrastrar ítems desde el inventario reusa la API de drag & drop de `Control`. **Código propio:** la validación de colocación contra la ocupación de `IsoGrid`.
+**Godot nativo:** el "snap" a celda sale de `IsoGrid.celda_bajo_puntero(camara, pos)`, sin matemática propia; arrastrar ítems desde el inventario reusa la API de drag & drop de `Control`. **Código propio:** la validación de colocación contra la ocupación de `IsoGrid`. El fantasma de previsualización lo hace `IndicadorCelda` con `GeometryInstance3D.transparency` —`modulate` es de `CanvasItem` y no hace nada en 3D— y sobre el hijo `Visual` de la escena, no sobre el `WorldObject` entero.
 **Interactúa con:** usa `IsoGrid` para validar (`tamano_grilla`/`rotable` de `ItemDefinition`); instancia `WorldObject` a partir de ítems de `InventoryManager`; `RoomController` persiste el resultado.
 **Funciones clave:** `entrar_modo_construccion() -> void`, `colocar(item: ItemDefinition, celda: Vector2i) -> void`.
 

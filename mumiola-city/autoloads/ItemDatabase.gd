@@ -71,6 +71,22 @@ func items_de_categoria(categoria : String) -> Array[ItemDefinition]:
 	return salida
 
 
+## Devuelve todos los items que se pueden dejar en una sala, ordenados por id.
+##
+## Se ordena para que la paleta del editor no cambie de orden entre arranques:
+## el catalogo se arma recorriendo una carpeta y ese recorrido no promete nada.
+func colocables() -> Array[ItemDefinition]:
+	var ids : Array = _por_id.keys()
+	ids.sort()
+
+	var salida : Array[ItemDefinition] = []
+	for id in ids:
+		var def : ItemDefinition = _por_id[id]
+		if def.colocable and def.escena_mundo != null:
+			salida.append(def)
+	return salida
+
+
 ## Cuantas definiciones tiene cargadas el catalogo.
 func cantidad() -> int:
 	return _por_id.size()

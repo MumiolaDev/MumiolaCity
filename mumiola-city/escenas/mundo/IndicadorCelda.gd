@@ -1,18 +1,47 @@
 class_name IndicadorCelda
 extends MeshInstance3D
 
-## Resalta la celda que esta bajo el puntero, coloreada segun su estado.
+## Resalta las celdas que ocuparia algo y muestra un fantasma de lo que se va a
+## colocar.
 ##
-## Es una ayuda de desarrollo para ver de un vistazo que celdas estan libres,
-## bloqueadas o fuera del suelo, sin tener que deducirlo del comportamiento del
-## personaje. Tambien es el germen de la vista previa de colocacion que va a
-## necesitar RoomBuilderUI en la fase 4, donde el mismo recuadro va a mostrar en
-## rojo si un mueble no cabe.
+## Tiene dos modos y el mismo cuerpo sirve para los dos. Con 'seguir_puntero' en
+## true se maneja solo, lee el mouse cada cuadro y resalta la celda de abajo: es
+## la ayuda de desarrollo que era antes. Con 'seguir_puntero' en false se queda
+## quieto hasta que alguien le dice que mostrar con mostrar(), que es como lo va
+## a usar el editor de sala, porque ahi quien decide la celda es el editor y no
+## el puntero: puede estar arrastrando, puede haber hecho scroll en la paleta.
+##
+## El color de cada celda sale de IsoGrid.motivo_bloqueo(), no de esta_libre(),
+## para que el rojo se pueda explicar. Con una huella de 2x2 eso ademas deja ver
+## cual de las cuatro celdas es la que estorba, que es la diferencia entre
+## "no cabe" y "no cabe por ese lado".
+##
+## Ojo con la raiz: es un MeshInstance3D porque asi esta declarado el nodo en
+## SalaComun.tscn y SalaPrivada.tscn, pero su propia malla queda en null y todo
+## lo dibujan sus hijos. Cambiarle el tipo obligaria a tocar las dos escenas a
+## mano.
 
-## La grilla a la que pertenece la celda resaltada.
+## Se emite cuando cambia el motivo por el que la posicion actual esta o no
+## bloqueada. Lleva OK cuando se puede colocar.
+##
+## Existe para que el HUD pueda escribir el motivo sin preguntar cada cuadro.
+signal motivo_cambiado(codigo : Errores.Codigo)
+
+## Cuantos recuadros se preparan de entrada. El objeto mas grande del catalogo
+## ocupa 2x2, asi que dieciseis sobra de lejos; si alguna vez no alcanza, se
+## crean mas en el momento y no se rompe nada.
+const CELDAS_RESERVADAS := 16
+
+## Nombre del hijo que trae la malla en las escenas de objeto. Lo garantizan las
+## 45 escenas generadas y tambien las hechas a mano.
+const NODO_VISUAL := ^"Visual"
+
+## La grilla a la que pertenecen las celdas resaltadas.
 @export var grid : IsoGrid
 ## La camara con la que se convierte la posicion del puntero en celda.
 @export var camara : Camera3D
+## Si se maneja solo siguiendo el mouse. En el editor de sala va en false.
+@export var seguir_puntero : bool = true
 
 @export_group("Colores")
 ## Hay suelo y no hay nada encima: se puede caminar y se puede construir.
@@ -20,11 +49,27 @@ extends MeshInstance3D
 ## Hay suelo pero esta ocupado por una pared o un objeto.
 @export var color_bloqueado : Color = Color(0.95, 0.3, 0.25, 0.35)
 
-## Cuanto se levanta el recuadro sobre el piso para que no pelee con el en el
-## z-buffer.
+@export_group("Fantasma")
+## Cuanto se transparenta la malla de la vista previa.
+##
+## Es GeometryInstance3D.transparency y no modulate: modulate es de CanvasItem y
+## no hace nada sobre una malla 3D.
+@export_range(0.0, 1.0) var transparencia : float = 0.55
+
+## Cuanto se levantan los recuadros sobre el piso para que no peleen con el en
+## el z-buffer.
 @export var alzado : float = 0.02
 
-var _material : StandardMaterial3D
+var _recuadros : Array[MeshInstance3D] = []
+var _malla_celda : PlaneMesh
+var _material_libre : StandardMaterial3D
+var _material_bloqueado : StandardMaterial3D
+
+var _fantasma : Node3D
+var _definicion : ItemDefinition
+var _origen : Vector2i = IsoGrid.SIN_CELDA
+var _rotacion : int = 0
+var _motivo : Errores.Codigo = Errores.Codigo.OK
 
 
 func _ready() -> void:
@@ -33,28 +78,231 @@ func _ready() -> void:
 		set_process(false)
 		return
 
-	var celda := PlaneMesh.new()
-	celda.size = Vector2(grid.suelo.cell_size.x, grid.suelo.cell_size.z)
-	mesh = celda
+	# La raiz se desprende de la transformada de la sala porque todo lo que este
+	# nodo ubica lo ubica en coordenadas de mundo, y componerlo dos veces
+	# dejaria el fantasma girado respecto del objeto real.
+	top_level = true
+	global_transform = Transform3D.IDENTITY
 
-	_material = StandardMaterial3D.new()
-	_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	_material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	material_override = _material
+	# La raiz no dibuja: dibujan los hijos.
+	mesh = null
+
+	_malla_celda = PlaneMesh.new()
+	_malla_celda.size = Vector2(grid.suelo.cell_size.x, grid.suelo.cell_size.z)
+
+	_material_libre = _nuevo_material(color_libre)
+	_material_bloqueado = _nuevo_material(color_bloqueado)
+
+	for i in CELDAS_RESERVADAS:
+		_crear_recuadro()
+
+	_ocultar_recuadros()
+	set_process(seguir_puntero)
 
 
 func _process(_delta : float) -> void:
-	var celda := grid.celda_bajo_puntero(camara, get_viewport().get_mouse_position())
+	_actualizar(grid.celda_bajo_puntero(camara, get_viewport().get_mouse_position()))
 
+
+## Elige que item previsualizar, sin decir donde.
+##
+## Es la mitad que usa la paleta: cambiar de mueble no deberia moverlo de lugar.
+## Con 'seguir_puntero' en true alcanza con esto y el fantasma sigue al mouse.
+##
+## Pasar null deja solo el recuadro de una celda, que es lo que corresponde al
+## pintar suelo o paredes, donde no hay malla que previsualizar.
+func elegir(definicion : ItemDefinition, rotacion : int = 0) -> void:
+	if definicion != _definicion:
+		_cambiar_fantasma(definicion)
+	_rotacion = rotacion
+	if _origen != IsoGrid.SIN_CELDA:
+		_actualizar(_origen)
+
+
+## Muestra la vista previa de un item en una celda, con una rotacion en pasos de
+## noventa grados.
+##
+## Es la otra mitad, la que usa el editor: ahi quien decide la celda es el
+## editor y no el puntero.
+func mostrar(definicion : ItemDefinition, celda : Vector2i, rotacion : int = 0) -> void:
+	if definicion != _definicion:
+		_cambiar_fantasma(definicion)
+	_rotacion = rotacion
+	_actualizar(celda)
+
+
+## Esconde la vista previa entera, recuadros y fantasma.
+func ocultar() -> void:
+	_origen = IsoGrid.SIN_CELDA
+	_ocultar_recuadros()
+	if _fantasma != null:
+		_fantasma.visible = false
+	_cambiar_motivo(Errores.Codigo.OK)
+
+
+## Devuelve por que no se puede colocar en la posicion actual, u OK si se puede.
+##
+## Es lo mismo que devolveria IsoGrid.motivo_bloqueo() para esta posicion, pero
+## ya calculado: quien lo quiera para un cartel no tiene que repetir la cuenta.
+func motivo() -> Errores.Codigo:
+	return _motivo
+
+
+## Devuelve la celda de origen que se esta mostrando, o IsoGrid.SIN_CELDA si no
+## se esta mostrando ninguna.
+func celda() -> Vector2i:
+	return _origen
+
+
+## Devuelve cuantas celdas ocupa lo que se esta previsualizando.
+func huella() -> Vector2i:
+	return Vector2i.ONE if _definicion == null else _definicion.tamano_grilla
+
+
+## Rearma la vista previa alrededor de una celda de origen.
+func _actualizar(origen : Vector2i) -> void:
 	# Fuera del suelo pintado no se muestra nada: un recuadro flotando sobre el
 	# vacio confunde mas de lo que informa.
-	if celda == IsoGrid.SIN_CELDA or not grid.celda_valida(celda):
-		visible = false
+	if origen == IsoGrid.SIN_CELDA or not grid.celda_valida(origen):
+		ocultar()
 		return
 
-	visible = true
-	var pos := grid.celda_a_mundo(celda)
-	pos.y = grid.altura_piso + alzado
-	global_position = pos
-	_material.albedo_color = color_libre if grid.esta_libre(celda) else color_bloqueado
+	_origen = origen
+	var celdas := grid.celdas_de(origen, huella(), _rotacion)
+	_dibujar_recuadros(celdas)
+	_ubicar_fantasma(origen)
+	_cambiar_motivo(grid.motivo_bloqueo(origen, huella(), _rotacion))
+
+
+## Pone un recuadro sobre cada celda de la huella y esconde los que sobran.
+##
+## Cada recuadro se colorea por su cuenta, preguntando por esa sola celda: en una
+## mesa de 2x2 se ve cual es la que no entra, no solo que la mesa no entra.
+func _dibujar_recuadros(celdas : Array[Vector2i]) -> void:
+	while _recuadros.size() < celdas.size():
+		_crear_recuadro()
+
+	for i in _recuadros.size():
+		var recuadro := _recuadros[i]
+		if i >= celdas.size():
+			recuadro.visible = false
+			continue
+
+		var c : Vector2i = celdas[i]
+		var pos := grid.celda_a_mundo(c)
+		pos.y = grid.altura_piso + alzado
+		recuadro.global_position = pos
+		recuadro.visible = true
+		recuadro.material_override = (_material_libre
+			if Errores.ok(grid.motivo_bloqueo(c)) else _material_bloqueado)
+
+
+## Lleva el fantasma al centro de la huella y lo gira como quedaria el objeto.
+##
+## El giro repite el de RoomController.colocar_objeto() usando su misma
+## constante, para que la vista previa no pueda desfasarse de lo que termina
+## colocado.
+func _ubicar_fantasma(origen : Vector2i) -> void:
+	if _fantasma == null:
+		return
+	var pos := grid.centro_de(origen, huella(), _rotacion)
+	pos.y = grid.altura_piso
+	_fantasma.global_position = pos
+	_fantasma.rotation.y = -RoomController.PASO_ROTACION * _rotacion
+	_fantasma.visible = true
+
+
+## Reemplaza la malla de la vista previa por la del item dado.
+##
+## Solo se llama cuando cambia el item elegido, no cada cuadro: instanciar una
+## escena por cuadro seria caro y ademas inutil.
+func _cambiar_fantasma(definicion : ItemDefinition) -> void:
+	if _fantasma != null:
+		_fantasma.queue_free()
+		_fantasma = null
+	_definicion = definicion
+
+	if definicion == null:
+		return
+
+	_fantasma = _extraer_visual(definicion.escena_mundo)
+	if _fantasma == null:
+		return
+
+	add_child(_fantasma)
+	_atenuar(_fantasma, transparencia)
+	_fantasma.visible = false
+
+
+## Saca la malla de una escena de objeto sin despertar al WorldObject.
+##
+## La raiz de esas escenas es un Area3D con WorldObject.gd, que en _ready() se
+## conecta a input_event y exige una instancia no nula: instanciarla entera
+## dejaria un objeto a medias, clickeable y quejandose por consola. Como
+## instantiate() no corre _ready() hasta que el nodo entra al arbol, alcanza con
+## sacarle el hijo visual y liberar el resto sin haberlo agregado nunca.
+static func _extraer_visual(escena : PackedScene) -> Node3D:
+	if escena == null:
+		return null
+
+	var raiz := escena.instantiate()
+	var visual := raiz.get_node_or_null(NODO_VISUAL) as Node3D
+	if visual != null:
+		raiz.remove_child(visual)
+	else:
+		push_warning(
+			"IndicadorCelda: la escena %s no tiene un hijo '%s', " % [escena.resource_path, NODO_VISUAL]
+			+ "asi que se coloca sin vista previa de la malla."
+		)
+	raiz.free()
+	return visual
+
+
+## Transparenta todas las mallas de un subarbol.
+##
+## Recorre en vez de tocar solo la raiz porque un modelo de KayKit trae varias
+## MeshInstance3D, y transparentar una sola se ve peor que no transparentar
+## ninguna.
+static func _atenuar(nodo : Node, valor : float) -> void:
+	if nodo is GeometryInstance3D:
+		(nodo as GeometryInstance3D).transparency = valor
+		(nodo as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for hijo in nodo.get_children():
+		_atenuar(hijo, valor)
+
+
+## Agrega un recuadro mas a la reserva.
+func _crear_recuadro() -> MeshInstance3D:
+	var recuadro := MeshInstance3D.new()
+	recuadro.mesh = _malla_celda
+	recuadro.top_level = true
+	recuadro.visible = false
+	add_child(recuadro)
+	_recuadros.append(recuadro)
+	return recuadro
+
+
+## Esconde todos los recuadros sin destruirlos.
+func _ocultar_recuadros() -> void:
+	for recuadro in _recuadros:
+		recuadro.visible = false
+
+
+## Guarda el motivo y avisa solo si cambio, para no emitir sesenta veces por
+## segundo lo mismo.
+func _cambiar_motivo(codigo : Errores.Codigo) -> void:
+	if codigo == _motivo:
+		return
+	_motivo = codigo
+	motivo_cambiado.emit(codigo)
+
+
+## Arma el material de un recuadro: plano, translucido y visible de los dos
+## lados, porque la camara puede pasar por debajo del piso al girar.
+func _nuevo_material(color : Color) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	material.albedo_color = color
+	return material

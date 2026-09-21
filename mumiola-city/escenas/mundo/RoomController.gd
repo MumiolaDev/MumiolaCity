@@ -50,6 +50,11 @@ const PASO_ROTACION := PI / 2.0
 @onready var contenedor_objetos : Node3D = $Objetos
 @onready var pivote : Node3D = $Pivote
 @onready var camara : Camera3D = $Pivote/Camera3D
+## La vista previa de colocacion, o null si esta sala no la tiene.
+##
+## Es opcional por contrato, como la interfaz: sacar el nodo del arbol quita la
+## ayuda visual y no rompe nada. El editor de sala la va a pedir por aca.
+@onready var indicador : IndicadorCelda = get_node_or_null(^"IndicadorCelda")
 
 var _activa : bool = false
 
