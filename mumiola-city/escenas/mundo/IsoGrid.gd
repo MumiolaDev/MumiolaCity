@@ -48,6 +48,10 @@ const SIN_CELDA := Vector2i.MAX
 ## celdas solidas es independiente de esta y hay que invalidarla.
 signal ocupacion_cambiada(celdas : Array[Vector2i])
 
+## Se emite al pintar o borrar estructura. La interfaz de construccion la usa
+## para refrescar; el A* no la necesita porque se descarta desde adentro.
+signal estructura_cambiada(capa : StringName)
+
 var _ocupadas : Dictionary = {} # Vector2i -> WorldObject
 
 # Planta de las paredes: Vector2i -> true. Se calcula una sola vez, la primera
@@ -198,6 +202,103 @@ func liberar_objeto(obj : WorldObject) -> bool:
 	_marcar_en_astar(celdas)
 	ocupacion_cambiada.emit(celdas)
 	return true
+
+
+## Devuelve el GridMap de una capa, o null si el nombre no es de ninguna.
+func _grid_de(capa : StringName) -> GridMap:
+	if capa == CatalogoPiezas.SUELO:
+		return suelo
+	if capa == CatalogoPiezas.PAREDES:
+		return paredes
+	push_error("IsoGrid: no existe la capa '%s'." % capa)
+	return null
+
+
+## Devuelve que pieza hay en una celda de una capa, o un diccionario vacio.
+##
+## Devuelve el **nombre** y no el id porque el id solo tiene sentido contra la
+## MeshLibrary cargada en este momento: es lo que D18 fija para todo lo que
+## cruza el borde del proyecto, y lo que permite que una operacion de pintado se
+## pueda guardar, deshacer o mandar por la red.
+func pieza_en(capa : StringName, celda : Vector2i) -> Dictionary:
+	var grid := _grid_de(capa)
+	if grid == null:
+		return {}
+	var pos := Vector3i(celda.x, 0, celda.y)
+	var id := grid.get_cell_item(pos)
+	if id == GridMap.INVALID_CELL_ITEM:
+		return {}
+	return {
+		"pieza": CatalogoPiezas.nombre_de(grid.mesh_library, id),
+		"orientacion": grid.get_cell_item_orientation(pos),
+	}
+
+
+## Pinta una pieza en una celda. Devuelve si se pudo.
+##
+## Recibe el nombre de la pieza y lo resuelve contra la biblioteca de la capa. Es
+## el primer lugar donde D18 deja de ser una precaucion y se vuelve necesario: el
+## editor guarda y deshace pintados, y un id no significa lo mismo despues de
+## re-exportar la MeshLibrary.
+func pintar(capa : StringName, celda : Vector2i, pieza : StringName, orientacion : int = 0) -> bool:
+	var grid := _grid_de(capa)
+	if grid == null:
+		return false
+
+	var id := CatalogoPiezas.id_de(grid.mesh_library, pieza)
+	if id < 0:
+		push_error("IsoGrid: la biblioteca de '%s' no tiene la pieza '%s'." % [capa, pieza])
+		return false
+
+	grid.set_cell_item(Vector3i(celda.x, 0, celda.y), id, orientacion)
+	_tras_cambiar_estructura(capa)
+	return true
+
+
+## Borra lo que haya en una celda de una capa. Devuelve si habia algo.
+func borrar_celda(capa : StringName, celda : Vector2i) -> bool:
+	var grid := _grid_de(capa)
+	if grid == null:
+		return false
+
+	var pos := Vector3i(celda.x, 0, celda.y)
+	if grid.get_cell_item(pos) == GridMap.INVALID_CELL_ITEM:
+		return false
+
+	grid.set_cell_item(pos, GridMap.INVALID_CELL_ITEM)
+	_tras_cambiar_estructura(capa)
+	return true
+
+
+## Devuelve todas las celdas del rectangulo que definen dos esquinas.
+##
+## Sirve para pintar arrastrando, que es la diferencia entre pintar una sala de
+## 20x20 en un gesto o en cuatrocientos clics. No filtra por validez: quien llama
+## decide que hacer con cada celda.
+func celdas_en_rectangulo(desde : Vector2i, hasta : Vector2i) -> Array[Vector2i]:
+	var celdas : Array[Vector2i] = []
+	if desde == SIN_CELDA or hasta == SIN_CELDA:
+		return celdas
+
+	var minimo := desde.min(hasta)
+	var maximo := desde.max(hasta)
+	for x in range(minimo.x, maximo.x + 1):
+		for z in range(minimo.y, maximo.y + 1):
+			celdas.append(Vector2i(x, z))
+	return celdas
+
+
+## Rehace lo que dependa de la estructura despues de pintarla o borrarla.
+##
+## Pintar suelo cambia la region del A* y pintar pared cambia que celdas son
+## solidas, asi que los dos casos obligan a rearmarlo. Se descarta en vez de
+## parchearlo porque un pintado por arrastre toca cientos de celdas: reconstruir
+## una vez al pedir la proxima ruta sale mas barato que parchear de a una.
+func _tras_cambiar_estructura(capa : StringName) -> void:
+	_astar = null
+	if capa == CatalogoPiezas.PAREDES:
+		_paredes_listas = false
+	estructura_cambiada.emit(capa)
 
 
 ## Devuelve una celda vecina libre, o SIN_CELDA si esta rodeada.

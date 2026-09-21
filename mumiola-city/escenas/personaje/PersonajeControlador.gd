@@ -51,6 +51,11 @@ func _unhandled_input(evento : InputEvent) -> void:
 	if grid == null or camara == null:
 		return
 
+	# Editando, el clic es del editor: colocar un mueble no tiene que hacer que
+	# el personaje salga caminando hacia el.
+	if GameManager.editando():
+		return
+
 	if evento is InputEventMouseButton and evento.pressed and evento.button_index == MOUSE_BUTTON_LEFT:
 		var celda := grid.celda_bajo_puntero(camara, evento.position)
 		if celda != IsoGrid.SIN_CELDA:

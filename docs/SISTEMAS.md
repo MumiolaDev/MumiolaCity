@@ -349,7 +349,7 @@ La tabla más importante del documento. La mayoría de los bugs de un juego de e
 
 ---
 
-## 6. Decisiones de arquitectura: dieciséis cerradas, cinco pendientes
+## 6. Decisiones de arquitectura: dieciocho cerradas, tres pendientes
 
 Once decisiones que hay que cerrar antes de escribir el sistema correspondiente, ordenadas por lo caro que sale cambiarlas después. **Cinco ya están cerradas** — D1, D2 y D11 aplicadas en `items.json`, D3 resuelta acá abajo, y D7 postergada a la fase 2 a propósito — y **D5 tiene el lado de los datos hecho y el del código pendiente**. Las demás siguen abiertas.
 
@@ -649,6 +649,28 @@ En la práctica eso significa: o el reemplazo se modela sobre el rig de KayKit, 
 **Dos detalles del formato que muerden.** JSON no tiene vectores, así que todo `Vector2i` viaja como array de dos enteros. Y **todo número vuelve como float**, incluso los que se escribieron enteros: sin `int()` al leer, una celda sería `Vector2i(3.0, 4.0)` y fallaría el tipado.
 
 **`version_formato` desde el primer día**, y `_migrar()` existe aunque hoy no migre nada. Cuando cambie el esquema — y va a cambiar, porque quedan siete decisiones abiertas — el lugar donde va el arreglo ya está decidido, y no hay que inventarlo con guardados rotos sobre la mesa.
+
+---
+
+### D23 — Toda mutación de una sala es una operación serializable · **decidida**
+
+**El problema, que es del futuro pero se decide hoy.** El GDD apunta a un juego en línea con servidor autoritativo, y el editor de sala es lo que más riesgo corre: convierte la sala en **contenido creado por el jugador** que tiene que viajar entre clientes. Si el editor llamara directo a `colocar_objeto()`, `pintar()` y `retirar_objeto()`, el día del servidor habría tres formas distintas que interceptar y el editor habría que reescribirlo entero.
+
+**Decisión: el editor habla en operaciones.** `OperacionSala` es un dato —`colocar`, `retirar`, `pintar`, `borrar`— con `to_dict()` y `desde_dict()`, y `RoomController.aplicar(op)` es **el único punto que muta una sala**. Local se aplica en el acto; online la misma operación se manda, el servidor la valida y la retransmite, y el mismo `aplicar()` corre en todos los clientes.
+
+**No es previsión gratuita: se paga hoy.** Una lista de operaciones da **deshacer y rehacer** casi sin trabajo extra, y un editor de salas lo necesita sí o sí. La costura del multijugador sale de yapa.
+
+**La inversa se calcula antes de aplicar**, mirando la sala como está en ese momento: deshacer un pintado necesita saber qué había, y después de pintar ya no se puede averiguar.
+
+**`puede_editar(actor)` existe desde ahora** aunque hoy devuelva siempre `true`. Lo importante no es la comprobación sino que exista **un** lugar donde va, en vez de tener que buscar después todos los sitios que mutan una sala.
+
+---
+
+### D24 — La forma canónica de una sala es su documento, no su `.tscn` · **decidida**
+
+Una escena no puede viajar por la red: lleva rutas de script, que es el mismo motivo por el que **D21** eligió JSON y no `.tres` para el guardado. A partir del editor, el `.tscn` de una sala es solo el molde vacío y **lo que la define es su documento de datos**: estructura, muebles y estado, con `version_formato` y la versión del catálogo con que se creó, para que una discrepancia se detecte en vez de dibujar cualquier cosa.
+
+De ahí que `IsoGrid.pintar()` reciba el **nombre** de la pieza y no su id, y que `pieza_en()` devuelva nombre: dos clientes tienen que coincidir en qué es `suelo_base` sin compartir la misma `MeshLibrary` en memoria. Es **D18** dejando de ser una precaución y volviéndose necesario.
 
 ---
 

@@ -141,5 +141,10 @@ func _al_recibir_clic(_camara : Node, evento : InputEvent, _pos : Vector3,
 	if not evento.pressed or evento.button_index != MOUSE_BUTTON_RIGHT:
 		return
 
+	# Editando, los verbos del mueble no vienen al caso: lo que se quiere es
+	# moverlo o sacarlo, y de eso se ocupa el editor.
+	if GameManager.editando():
+		return
+
 	get_viewport().set_input_as_handled()
 	clickeado.emit(self)

@@ -25,10 +25,23 @@ signal aviso(texto : String)
 ## Cambio el texto de ayuda fijo.
 signal ayuda_cambiada(texto : String)
 
+## Se paso de recorrer la sala a editarla, o al reves.
+signal modo_cambiado(modo : Modo)
+
+
+## En que esta el jugador: recorriendo la sala o construyendola.
+##
+## Vive aca y no en el editor porque varias cosas que no se conocen entre si
+## necesitan leerlo: el personaje deja de caminar al clic, el menu contextual
+## deja de abrirse, la vista previa aparece. Con el modo colgando del editor,
+## todas ellas tendrian que conocer al editor.
+enum Modo { JUGANDO, EDITANDO }
+
 var _jugador : PersonajeControlador = null
 var _contenedor : Node = null
 var _sala_actual : RoomController = null
 var _ayuda : String = ""
+var _modo : Modo = Modo.JUGANDO
 
 
 ## El jugador se anota solo desde su _ready().
@@ -156,3 +169,39 @@ func mostrar_ayuda(texto : String) -> void:
 ## Devuelve la ayuda vigente, para una interfaz que aparezca despues de fijada.
 func ayuda() -> String:
 	return _ayuda
+
+
+## Devuelve en que modo esta el juego.
+func modo() -> Modo:
+	return _modo
+
+
+## Devuelve si se esta editando la sala.
+##
+## Existe ademas de modo() porque "if GameManager.editando():" se lee mucho mejor
+## que comparar contra el enum en los quince lugares que van a preguntarlo.
+func editando() -> bool:
+	return _modo == Modo.EDITANDO
+
+
+## Cambia de modo y avisa. Devuelve si hubo cambio.
+##
+## Al salir del modo editor se olvida el historial de la sala: deshacer despues
+## de haberse ido a recorrerla desharia cosas que el jugador ya dio por hechas.
+func cambiar_modo(nuevo : Modo) -> bool:
+	if nuevo == _modo:
+		return false
+
+	_modo = nuevo
+	if _modo == Modo.JUGANDO:
+		var sala := sala_actual()
+		if sala != null:
+			sala.olvidar_historial()
+
+	modo_cambiado.emit(_modo)
+	return true
+
+
+## Alterna entre recorrer y editar.
+func alternar_modo() -> void:
+	cambiar_modo(Modo.JUGANDO if editando() else Modo.EDITANDO)

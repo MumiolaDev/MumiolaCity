@@ -23,6 +23,10 @@ signal objeto_colocado(obj : WorldObject)
 ## instancia ya desprendida: quien escuche puede mirarlo pero ya no es su dueno.
 signal objeto_retirado(obj : WorldObject)
 
+## Se emite tras aplicar cualquier operacion, incluidas las de deshacer. Es por
+## donde la interfaz de construccion se entera de que la sala cambio.
+signal operacion_aplicada(op : OperacionSala)
+
 ## Un cuarto de vuelta. Rotar la sala al estilo Habbo es girar el pivote, nunca
 ## el contenido: los objetos siguen en sus mismas celdas.
 const PASO_ROTACION := PI / 2.0
@@ -48,6 +52,14 @@ const PASO_ROTACION := PI / 2.0
 @onready var camara : Camera3D = $Pivote/Camera3D
 
 var _activa : bool = false
+
+## Lo hecho y lo deshecho, en un solo array con un cursor.
+##
+## Cada entrada guarda la operacion y su inversa, porque la inversa no se puede
+## deducir de la operacion sola: deshacer un pintado necesita saber que habia
+## antes, y eso solo se sabe mirando la sala justo antes de aplicarlo.
+var _historial : Array = []
+var _cursor : int = 0
 
 
 func _ready() -> void:
@@ -198,6 +210,142 @@ func retirar_objeto(obj : WorldObject) -> ItemInstance:
 	objeto_retirado.emit(obj)
 	obj.queue_free()
 	return inst
+
+
+## Devuelve si un actor puede modificar esta sala.
+##
+## Hoy siempre si, porque el sandbox no tiene limites. Existe igual para que el
+## dia del servidor autoritativo haya **un** lugar donde poner la comprobacion,
+## en vez de tener que buscar todos los sitios que mutan una sala. Los codigos
+## NO_ES_TUYO y SIN_PERMISO ya estan en el enum esperandola.
+func puede_editar(_actor : Node) -> bool:
+	return true
+
+
+## Aplica una operacion. Es el unico punto que modifica una sala.
+##
+## Que sea unico es toda la gracia: local se aplica en el acto, online la misma
+## operacion se manda, el servidor la valida y la retransmite, y este mismo
+## metodo corre en todos los clientes.
+##
+## registrar en false la aplica sin tocar el historial, que es como se ejecutan
+## deshacer y rehacer sin que se registren a si mismos.
+func aplicar(op : OperacionSala, registrar : bool = true) -> Errores.Codigo:
+	if op == null:
+		return Errores.Codigo.NO_TIENE_ITEM
+	if not puede_editar(GameManager.jugador_actual()):
+		return Errores.Codigo.SIN_PERMISO
+
+	# La inversa se calcula **antes**, mirando la sala como esta ahora: despues de
+	# aplicar ya no se puede saber que habia.
+	var inversa := _inversa_de(op) if registrar else null
+
+	var codigo := _ejecutar(op)
+	if not Errores.ok(codigo):
+		return codigo
+
+	if registrar and inversa != null:
+		# Una rama nueva descarta lo que se habia deshecho, como en cualquier
+		# editor: si deshaces tres pasos y haces algo distinto, los tres viejos
+		# dejan de tener sentido.
+		_historial.resize(_cursor)
+		_historial.append({"op": op, "inversa": inversa})
+		_cursor = _historial.size()
+
+	operacion_aplicada.emit(op)
+	return codigo
+
+
+## Deshace la ultima operacion. Devuelve si habia algo que deshacer.
+func deshacer() -> bool:
+	if _cursor <= 0:
+		return false
+	_cursor -= 1
+	_ejecutar(_historial[_cursor]["inversa"])
+	operacion_aplicada.emit(_historial[_cursor]["inversa"])
+	return true
+
+
+## Rehace la ultima operacion deshecha.
+func rehacer() -> bool:
+	if _cursor >= _historial.size():
+		return false
+	_ejecutar(_historial[_cursor]["op"])
+	operacion_aplicada.emit(_historial[_cursor]["op"])
+	_cursor += 1
+	return true
+
+
+func puede_deshacer() -> bool:
+	return _cursor > 0
+
+
+func puede_rehacer() -> bool:
+	return _cursor < _historial.size()
+
+
+## Olvida el historial. Se llama al cargar una sala: deshacer hasta antes de
+## abrirla no tendria ningun sentido.
+func olvidar_historial() -> void:
+	_historial.clear()
+	_cursor = 0
+
+
+## Hace lo que la operacion pide, sin registrar nada.
+func _ejecutar(op : OperacionSala) -> Errores.Codigo:
+	match op.tipo:
+		OperacionSala.Tipo.COLOCAR:
+			var inst := ItemInstance.new()
+			inst.definicion_id = op.item
+			inst.contenido_id = StringName(op.estado.get("contenido", ""))
+			inst.contenido_cantidad = int(op.estado.get("contenido_cantidad", 0))
+			return colocar_objeto(inst, op.celda, op.rotacion)
+
+		OperacionSala.Tipo.RETIRAR:
+			var obj := grid.objeto_en(op.celda)
+			if obj == null:
+				return Errores.Codigo.NO_TIENE_ITEM
+			return Errores.Codigo.OK if retirar_objeto(obj) != null \
+				else Errores.Codigo.NO_TIENE_ITEM
+
+		OperacionSala.Tipo.PINTAR:
+			return Errores.Codigo.OK if grid.pintar(op.capa, op.celda, op.pieza, op.orientacion) \
+				else Errores.Codigo.CELDA_INEXISTENTE
+
+		OperacionSala.Tipo.BORRAR:
+			grid.borrar_celda(op.capa, op.celda)
+			return Errores.Codigo.OK
+
+	return Errores.Codigo.NO_TIENE_ITEM
+
+
+## Construye la operacion que devuelve la sala al estado previo.
+##
+## Devuelve null cuando no hay nada que deshacer —borrar una celda ya vacia— para
+## que esas no ensucien el historial.
+func _inversa_de(op : OperacionSala) -> OperacionSala:
+	match op.tipo:
+		OperacionSala.Tipo.COLOCAR:
+			return OperacionSala.retirar(op.celda)
+
+		OperacionSala.Tipo.RETIRAR:
+			var obj := grid.objeto_en(op.celda)
+			if obj == null or obj.instancia == null:
+				return null
+			return OperacionSala.colocar(obj.instancia.definicion_id, obj.celda_origen,
+				obj.rotacion_grilla, {
+					"contenido": String(obj.instancia.contenido_id),
+					"contenido_cantidad": obj.instancia.contenido_cantidad,
+				})
+
+		OperacionSala.Tipo.PINTAR, OperacionSala.Tipo.BORRAR:
+			var antes := grid.pieza_en(op.capa, op.celda)
+			if antes.is_empty():
+				return null if op.tipo == OperacionSala.Tipo.BORRAR \
+					else OperacionSala.borrar(op.capa, op.celda)
+			return OperacionSala.pintar(op.capa, op.celda, antes["pieza"], antes["orientacion"])
+
+	return null
 
 
 ## Vuelca los objetos colocados a un diccionario serializable.
