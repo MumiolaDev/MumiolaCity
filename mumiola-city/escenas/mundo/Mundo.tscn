@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://escenas/ui/ContextMenuUI.tscn" id="5_menu"]
 [ext_resource type="PackedScene" path="res://escenas/ui/HUD.tscn" id="5_v0tkt"]
 [ext_resource type="PackedScene" path="res://escenas/ui/RoomBuilderUI.tscn" id="6_paleta"]
+[ext_resource type="Script" path="res://escenas/mundo/EditorSala.gd" id="7_editor"]
 
 [node name="Mundo" type="Node3D" unique_id=1075680758]
 script = ExtResource("1_mundo")
@@ -26,3 +27,7 @@ script = ExtResource("1_mundo")
 [node name="ContextMenuUI" parent="UI" unique_id=1727285277 instance=ExtResource("5_menu")]
 
 [node name="RoomBuilderUI" parent="UI" instance=ExtResource("6_paleta")]
+
+[node name="EditorSala" type="Node" parent="." node_paths=PackedStringArray("paleta")]
+script = ExtResource("7_editor")
+paleta = NodePath("../UI/RoomBuilderUI")

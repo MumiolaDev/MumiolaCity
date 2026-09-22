@@ -4,12 +4,12 @@ extends MeshInstance3D
 ## Resalta las celdas que ocuparia algo y muestra un fantasma de lo que se va a
 ## colocar.
 ##
-## Tiene dos modos y el mismo cuerpo sirve para los dos. Con 'seguir_puntero' en
-## true se maneja solo, lee el mouse cada cuadro y resalta la celda de abajo: es
-## la ayuda de desarrollo que era antes. Con 'seguir_puntero' en false se queda
-## quieto hasta que alguien le dice que mostrar con mostrar(), que es como lo va
-## a usar el editor de sala, porque ahi quien decide la celda es el editor y no
-## el puntero: puede estar arrastrando, puede haber hecho scroll en la paleta.
+## Tiene dos modos y el mismo cuerpo sirve para los dos. Por defecto se queda
+## quieto hasta que alguien le dice que mostrar con mostrar(), que es como lo usa
+## EditorSala: ahi quien decide la celda es el editor y no el puntero, porque
+## puede estar arrastrando o el mouse puede estar sobre la paleta. Con
+## 'seguir_puntero' en true vuelve a manejarse solo leyendo el mouse cada cuadro,
+## que es la ayuda de desarrollo que era antes.
 ##
 ## El color de cada celda sale de IsoGrid.motivo_bloqueo(), no de esta_libre(),
 ## para que el rojo se pueda explicar. Con una huella de 2x2 eso ademas deja ver
@@ -39,8 +39,13 @@ const CELDAS_RESERVADAS := 16
 @export var grid : IsoGrid
 ## La camara con la que se convierte la posicion del puntero en celda.
 @export var camara : Camera3D
-## Si se maneja solo siguiendo el mouse. En el editor de sala va en false.
-@export var seguir_puntero : bool = true
+## Si se maneja solo siguiendo el mouse.
+##
+## Viene en false: la vista previa es del editor, y en modo juego un recuadro
+## persiguiendo el puntero sobre muebles que no se pueden mover solo distrae.
+## Queda el modo automatico por si hace falta volver a usarlo como ayuda de
+## desarrollo, que es para lo que nacio.
+@export var seguir_puntero : bool = false
 
 @export_group("Colores")
 ## Hay suelo y no hay nada encima: se puede caminar y se puede construir.

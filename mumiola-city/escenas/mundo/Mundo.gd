@@ -14,9 +14,7 @@ extends Node3D
 ## Teclas de prueba, todas provisionales.
 ##
 ## Mundo:   B alterna entre jugar y editar, TAB cambia de sala, Q y E giran el
-##          encuadre, V elige que item
-##          colocar —con shift va para atras—, R lo gira, C lo coloca bajo el
-##          mouse, X retira, G guarda, L carga.
+##          encuadre, G guarda, L carga.
 ## Economia: I lista el inventario, K muestra el nivel de Cocina, 1 corta un
 ##          tomate y 2 cocina carne.
 ##
@@ -25,30 +23,13 @@ extends Node3D
 ## reporta sin comportamiento. Son andamio para poder juzgar como se siente la
 ## progresion antes de construirle el mundo encima.
 ##
-## Girar el encuadre y girar el objeto son dos cosas distintas y por eso son dos
-## teclas distintas: la camara orbita y los objetos se quedan donde estan, asi
-## que una silla ya colocada se ve desde otro lado sin haber cambiado de
-## orientacion. Como decide el jugador hacia donde mira un mueble es D19.
-##
-## C y X existen para poder probar el paso 4b sin menu contextual: el clic
-## izquierdo ya lo usa el personaje para caminar, y ContextMenuUI es el paso 7.
-##
-## V es el andamio de la paleta que todavia no existe: recorre el catalogo
-## entero de colocables y le dice a la vista previa cual mostrar. Desaparece con
-## RoomBuilderUI.
+## Colocar, retirar, girar y elegir ya no estan aca: se los llevo EditorSala, que
+## es donde tienen sentido. En modo juego no se coloca nada y no hay vista previa
+## siguiendo al puntero — un fantasma sobre muebles que no se pueden mover solo
+## distrae. Q y E si se quedan: girar el encuadre es de mirar, no de editar.
 
 @onready var contenedor_salas : Node3D = $Salas
 @onready var menu : ContextMenuUI = $UI/ContextMenuUI
-
-## Con que rotacion se coloca el proximo item. Gira con R, no con el encuadre,
-## para poder comprobar que la rotacion de la huella y la visual concuerdan sin
-## confundirla con el giro de la camara.
-var _rotacion_colocacion : int = 0
-
-## Todos los items colocables, en el orden en que los recorre V.
-var _catalogo : Array[ItemDefinition] = []
-## Cual de ellos esta elegido.
-var _elegido : int = 0
 
 
 func _ready() -> void:
@@ -63,7 +44,7 @@ func _ready() -> void:
 	# funcion, no rompe el juego.
 	if menu != null:
 		menu.verbo_elegido.connect(_al_elegir_verbo)
-	GameManager.mostrar_ayuda("TAB cambiar de sala   Q/E girar la vista   B jugar/editar   V elegir item   R girarlo   C colocar   X retirar   G guardar   L cargar\nI inventario   K habilidad   1 cortar tomate   2 cocinar carne\nClic izquierdo: caminar   Clic derecho sobre un mueble: menu")
+	GameManager.mostrar_ayuda("TAB cambiar de sala   Q/E girar la vista   B jugar/editar   G guardar   L cargar\nI inventario   K habilidad   1 cortar tomate   2 cocinar carne\nClic izquierdo: caminar   Clic derecho sobre un mueble: menu")
 
 	for sala in GameManager.salas():
 		sala.objeto_colocado.connect(_atender_clics_de)
@@ -72,11 +53,6 @@ func _ready() -> void:
 
 	RecipeManager.crafteo_terminado.connect(_al_terminar_crafteo)
 	_dar_equipo_de_prueba()
-
-	# Antes de ir_a_indice(), para que la primera sala ya entre con la vista
-	# previa cargada en vez de quedarse vacia hasta el primer TAB.
-	_catalogo = ItemDatabase.colocables()
-	GameManager.sala_cambiada.connect(_al_cambiar_de_sala)
 
 	if not GameManager.ir_a_indice(0):
 		push_error("Mundo: no hay ninguna RoomController colgando de Salas.")
@@ -102,16 +78,6 @@ func _unhandled_input(evento : InputEvent) -> void:
 		sala.rotar(-1)
 	elif evento.keycode == KEY_E:
 		sala.rotar(1)
-	elif evento.keycode == KEY_V:
-		_elegir_otro(sala, -1 if evento.shift_pressed else 1)
-	elif evento.keycode == KEY_R:
-		_rotacion_colocacion = posmod(_rotacion_colocacion + 1, 4)
-		_refrescar_vista_previa(sala)
-		GameManager.avisar("Rotacion de colocacion: %d" % _rotacion_colocacion)
-	elif evento.keycode == KEY_C:
-		_colocar_elegido(sala)
-	elif evento.keycode == KEY_X:
-		_retirar_bajo_el_mouse(sala)
 	elif evento.keycode == KEY_G:
 		GameManager.avisar("Partida guardada." if SaveManager.guardar() == OK
 			else "No se pudo guardar.")
@@ -126,84 +92,6 @@ func _unhandled_input(evento : InputEvent) -> void:
 	elif evento.keycode == KEY_L:
 		GameManager.avisar("Partida cargada." if SaveManager.cargar() == OK
 			else "No hay partida guardada.")
-
-
-## Coloca el item elegido en la celda bajo el mouse y reporta el resultado.
-##
-## Provisional, para poder probar colocar_objeto() sin menu contextual. La
-## instancia se crea aca porque el editor va a colocar desde catalogo infinito y
-## no desde la mochila (D22).
-##
-## Coloca exactamente lo que muestra la vista previa: si fuera otra cosa, el
-## fantasma dejaria de servir para lo unico que sirve.
-func _colocar_elegido(sala : RoomController) -> void:
-	var def := _item_elegido()
-	if def == null:
-		GameManager.avisar("No hay ningun item elegido.")
-		return
-
-	var celda := sala.grid.celda_bajo_puntero(sala.camara, get_viewport().get_mouse_position())
-	if celda == IsoGrid.SIN_CELDA:
-		return
-
-	var inst := ItemInstance.new()
-	inst.definicion_id = def.id
-
-	var resultado := sala.colocar_objeto(inst, celda, _rotacion_colocacion)
-	if Errores.ok(resultado):
-		GameManager.avisar("Colocaste: %s" % sala.grid.objeto_en(celda).nombre_mostrado())
-	else:
-		GameManager.avisar_error(resultado)
-
-
-## Retira el objeto que haya en la celda bajo el mouse.
-func _retirar_bajo_el_mouse(sala : RoomController) -> void:
-	var celda := sala.grid.celda_bajo_puntero(sala.camara, get_viewport().get_mouse_position())
-	if celda == IsoGrid.SIN_CELDA:
-		return
-
-	var obj := sala.grid.objeto_en(celda)
-	if obj == null:
-		GameManager.avisar_error(Errores.Codigo.NO_TIENE_ITEM)
-		return
-
-	var inst := sala.retirar_objeto(obj)
-	if inst != null:
-		GameManager.avisar("Retiraste: %s" % inst.nombre_mostrado())
-
-
-## Devuelve el item elegido para colocar, o null si el catalogo esta vacio.
-func _item_elegido() -> ItemDefinition:
-	return null if _catalogo.is_empty() else _catalogo[_elegido]
-
-
-## Pasa al siguiente item colocable del catalogo, o al anterior con paso -1.
-func _elegir_otro(sala : RoomController, paso : int) -> void:
-	if _catalogo.is_empty():
-		GameManager.avisar("El catalogo no tiene ningun item colocable con modelo.")
-		return
-
-	_elegido = posmod(_elegido + paso, _catalogo.size())
-	_refrescar_vista_previa(sala)
-	GameManager.avisar("Vas a colocar: %s   (%d de %d)"
-		% [_item_elegido().nombre, _elegido + 1, _catalogo.size()])
-
-
-## Le dice a la vista previa de una sala que mostrar.
-##
-## La sala puede no tener indicador: es opcional por contrato, asi que esto no
-## comprueba nada mas que eso y nunca es un error.
-func _refrescar_vista_previa(sala : RoomController) -> void:
-	if sala != null and sala.indicador != null:
-		sala.indicador.elegir(_item_elegido(), _rotacion_colocacion)
-
-
-## Le pasa el item elegido a la sala que acaba de activarse.
-##
-## Hace falta porque cada sala trae su propio indicador: al cambiar de sala, el
-## de la nueva todavia no sabe nada de lo que venias colocando.
-func _al_cambiar_de_sala(sala : RoomController) -> void:
-	_refrescar_vista_previa(sala)
 
 
 ## Engancha el clic derecho de un mueble al menu contextual.

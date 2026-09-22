@@ -124,7 +124,11 @@ func rotar(pasos : int) -> void:
 func objetos() -> Array[WorldObject]:
 	var lista : Array[WorldObject] = []
 	for hijo in contenedor_objetos.get_children():
-		if hijo is WorldObject:
+		# Salta los que ya se retiraron. queue_free() no saca el nodo del arbol
+		# hasta el final del cuadro, asi que sin esto retirar un mueble y guardar
+		# en el mismo cuadro serializaria un objeto muerto —y con la instancia ya
+		# en null, que es justo lo que retirar_objeto() le deja.
+		if hijo is WorldObject and not hijo.is_queued_for_deletion():
 			lista.append(hijo)
 	return lista
 
