@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="CatalogoInfo" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="CatalogoInfo" format=3 uid="uid://cms704yg4irj2"]
 
-[ext_resource type="Script" path="res://escenas/objetos/recursos/CatalogoInfo.gd" id="1_info"]
+[ext_resource type="Script" uid="uid://de3d2lcdjk3c6" path="res://escenas/objetos/recursos/CatalogoInfo.gd" id="1_4g6jo"]
 
 [resource]
-script = ExtResource("1_info")
+script = ExtResource("1_4g6jo")
 version = "0.5"
 cantidad_items = 52

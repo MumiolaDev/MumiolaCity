@@ -13,5 +13,6 @@ descripcion = "Materia prima del taller. Todavia no se produce."
 categoria = "materia_prima"
 peso = 2.0
 valor_base = 10
+rotable = true
 icono = ExtResource("2_sjicm")
 escena_mundo = ExtResource("1_1edej")

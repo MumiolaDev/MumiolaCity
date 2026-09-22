@@ -40,5 +40,6 @@ stack_maximo = 1
 valor_base = 260
 comprable = false
 receta = SubResource("Resource_nry7n")
+rotable = true
 icono = ExtResource("2_xppd5")
 escena_mundo = ExtResource("1_k8fen")

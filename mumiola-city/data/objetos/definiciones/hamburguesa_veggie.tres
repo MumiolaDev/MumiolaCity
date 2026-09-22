@@ -52,5 +52,6 @@ stack_maximo = 1
 valor_base = 86
 comprable = false
 receta = SubResource("Resource_mjhdp")
+rotable = true
 icono = ExtResource("2_noj1o")
 escena_mundo = ExtResource("1_dp8w4")

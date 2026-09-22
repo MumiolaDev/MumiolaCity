@@ -16,5 +16,6 @@ apilable = false
 stack_maximo = 1
 valor_base = 55
 familia = &"olla"
+rotable = true
 icono = ExtResource("2_80dn8")
 escena_mundo = ExtResource("1_iu63a")

@@ -17,5 +17,6 @@ stack_maximo = 1
 valor_base = 0
 comprable = false
 vendible = false
+rotable = true
 icono = ExtResource("2_syyay")
 escena_mundo = ExtResource("1_urw3m")

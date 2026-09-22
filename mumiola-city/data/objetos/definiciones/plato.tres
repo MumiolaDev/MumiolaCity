@@ -31,5 +31,6 @@ stack_maximo = 1
 valor_base = 12
 familia = &"plato"
 receta = SubResource("Resource_gfyq4")
+rotable = true
 icono = ExtResource("2_gfyq4")
 escena_mundo = ExtResource("1_7imvp")

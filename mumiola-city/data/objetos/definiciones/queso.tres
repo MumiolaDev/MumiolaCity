@@ -13,5 +13,6 @@ descripcion = "Insumo lacteo. Todavia no se craftea."
 categoria = "intermedio"
 peso = 0.2
 valor_base = 9
+rotable = true
 icono = ExtResource("2_bspjs")
 escena_mundo = ExtResource("1_8eh8k")

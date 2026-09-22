@@ -13,5 +13,6 @@ descripcion = "Insumo de panaderia. Todavia no se craftea."
 categoria = "intermedio"
 peso = 0.2
 valor_base = 5
+rotable = true
 icono = ExtResource("2_12wms")
 escena_mundo = ExtResource("1_smh3v")

@@ -30,5 +30,6 @@ peso = 0.2
 valor_base = 10
 comprable = false
 receta = SubResource("Resource_dgn8t")
+rotable = true
 icono = ExtResource("2_dgn8t")
 escena_mundo = ExtResource("1_dck78")

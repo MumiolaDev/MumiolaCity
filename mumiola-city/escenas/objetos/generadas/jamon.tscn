@@ -6,12 +6,12 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_gpw5x"]
 size = Vector3(0.9, 1, 0.9)
 
-[node name="Jamon" type="Area3D" unique_id=547071545]
+[node name="Jamon" type="Area3D" unique_id=1082217426]
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("1_gpw5x")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1645030340]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=735154969]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("BoxShape3D_gpw5x")
 

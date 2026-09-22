@@ -37,5 +37,6 @@ peso = 0.2
 valor_base = 11
 comprable = false
 receta = SubResource("Resource_el8vq")
+rotable = true
 icono = ExtResource("2_hvcvk")
 escena_mundo = ExtResource("1_pd5ly")

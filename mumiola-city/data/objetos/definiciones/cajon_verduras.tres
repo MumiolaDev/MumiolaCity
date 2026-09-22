@@ -14,5 +14,6 @@ peso = 8.0
 apilable = false
 stack_maximo = 1
 valor_base = 40
+rotable = true
 icono = ExtResource("2_r8sal")
 escena_mundo = ExtResource("1_ed4mj")
