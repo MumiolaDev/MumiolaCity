@@ -56,6 +56,15 @@ const CAPAS : Array[StringName] = [CatalogoPiezas.SUELO, CatalogoPiezas.PAREDES]
 ## medir.
 @export var celda_entrada : Vector2i = Vector2i.ZERO
 
+@export_group("Camara")
+## Cuanto se puede acercar. Por debajo de esto una celda ocupa media pantalla.
+@export var zoom_minimo : float = 5.0
+## Cuanto se puede alejar. Por encima, una sala grande entra entera y sobra.
+@export var zoom_maximo : float = 60.0
+## Cuanto cambia el zoom por muesca de rueda. Multiplicativo y no aditivo: un
+## paso fijo se siente lentisimo de lejos y brusquisimo de cerca.
+@export var zoom_paso : float = 1.12
+
 @onready var grid : IsoGrid = $IsoGrid
 @onready var contenedor_objetos : Node3D = $Objetos
 @onready var pivote : Node3D = $Pivote
@@ -81,6 +90,38 @@ func _ready() -> void:
 	# Toda sala arranca apagada y es el mundo el que enciende una. Asi no hay un
 	# orden de nodos en el que dos camaras se peleen por ser la actual.
 	desactivar()
+
+
+## Atiende los controles de camara: rueda para el zoom, boton del medio para
+## arrastrar, Inicio para volver a encuadrar la sala.
+##
+## Vive aca y no en Mundo ni en EditorSala por dos razones. Una sala apagada
+## tiene process_mode en DISABLED, asi que solo la activa recibe input y no hace
+## falta preguntar cual es. Y mover la camara sirve igual jugando que editando,
+## asi que ponerlo en el editor lo dejaria fuera de la mitad del juego.
+##
+## No marca el evento como manejado: nadie mas usa la rueda ni el boton del
+## medio, y consumirlo obligaria a pensar el orden de los nodos.
+func _unhandled_input(evento : InputEvent) -> void:
+	if evento is InputEventMouseButton:
+		var boton := evento as InputEventMouseButton
+		if not boton.pressed:
+			return
+		if boton.button_index == MOUSE_BUTTON_WHEEL_UP:
+			acercar(1)
+		elif boton.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			acercar(-1)
+		return
+
+	if evento is InputEventMouseMotion:
+		var movimiento := evento as InputEventMouseMotion
+		if movimiento.button_mask & MOUSE_BUTTON_MASK_MIDDLE:
+			desplazar(movimiento.relative)
+		return
+
+	if evento is InputEventKey and evento.pressed and not evento.echo:
+		if (evento as InputEventKey).keycode == KEY_HOME:
+			centrar()
 
 
 ## Enciende la sala y le da la camara.
@@ -128,6 +169,74 @@ func posicion_de_entrada() -> Vector3:
 ## depende de por donde mire la camara.
 func rotar(pasos : int) -> void:
 	pivote.rotation.y += PASO_ROTACION * pasos
+
+
+## Desplaza la vista siguiendo un arrastre del mouse, en pixeles.
+##
+## La cuenta que lo hace sentir bien es una sola: en una camara ortografica, un
+## pixel son camara.size / alto_de_pantalla unidades de mundo. Con eso el mundo
+## se mueve exactamente con el cursor —ni mas rapido ni mas lento— y sigue
+## haciendolo despues de acercar, porque size ya esta en la formula.
+##
+## Las direcciones salen de la base de la camara y no de constantes, asi que
+## girar el encuadre con Q y E las reorienta solas: arrastrar hacia la derecha
+## siempre lleva el mundo a la derecha, mire de donde mire la camara.
+func desplazar(delta_pantalla : Vector2) -> void:
+	var alto := get_viewport().get_visible_rect().size.y
+	if alto <= 0.0:
+		return
+
+	var escala := camara.size / alto
+	var base := camara.global_transform.basis
+
+	# Proyectadas al plano del piso: sin esto, arrastrar hacia arriba tambien
+	# levantaria la camara y la sala se veria desde mas alto a cada rato.
+	var derecha := Vector3(base.x.x, 0.0, base.x.z).normalized()
+	var lejos := Vector3(base.y.x, 0.0, base.y.z).normalized()
+
+	# Y aca esta el detalle que hace que el mundo siga al cursor de verdad.
+	# Proyectar al piso acorta el eje vertical de la pantalla: moverse una unidad
+	# sobre 'lejos' solo desplaza la imagen por el coseno de la inclinacion de la
+	# camara —0.58 con el isometrico de manual—, asi que sin compensarlo el
+	# arrastre vertical se queda corto un 42 % y el mundo patina bajo el mouse.
+	# El horizontal no necesita nada porque 'derecha' ya es horizontal.
+	var inclinacion := lejos.dot(base.y)
+	if absf(inclinacion) < 0.01:
+		return
+
+	pivote.global_position += (lejos * (delta_pantalla.y / inclinacion)
+		- derecha * delta_pantalla.x) * escala
+
+
+## Acerca o aleja la vista. Positivo acerca.
+func acercar(pasos : int) -> void:
+	if pasos == 0:
+		return
+	camara.size = clampf(camara.size / pow(zoom_paso, pasos), zoom_minimo, zoom_maximo)
+
+
+## Devuelve el zoom actual, en unidades de mundo de alto de pantalla.
+func zoom() -> float:
+	return camara.size
+
+
+## Vuelve a encuadrar la sala entera.
+##
+## Usa la region realmente pintada y no un tamanio declarado, por lo mismo que
+## celda_valida(): el area de una sala es lo que pintaste, y una sala en L o
+## recien agrandada tiene que entrar igual.
+func centrar() -> void:
+	var region := grid.region_usada()
+	if region.size == Vector2i.ZERO:
+		return
+
+	var centro := grid.celda_a_mundo(region.position) + grid.celda_a_mundo(region.end - Vector2i.ONE)
+	pivote.global_position = Vector3(centro.x * 0.5, 0.0, centro.z * 0.5)
+
+	# El lado mas largo tiene que entrar en pantalla, y en isometrico una region
+	# de NxM se ve mas ancha que N: por eso la diagonal y no el lado.
+	var diagonal := sqrt(float(region.size.x * region.size.x + region.size.y * region.size.y))
+	camara.size = clampf(diagonal * 1.1, zoom_minimo, zoom_maximo)
 
 
 ## Devuelve los objetos colocados en la sala.

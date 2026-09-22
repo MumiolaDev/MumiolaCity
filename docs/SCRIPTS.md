@@ -328,8 +328,9 @@ El MVP. Colocar y quitar muebles con vista previa, pintar suelo y paredes, desha
 **Godot nativo:** `JSON.stringify()`/`parse()` y `FileAccess`, igual que el guardado de partida; `DirAccess.make_dir_recursive_absolute()` para la carpeta.
 **Código propio:** el saneado del nombre de archivo, que es el borde por donde entra lo que escribe una persona — y algún día la red.
 
-### Cámara
-Desplazamiento y zoom para trabajar en salas grandes. Es del `RoomController`, que ya es dueño del pivote y de la cámara.
+### Cámara · **hecho**
+Desplazamiento y zoom para trabajar en salas grandes, en `RoomController`, que ya es dueño del pivote y de la cámara. Rueda para el zoom, botón del medio para arrastrar, `Inicio` para volver a encuadrar la sala entera.
+**Por qué ahí:** una sala apagada tiene `process_mode` en `DISABLED`, así que sólo la activa recibe input y no hay que preguntar cuál es — y mover la cámara sirve igual jugando que editando.
 
 ---
 

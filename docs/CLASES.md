@@ -981,6 +981,10 @@ func posicion_de_entrada() -> Vector3
 
 # Encuadre
 func rotar(pasos: int) -> void                   # cuartos de vuelta
+func desplazar(delta_pantalla: Vector2) -> void  # arrastre, en pixeles
+func acercar(pasos: int) -> void                 # positivo acerca
+func zoom() -> float
+func centrar() -> void                           # encuadra la sala entera
 
 # Contenido
 func objetos() -> Array[WorldObject]
@@ -1034,6 +1038,14 @@ func olvidar_historial() -> void
 **`celda_entrada` no es comodidad.** **D14** define la validación de que un tabique no parta la sala como «todas las celdas con suelo siguen siendo alcanzables *desde la entrada*». Sin una entrada declarada, esa comprobación no tiene desde dónde medir.
 
 **`rotar()` gira el pivote, nunca el contenido.** Los objetos conservan sus coordenadas de grilla, así que celdas, rutas y ocupación no se enteran. El clic tampoco: `celda_bajo_puntero()` intersecta contra el plano del piso y no depende de por dónde mire la cámara.
+
+**La sala atiende sus propios controles de cámara** —rueda, botón del medio, `Inicio`— y no lo hace `Mundo` ni `EditorSala`. Una sala apagada tiene `process_mode` en `DISABLED`, así que **sólo la activa recibe input** y no hay que preguntar cuál es; y mover la cámara sirve igual jugando que editando, así que ponerlo en el editor lo dejaría fuera de la mitad del juego.
+
+**`desplazar()` tiene una sutileza que decide si se siente bien o mal.** La escala es obvia: en una cámara ortográfica un píxel son `camara.size / alto_de_pantalla` unidades de mundo, y como `size` está en la fórmula, el arrastre sigue siendo exacto después de acercar. Lo que no es obvio es que **proyectar el eje vertical al piso lo acorta**: moverse una unidad sobre esa dirección desplaza la imagen sólo por el coseno de la inclinación de la cámara —0.58 con el isométrico de manual—, así que sin compensarlo el arrastre vertical se queda corto un 42 % y el mundo patina bajo el mouse. Dividir por `lejos.dot(base.y)` lo corrige. Medido: **0.00000 m de desvío**, con y sin giro, a cualquier zoom.
+
+**El zoom es multiplicativo.** Un paso fijo se siente lentísimo de lejos y brusquísimo de cerca.
+
+**`centrar()` usa la región realmente pintada** y no un tamaño declarado, por lo mismo que `celda_valida()`: el área de una sala es lo que pintaste. Encuadra por la diagonal y no por el lado, porque en isométrico una región de N×M se ve más ancha que N.
 
 **`colocar_objeto` devuelve un `Errores.Codigo`, no el objeto creado (D16).** Rechazar una colocación tiene al menos cuatro motivos distintos —no hay piso, hay pared, está ocupada, partiría la sala— y un `null` no los distingue. El `WorldObject` recién creado se recupera con `grid.objeto_en(celda)` justo después de un `OK`, así que no hacen falta parámetros de salida ni devolver un diccionario.
 

@@ -14,7 +14,11 @@ extends Node3D
 ## Teclas de prueba, todas provisionales.
 ##
 ## Mundo:   B alterna entre jugar y editar, TAB cambia de sala, Q y E giran el
-##          encuadre, G guarda, L carga.
+##          encuadre, G guarda la partida, L la carga.
+##
+## La camara no esta aca: la rueda, el boton del medio y la tecla Inicio los
+## atiende RoomController, porque sirven igual jugando que editando y porque la
+## unica sala que recibe input es la activa.
 ## Economia: I lista el inventario, K muestra el nivel de Cocina, 1 corta un
 ##          tomate y 2 cocina carne.
 ##
@@ -44,7 +48,7 @@ func _ready() -> void:
 	# funcion, no rompe el juego.
 	if menu != null:
 		menu.verbo_elegido.connect(_al_elegir_verbo)
-	GameManager.mostrar_ayuda("TAB cambiar de sala   Q/E girar la vista   B jugar/editar   G guardar   L cargar\nI inventario   K habilidad   1 cortar tomate   2 cocinar carne\nClic izquierdo: caminar   Clic derecho sobre un mueble: menu")
+	GameManager.mostrar_ayuda("B jugar/editar   TAB cambiar de sala   Q/E girar   rueda: zoom   boton del medio: desplazar   Inicio: encuadrar\nG guardar partida   L cargar   I inventario   K habilidad   1 cortar tomate   2 cocinar carne\nJugando: clic izquierdo camina, clic derecho abre el menu.   Editando: clic coloca, derecho quita, R gira, Ctrl+Z deshace, Ctrl+S guarda la sala")
 
 	for sala in GameManager.salas():
 		sala.objeto_colocado.connect(_atender_clics_de)
