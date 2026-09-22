@@ -1,7 +1,18 @@
+@tool
 class_name ItemDefinition
 extends Resource
 
 ## El esquema de un item: correspondencia directa con una entrada de items.json.
+##
+## Es @tool por una sola razon: cuando el editor carga un .tres cuyo script no lo
+## es, entrega una *instancia placeholder* — se le pueden leer las propiedades
+## pero no llamarle metodos, y el intento falla con "Attempt to call a method on
+## a placeholder instance". herramientas/GenerarIconos.gd corre dentro del editor
+## y necesita instanciar_visual(), asi que sin esto no puede.
+##
+## Es seguro porque esta clase es datos puros: no tiene _init con efectos, ni
+## _ready, ni proceso. Marcarla no hace que corra nada en el editor; solo permite
+## que sus metodos existan ahi.
 ##
 ## Nunca se muta en runtime. Una misma ItemDefinition la comparten todas las
 ## unidades de ese item que existan en el mundo, asi que escribirle encima le
