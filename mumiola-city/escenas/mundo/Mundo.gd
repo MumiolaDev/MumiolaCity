@@ -13,7 +13,8 @@ extends Node3D
 ##
 ## Teclas de prueba, todas provisionales.
 ##
-## Mundo:   TAB cambia de sala, Q y E giran el encuadre, V elige que item
+## Mundo:   B alterna entre jugar y editar, TAB cambia de sala, Q y E giran el
+##          encuadre, V elige que item
 ##          colocar —con shift va para atras—, R lo gira, C lo coloca bajo el
 ##          mouse, X retira, G guarda, L carga.
 ## Economia: I lista el inventario, K muestra el nivel de Cocina, 1 corta un
@@ -62,7 +63,7 @@ func _ready() -> void:
 	# funcion, no rompe el juego.
 	if menu != null:
 		menu.verbo_elegido.connect(_al_elegir_verbo)
-	GameManager.mostrar_ayuda("TAB cambiar de sala   Q/E girar la vista   V elegir item   R girarlo   C colocar   X retirar   G guardar   L cargar\nI inventario   K habilidad   1 cortar tomate   2 cocinar carne\nClic izquierdo: caminar   Clic derecho sobre un mueble: menu")
+	GameManager.mostrar_ayuda("TAB cambiar de sala   Q/E girar la vista   B jugar/editar   V elegir item   R girarlo   C colocar   X retirar   G guardar   L cargar\nI inventario   K habilidad   1 cortar tomate   2 cocinar carne\nClic izquierdo: caminar   Clic derecho sobre un mueble: menu")
 
 	for sala in GameManager.salas():
 		sala.objeto_colocado.connect(_atender_clics_de)
@@ -87,6 +88,11 @@ func _unhandled_input(evento : InputEvent) -> void:
 
 	if evento.keycode == KEY_TAB:
 		GameManager.siguiente_sala()
+		return
+	if evento.keycode == KEY_B:
+		GameManager.alternar_modo()
+		GameManager.avisar("Modo: %s"
+			% ("editando" if GameManager.editando() else "jugando"))
 		return
 
 	var sala := GameManager.sala_actual()

@@ -221,12 +221,16 @@ func _grid_de(capa : StringName) -> GridMap:
 	return null
 
 
-## Devuelve que pieza hay en una celda de una capa, o un diccionario vacio.
+## Devuelve la MeshLibrary de una capa, o null si esa capa no existe.
 ##
-## Devuelve el **nombre** y no el id porque el id solo tiene sentido contra la
-## MeshLibrary cargada en este momento: es lo que D18 fija para todo lo que
-## cruza el borde del proyecto, y lo que permite que una operacion de pintado se
-## pueda guardar, deshacer o mandar por la red.
+## Existe para que quien necesite las piezas de una capa —la paleta del editor,
+## por ejemplo— no tenga que saber que hay dos GridMap adentro ni cual es cual.
+func biblioteca_de(capa : StringName) -> MeshLibrary:
+	var grid_map := _grid_de(capa)
+	return null if grid_map == null else grid_map.mesh_library
+
+
+## Devuelve que pieza hay en una celda de una capa.
 func pieza_en(capa : StringName, celda : Vector2i) -> Dictionary:
 	var grid := _grid_de(capa)
 	if grid == null:
