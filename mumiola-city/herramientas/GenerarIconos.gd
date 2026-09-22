@@ -45,10 +45,16 @@ const MARGEN := 1.12
 ## isometrico de manual. Asi el icono muestra el mueble como se va a ver puesto.
 const DIRECCION := Vector3(1, 1, 1)
 
-## La misma DirectionalLight3D que tienen SalaComun y SalaPrivada, para que el
-## icono no este iluminado distinto que el mueble de verdad.
-const ROTACION_LUZ := Vector3(-114.9, 0.0, 0.0)
-const ENERGIA_LUZ := 1.2
+## Hacia donde alumbra la luz principal. Viene de arriba y del lado de la camara,
+## no del angulo de las salas: en una sala la luz rasante da volumen porque hay
+## piso y sombras alrededor, pero en un icono recortado deja media pieza negra.
+## Un icono tiene que leerse, no ser fiel a la hora del dia.
+const DIRECCION_LUZ := Vector3(-0.4, -1.0, -0.55)
+const ENERGIA_LUZ := 1.5
+## Una segunda luz debil desde el lado opuesto, para que la cara en sombra se
+## siga distinguiendo del fondo en vez de ser una silueta.
+const DIRECCION_RELLENO := Vector3(0.7, -0.2, 0.6)
+const ENERGIA_RELLENO := 0.45
 ## Sin algo de ambiente, la cara que no mira a la luz sale negra y el icono se
 ## lee como una silueta.
 const LUZ_AMBIENTE := 0.45
@@ -97,6 +103,15 @@ func _run() -> void:
 
 		_encuadrar(camara, caja)
 
+		# Sin esto no funciona nada, y falla de una forma que engania: un Node3D
+		# le avisa al servidor de render que se movio por una notificacion
+		# diferida, asi que force_draw() dibujaria con la camara todavia en el
+		# origen. Como ahi esta parada adentro del propio mueble, salen cortes
+		# transversales —la mesa aparece como sus dos patas— y los objetos planos
+		# salen vacios, sin un solo error por consola.
+		camara.force_update_transform()
+		visual.force_update_transform()
+
 		# Un cuadro por objeto, pedido a mano y sincronico: force_draw() vuelve
 		# recien cuando ya dibujo, asi que la textura tiene algo en la linea
 		# siguiente. Es lo que reemplaza al await que aca no se puede usar.
@@ -124,7 +139,7 @@ func _run() -> void:
 ##
 ## El fondo va transparente, o cada icono llevaria pegado un cuadrado de color
 ## que se veria en cuanto la paleta tenga otro fondo.
-func _armar_vista() -> SubViewport:
+static func _armar_vista() -> SubViewport:
 	var vista := SubViewport.new()
 	vista.size = Vector2i(LADO_RENDER, LADO_RENDER)
 	vista.transparent_bg = true
@@ -142,10 +157,16 @@ func _armar_vista() -> SubViewport:
 	vista.add_child(camara)
 
 	var luz := DirectionalLight3D.new()
-	luz.rotation_degrees = ROTACION_LUZ
+	luz.transform = Transform3D(Basis.looking_at(DIRECCION_LUZ.normalized()), Vector3.ZERO)
 	luz.light_energy = ENERGIA_LUZ
 	luz.shadow_enabled = false
 	vista.add_child(luz)
+
+	var relleno := DirectionalLight3D.new()
+	relleno.transform = Transform3D(Basis.looking_at(DIRECCION_RELLENO.normalized()), Vector3.ZERO)
+	relleno.light_energy = ENERGIA_RELLENO
+	relleno.shadow_enabled = false
+	vista.add_child(relleno)
 
 	var ambiente := WorldEnvironment.new()
 	var entorno := Environment.new()
