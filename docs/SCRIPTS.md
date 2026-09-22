@@ -8,7 +8,7 @@
 >
 > **Sistemas y decisiones abiertas:** ver [`SISTEMAS.md`](SISTEMAS.md) — cómo se comunican estos scripts entre sí, dónde vive cada dato y las once decisiones (D1–D11) que hay que cerrar antes de escribir el código de cada fase.
 >
-> **Firma de cada clase:** ver [`CLASES.md`](CLASES.md) — campos `@export`, señales, métodos e invariantes de las 53 clases. Este documento detalla **38**: las otras nueve son recursos de datos que aparecieron al revisar el diseño y se listan, con su fase y su motivo, en la tabla "Las clases que esta tabla no detalla" de más abajo.
+> **Firma de cada clase:** ver [`CLASES.md`](CLASES.md) — campos `@export`, señales, métodos e invariantes de las 54 clases. Este documento detalla **39**: las otras nueve son recursos de datos que aparecieron al revisar el diseño y se listan, con su fase y su motivo, en la tabla "Las clases que esta tabla no detalla" de más abajo.
 >
 > **Checklist de implementación:** ver [`docs/IMPLEMENTACION.md`](IMPLEMENTACION.md) — qué definir, qué implementar y cómo verificar cada script antes de pasar al siguiente, en el mismo orden de esta tabla.
 
@@ -40,6 +40,7 @@ Antes de escribir un sistema, hay que revisar si el motor ya lo resuelve — y s
 | 4 | `RoomController` | Nodo/Escena | Escena | `Node3D` | 1 |
 | 5 | `WorldObject` | Nodo/Escena | Escena | `Area3D` | 1 |
 | 6 | `InteractionBehavior` (+ `SentarseBehavior`) | Resource | Recurso | `Resource` | 1 |
+| 6b | `MirarBehavior` | Resource | Recurso | `InteractionBehavior` | 3 (verbo universal) |
 | 7 | `ContextMenuUI` | UI | Escena | `PopupMenu` | 1 |
 | 8 | `HUD` | UI | Escena | `CanvasLayer` | 1 |
 | 9 | `GameManager` | Autoload | Autoload | `Node` | 1 |
@@ -77,7 +78,7 @@ Antes de escribir un sistema, hay que revisar si el motor ya lo resuelve — y s
 
 ### Las clases que esta tabla no detalla
 
-La tabla de arriba cuenta **38 scripts**; [`CLASES.md`](CLASES.md) especifica **53 clases**. La diferencia no es un descuido: son clases que aparecieron al revisar el diseño en profundidad, y casi todas son recursos de datos diminutos —los diccionarios anidados de `items.json` (`receta`, `plantable`, `contenedor`, `efecto`) convertidos en `Resource` tipados, para que el inspector de Godot los valide en vez de dejarlos como `Dictionary` sueltos. Se listan acá para que nadie llegue a su fase y descubra que le falta una pieza; **su firma completa está en `CLASES.md`**, no en este documento.
+La tabla de arriba cuenta **39 scripts**; [`CLASES.md`](CLASES.md) especifica **54 clases**. La diferencia no es un descuido: son clases que aparecieron al revisar el diseño en profundidad, y casi todas son recursos de datos diminutos —los diccionarios anidados de `items.json` (`receta`, `plantable`, `contenedor`, `efecto`) convertidos en `Resource` tipados, para que el inspector de Godot los valide en vez de dejarlos como `Dictionary` sueltos. Se listan acá para que nadie llegue a su fase y descubra que le falta una pieza; **su firma completa está en `CLASES.md`**, no en este documento.
 
 | Clase | Capa | Extends | Fase | Por qué existe |
 |---|---|---|---|---|

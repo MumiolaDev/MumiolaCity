@@ -1,6 +1,6 @@
 # MumiolaCity — Checklist de implementación
 
-> Complementa [`SCRIPTS.md`](SCRIPTS.md) (el mapa de los 38 scripts, más las clases de datos que ese documento lista sin detallar), [`SISTEMAS.md`](SISTEMAS.md) (cómo se comunican entre sí y qué decisiones faltan cerrar), [`CLASES.md`](CLASES.md) (la firma de cada clase) y [`GDD.md`](GDD.md). Este documento sí es un plan de trabajo: se va llenando a medida que se implementa cada script, en el mismo orden de `SCRIPTS.md`.
+> Complementa [`SCRIPTS.md`](SCRIPTS.md) (el mapa de los 39 scripts, más las clases de datos que ese documento lista sin detallar), [`SISTEMAS.md`](SISTEMAS.md) (cómo se comunican entre sí y qué decisiones faltan cerrar), [`CLASES.md`](CLASES.md) (la firma de cada clase) y [`GDD.md`](GDD.md). Este documento sí es un plan de trabajo: se va llenando a medida que se implementa cada script, en el mismo orden de `SCRIPTS.md`.
 >
 > **Formato por script:** **Definir** (decisiones de diseño a cerrar antes de escribir código — cambiarlas después de implementado sale caro) → **Implementar** (qué construir) → **Verificar** (cómo comprobar, con tus propios ojos o con un print, que quedó bien antes de pasar al siguiente). "Listo para el siguiente script" es el criterio de salida de cada bloque.
 >

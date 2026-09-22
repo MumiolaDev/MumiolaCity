@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="MirarBehavior" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://escenas/objetos/interacciones/MirarBehavior.gd" id="1_mirar"]
+
+[resource]
+script = ExtResource("1_mirar")
+verbo = &"mirar"
+etiqueta = "Mirar"
+requiere_adyacencia = false

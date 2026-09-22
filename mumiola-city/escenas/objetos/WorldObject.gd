@@ -9,6 +9,18 @@ extends Area3D
 ## CollisionShape3D no tiene que seguir la malla: una caja del tamano de la celda
 ## alcanza y es mas barata.
 
+## El verbo que tiene absolutamente todo objeto del mundo.
+##
+## No vive en items.json ni en la lista de interacciones de cada item, y es a
+## proposito: mirar es una propiedad de ser un objeto del mundo, no contenido de
+## un item concreto. Si estuviera en el catalogo habria que acordarse de
+## agregarlo a cada item nuevo, y olvidarse no daria error — simplemente ese
+## mueble no se podria mirar, que es la clase de hueco que se descubre tarde.
+##
+## Tambien alcanza asi a los objetos que no vienen del catalogo, como una mesada
+## puesta a mano en una sala.
+const MIRAR : InteractionBehavior = preload("res://data/objetos/comportamientos/mirar.tres")
+
 ## Se emite despues de que un verbo se ejecuto de verdad.
 signal interactuado(behavior : InteractionBehavior, actor : Node)
 
@@ -96,11 +108,16 @@ func celdas_ocupadas(grid : IsoGrid) -> Array[Vector2i]:
 func verbos_disponibles(actor : Node) -> Array[InteractionBehavior]:
 	var salida : Array[InteractionBehavior] = []
 	var def := definicion()
-	if def == null:
-		return salida
-	for comportamiento in def.interacciones:
-		if comportamiento != null and comportamiento.puede_interactuar(actor, self):
-			salida.append(comportamiento)
+	if def != null:
+		for comportamiento in def.interacciones:
+			if comportamiento != null and comportamiento.puede_interactuar(actor, self):
+				salida.append(comportamiento)
+
+	# Ultimo y no primero: lo que el jugador suele querer es la accion del
+	# mueble, y mirar es lo que queda cuando no hay otra cosa. Va incluso sin
+	# definicion, que es el unico caso en que la lista podria salir vacia.
+	if MIRAR.puede_interactuar(actor, self):
+		salida.append(MIRAR)
 	return salida
 
 

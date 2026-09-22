@@ -1014,6 +1014,26 @@ Si el inventario conserva la referencia *y* el `WorldObject` también, el mismo 
 
 **La cámara vive en la escena de la sala**, no acá: un `Node3D` pivote centrado con una `Camera3D` ortográfica como hija (GDD §7). Rotar la sala al estilo Habbo es interpolar `pivote.rotation.y` en pasos de 90°.
 
+### 3.4a `MirarBehavior extends InteractionBehavior` — el verbo universal
+
+```gdscript
+class_name MirarBehavior extends InteractionBehavior
+
+const LARGO_MAXIMO := 160
+
+func puede_interactuar(actor: Node, objeto: WorldObject) -> bool    # siempre true
+func interactuar(actor: Node, objeto: WorldObject) -> bool
+func texto_de(objeto: WorldObject) -> String
+```
+
+**No vive en `items.json`.** Lo agrega `WorldObject.MIRAR` a todo objeto, y es a propósito: mirar es una propiedad de *ser un objeto del mundo*, no contenido de un ítem concreto. Si estuviera en el catálogo habría que acordarse de ponerlo en cada ítem nuevo, y olvidarse **no daría error** — ese mueble simplemente no se podría mirar. Así además alcanza a los objetos que no vienen del catálogo, como una mesada puesta a mano en una sala.
+
+**Su valor no es la descripción sino que todo conteste algo.** Con 44 de 45 muebles sin ningún verbo, hacer clic derecho y que no pase nada se lee como que el juego está roto. Con esto, lo que falta se nota como lo que es: verbos sin escribir, no objetos muertos.
+
+**Es el único verbo sin adyacencia ni comprobaciones**, porque no altera nada: mirar siempre se puede, incluso sin definición en el catálogo — ahí baja hasta el nombre del nodo.
+
+**Va último en el menú**, no primero: lo que el jugador suele querer es la acción del mueble.
+
 ### 3.4b `SuperficieBehavior extends InteractionBehavior` — **fase 4 (D25)**
 
 El verbo de apoyar cosas encima. Es lo que le da espacio a la decoración personal, que en un sandbox es el producto y no un extra.
@@ -1281,7 +1301,7 @@ stateDiagram-v2
 
 ## 7. Índice de clases
 
-53 clases, contra los 38 scripts que detalla `SCRIPTS.md`. Las marcadas **NUEVA** son las que aparecieron al revisar el diseño; `SCRIPTS.md` las nombra en una tabla aparte, pero no las desarrolla.
+54 clases, contra los 39 scripts que detalla `SCRIPTS.md`. Las marcadas **NUEVA** son las que aparecieron al revisar el diseño; `SCRIPTS.md` las nombra en una tabla aparte, pero no las desarrolla.
 
 | # | Clase | Capa | Extends | Fase |
 |---|---|---|---|---|
@@ -1297,6 +1317,7 @@ stateDiagram-v2
 | 5 | `WorldObject` | Mundo | `Area3D` | 1 |
 | 6 | `InteractionBehavior` | Datos | `Resource` | 1 |
 | 7 | `SentarseBehavior` | Datos | `InteractionBehavior` | 1 |
+| 7b | **`MirarBehavior`** NUEVA | Datos | `InteractionBehavior` | 3 |
 | 8 | `ContextMenuUI` | UI | `PopupMenu` | 1 |
 | 9 | `HUD` | UI | `CanvasLayer` | 1 |
 | 10 | `GameManager` | Manager | `Node` | 1 |
