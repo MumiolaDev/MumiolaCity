@@ -221,6 +221,19 @@ func _grid_de(capa : StringName) -> GridMap:
 	return null
 
 
+## Devuelve el punto donde un GridMap ancla la pieza de una celda.
+##
+## No es lo mismo que celda_a_mundo(), y la diferencia importa: celda_a_mundo()
+## devuelve la cara superior de la losa, que es donde se apoya un mueble, pero un
+## GridMap ancla sus piezas en el centro de la celda y desde ahi les aplica la
+## transformada que la MeshLibrary guarda para cada una.
+##
+## Lo necesita la vista previa: sin esto el fantasma de una pared queda trece
+## centimetros mas arriba que la pared de verdad.
+func ancla_de_pieza(celda : Vector2i) -> Vector3:
+	return suelo.map_to_local(Vector3i(celda.x, 0, celda.y))
+
+
 ## Devuelve todas las celdas pintadas de una capa.
 ##
 ## Ojo con lo que significa: son las celdas donde se *coloco* una pieza, no las

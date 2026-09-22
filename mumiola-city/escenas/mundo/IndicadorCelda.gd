@@ -73,6 +73,9 @@ var _fantasma : Node3D
 ## Que genero el fantasma que hay ahora: una ItemDefinition o una Mesh. Se guarda
 ## para no reconstruirlo sesenta veces por segundo cuando no cambio nada.
 var _fuente : Variant = null
+## Si lo que se previsualiza es una pieza de escenario. Cambia donde se ancla el
+## fantasma, porque un GridMap y un mueble no se apoyan en el mismo punto.
+var _es_pieza : bool = false
 var _definicion : ItemDefinition
 var _origen : Vector2i = IsoGrid.SIN_CELDA
 var _rotacion : int = 0
@@ -122,6 +125,7 @@ func elegir(definicion : ItemDefinition, rotacion : int = 0) -> void:
 	if definicion != _fuente:
 		_cambiar_fantasma(definicion)
 	_definicion = definicion
+	_es_pieza = false
 	_rotacion = rotacion
 	if _origen != IsoGrid.SIN_CELDA:
 		_actualizar(_origen)
@@ -132,10 +136,17 @@ func elegir(definicion : ItemDefinition, rotacion : int = 0) -> void:
 ## Existe para que girar una pared no sea a ciegas. Una pieza no tiene
 ## ItemDefinition —es una entrada de MeshLibrary, no un item— asi que entra por
 ## su malla, y su huella es siempre una celda (D15).
-func elegir_pieza(malla : Mesh, rotacion : int = 0) -> void:
+##
+## Hay que pasarle tambien la transformada que la biblioteca guarda para esa
+## pieza, que es la que el GridMap le aplica al colocarla. Sin ella el fantasma
+## sale con el tamanio crudo de la malla: suelo_base mide cuatro metros y se
+## coloca escalado a 0.25, asi que el fantasma se veria cuatro veces mas grande
+## que el suelo que va a quedar.
+func elegir_pieza(malla : Mesh, transformada : Transform3D, rotacion : int = 0) -> void:
 	if malla != _fuente:
-		_cambiar_fantasma(malla)
+		_cambiar_fantasma(malla, transformada)
 	_definicion = null
+	_es_pieza = true
 	_rotacion = rotacion
 	if _origen != IsoGrid.SIN_CELDA:
 		_actualizar(_origen)
@@ -161,6 +172,7 @@ func mostrar(definicion : ItemDefinition, celda : Vector2i, rotacion : int = 0) 
 	if definicion != _fuente:
 		_cambiar_fantasma(definicion)
 	_definicion = definicion
+	_es_pieza = false
 	_rotacion = rotacion
 	_actualizar(celda)
 
@@ -239,7 +251,10 @@ func _dibujar_recuadros(celdas : Array[Vector2i]) -> void:
 func _ubicar_fantasma(origen : Vector2i) -> void:
 	if _fantasma == null:
 		return
-	var pos := grid.centro_de(origen, huella(), _rotacion)
+	# Un mueble se apoya en el centro de su huella y sobre la cara de la losa; una
+	# pieza se ancla donde el GridMap la anclaria, que es otro punto.
+	var pos := (grid.ancla_de_pieza(origen) if _es_pieza
+		else grid.centro_de(origen, huella(), _rotacion))
 	_fantasma.global_position = pos
 	_fantasma.rotation.y = -RoomController.PASO_ROTACION * _rotacion
 	_fantasma.visible = true
@@ -249,7 +264,7 @@ func _ubicar_fantasma(origen : Vector2i) -> void:
 ##
 ## Solo se llama cuando cambia el item elegido, no cada cuadro: instanciar una
 ## escena por cuadro seria caro y ademas inutil.
-func _cambiar_fantasma(fuente : Variant) -> void:
+func _cambiar_fantasma(fuente : Variant, transformada := Transform3D.IDENTITY) -> void:
 	if _fantasma != null:
 		_fantasma.queue_free()
 		_fantasma = null
@@ -258,9 +273,14 @@ func _cambiar_fantasma(fuente : Variant) -> void:
 	if fuente is ItemDefinition:
 		_fantasma = (fuente as ItemDefinition).instanciar_visual()
 	elif fuente is Mesh:
+		# La malla va en un hijo con la transformada de la biblioteca, para que la
+		# raiz se pueda ubicar y girar igual que la de un mueble. Asi
+		# _ubicar_fantasma() no tiene que saber de cual de los dos se trata.
 		var nodo := MeshInstance3D.new()
 		nodo.mesh = fuente as Mesh
-		_fantasma = nodo
+		nodo.transform = transformada
+		_fantasma = Node3D.new()
+		_fantasma.add_child(nodo)
 
 	if _fantasma == null:
 		return

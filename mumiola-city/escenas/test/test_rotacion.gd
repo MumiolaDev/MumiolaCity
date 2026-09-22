@@ -86,17 +86,18 @@ func _ready() -> void:
 
 	# --- el fantasma muestra la pieza ---
 	var indicador := sala.indicador
-	var malla : Mesh = editor._malla_elegida()
-	if malla == null:
+	var pieza : Dictionary = editor._pieza_elegida()
+	if pieza["malla"] == null:
 		print("FALLO: no se pudo sacar la malla de la pieza"); fallos += 1
 	else:
-		indicador.elegir_pieza(malla, 1)
+		indicador.elegir_pieza(pieza["malla"], pieza["transformada"], 1)
 		indicador.mostrar_en(celda2, 1)
 		await get_tree().process_frame
 		var tiene := false
 		for h in indicador.get_children():
-			if h is MeshInstance3D and (h as MeshInstance3D).mesh == malla:
-				tiene = true
+			if h is Node3D and h.get_child_count() > 0 and h.get_child(0) is MeshInstance3D:
+				if (h.get_child(0) as MeshInstance3D).mesh == pieza["malla"]:
+					tiene = true
 		if not tiene:
 			print("FALLO: el fantasma no muestra la malla de la pieza"); fallos += 1
 		else:

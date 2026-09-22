@@ -220,7 +220,8 @@ func _refrescar_vista_previa() -> void:
 	# por la malla que la MeshLibrary ya guarda. Sin esto, girar una pared seria
 	# a ciegas: el recuadro se ve igual en las cuatro orientaciones.
 	if _clase_elegida() == RoomBuilderUI.Clase.PIEZA:
-		indicador.elegir_pieza(_malla_elegida(), _rotacion)
+		var pieza := _pieza_elegida()
+		indicador.elegir_pieza(pieza["malla"], pieza["transformada"], _rotacion)
 		indicador.mostrar_en(celda, _rotacion)
 		return
 
@@ -255,18 +256,28 @@ func _item_elegido() -> ItemDefinition:
 	return null if paleta == null else paleta.item()
 
 
-## La malla de la pieza elegida, o null si lo elegido no es una pieza.
-func _malla_elegida() -> Mesh:
+## La malla de la pieza elegida y la transformada con que la coloca el GridMap.
+##
+## Las dos juntas y no solo la malla: la biblioteca guarda una escala por pieza
+## —suelo_base va a 0.25 con una malla de cuatro metros— y sin ella el fantasma
+## se ve mucho mas grande que lo que termina colocado.
+func _pieza_elegida() -> Dictionary:
+	var vacio := {"malla": null, "transformada": Transform3D.IDENTITY}
 	var sala := GameManager.sala_actual()
 	if paleta == null or sala == null or sala.grid == null:
-		return null
+		return vacio
 
 	var biblioteca := sala.grid.biblioteca_de(paleta.capa())
 	if biblioteca == null:
-		return null
+		return vacio
 
 	var id := CatalogoPiezas.id_de(biblioteca, paleta.pieza())
-	return null if id == -1 else biblioteca.get_item_mesh(id)
+	if id == -1:
+		return vacio
+	return {
+		"malla": biblioteca.get_item_mesh(id),
+		"transformada": biblioteca.get_item_mesh_transform(id),
+	}
 
 
 ## Guarda la sala activa como archivo suelto, con su propio nombre.
