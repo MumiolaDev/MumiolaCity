@@ -22,6 +22,7 @@ const DIR_HABILIDADES := "res://data/habilidades"
 const DIR_COMPORTAMIENTOS := "res://data/objetos/comportamientos"
 const DIR_ESCENAS := "res://escenas/objetos/generadas"
 const DIR_MODELOS := "res://arte/modelos_3d"
+const DIR_ICONOS := "res://arte/iconos"
 
 var _avisos : Array[String] = []
 
@@ -188,9 +189,28 @@ func _armar_definicion(d : Dictionary, escenas : Dictionary) -> ItemDefinition:
 		else:
 			_avisos.append("%s: la escena generada no cargo como PackedScene" % d["id"])
 
+	def.icono = _icono_de(str(d["id"]))
+
 	def.interacciones = _resolver_interacciones(d)
 	def.receta = _armar_receta(d)
 	return def
+
+
+## Busca el icono ya generado de un item, o null si todavia no existe.
+##
+## No avisa cuando falta, a proposito: el catalogo tiene items sin modelo y por
+## lo tanto sin icono, y ademas este importador se corre muchas veces antes que
+## GenerarIconos.gd la primera. Un aviso por item seria ruido constante.
+##
+## Pide el .import y no el .png porque lo que hace falta es que Godot ya lo haya
+## importado: si el PNG existe pero el editor todavia no lo proceso, load()
+## devuelve null igual. Es el orden de las dos pasadas, comprobado en vez de
+## supuesto.
+func _icono_de(id : String) -> Texture2D:
+	var ruta := "%s/%s.png" % [DIR_ICONOS, id]
+	if not ResourceLoader.exists(ruta):
+		return null
+	return load(ruta) as Texture2D
 
 
 ## Traduce la lista de verbos del JSON a los comportamientos que existen.

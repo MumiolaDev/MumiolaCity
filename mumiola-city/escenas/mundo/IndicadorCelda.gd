@@ -16,6 +16,9 @@ extends MeshInstance3D
 ## cual de las cuatro celdas es la que estorba, que es la diferencia entre
 ## "no cabe" y "no cabe por ese lado".
 ##
+## De donde sale el fantasma: ItemDefinition.instanciar_visual(), que sabe sacar
+## la malla de una escena de objeto sin despertar al WorldObject que la envuelve.
+##
 ## Ojo con la raiz: es un MeshInstance3D porque asi esta declarado el nodo en
 ## SalaComun.tscn y SalaPrivada.tscn, pero su propia malla queda en null y todo
 ## lo dibujan sus hijos. Cambiarle el tipo obligaria a tocar las dos escenas a
@@ -31,10 +34,6 @@ signal motivo_cambiado(codigo : Errores.Codigo)
 ## ocupa 2x2, asi que dieciseis sobra de lejos; si alguna vez no alcanza, se
 ## crean mas en el momento y no se rompe nada.
 const CELDAS_RESERVADAS := 16
-
-## Nombre del hijo que trae la malla en las escenas de objeto. Lo garantizan las
-## 45 escenas generadas y tambien las hechas a mano.
-const NODO_VISUAL := ^"Visual"
 
 ## La grilla a la que pertenecen las celdas resaltadas.
 @export var grid : IsoGrid
@@ -224,37 +223,13 @@ func _cambiar_fantasma(definicion : ItemDefinition) -> void:
 	if definicion == null:
 		return
 
-	_fantasma = _extraer_visual(definicion.escena_mundo)
+	_fantasma = definicion.instanciar_visual()
 	if _fantasma == null:
 		return
 
 	add_child(_fantasma)
 	_atenuar(_fantasma, transparencia)
 	_fantasma.visible = false
-
-
-## Saca la malla de una escena de objeto sin despertar al WorldObject.
-##
-## La raiz de esas escenas es un Area3D con WorldObject.gd, que en _ready() se
-## conecta a input_event y exige una instancia no nula: instanciarla entera
-## dejaria un objeto a medias, clickeable y quejandose por consola. Como
-## instantiate() no corre _ready() hasta que el nodo entra al arbol, alcanza con
-## sacarle el hijo visual y liberar el resto sin haberlo agregado nunca.
-static func _extraer_visual(escena : PackedScene) -> Node3D:
-	if escena == null:
-		return null
-
-	var raiz := escena.instantiate()
-	var visual := raiz.get_node_or_null(NODO_VISUAL) as Node3D
-	if visual != null:
-		raiz.remove_child(visual)
-	else:
-		push_warning(
-			"IndicadorCelda: la escena %s no tiene un hijo '%s', " % [escena.resource_path, NODO_VISUAL]
-			+ "asi que se coloca sin vista previa de la malla."
-		)
-	raiz.free()
-	return visual
 
 
 ## Transparenta todas las mallas de un subarbol.

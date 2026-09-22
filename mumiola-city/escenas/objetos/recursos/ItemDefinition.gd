@@ -20,6 +20,10 @@ extends Resource
 ## Si alguno vuelve, vuelve con su clase. Lo que si esta es todo lo que el
 ## catalogo usa hoy.
 
+## Nombre del hijo que trae la malla en las escenas de objeto. Lo garantizan las
+## 45 escenas generadas y tambien las hechas a mano.
+const NODO_VISUAL := ^"Visual"
+
 @export var id : StringName = &""
 ## Nombre de presentacion, con tildes y mayusculas. El id nunca las lleva (D4).
 @export var nombre : String = ""
@@ -70,6 +74,8 @@ extends Resource
 @export var rotable : bool = false
 
 @export_group("Arte")
+## Icono para la paleta y el inventario. Lo genera herramientas/GenerarIconos.gd
+## y lo asigna el importador si el archivo existe.
 @export var icono : Texture2D
 ## Escena propia del objeto. Si es null se usa el WorldObject generico.
 @export var escena_mundo : PackedScene
@@ -97,6 +103,37 @@ func se_craftea() -> bool:
 ## arreglarlo, y no cada sitio que hoy pregunta por apilable.
 func tiene_estado_propio() -> bool:
 	return not es_apilable()
+
+
+## Devuelve una copia suelta de la malla de este item, o null si no tiene.
+##
+## Saca el hijo visual sin despertar al WorldObject. La raiz de una escena de
+## objeto es un Area3D con WorldObject.gd, que en _ready() se conecta a
+## input_event y exige una instancia no nula: instanciarla entera dejaria un
+## objeto de mundo a medias, clickeable y quejandose por consola. Como
+## instantiate() no corre _ready() hasta que el nodo entra al arbol, alcanza con
+## sacarle el hijo y liberar el resto sin haberlo agregado nunca.
+##
+## Vive aca y no en quien la usa porque ya son dos —la vista previa del editor y
+## el generador de iconos— y con dos copias de la misma astucia, el dia que una
+## escena cambie de forma se arregla una sola.
+##
+## Quien la pide es dueno del nodo devuelto y tiene que liberarlo.
+func instanciar_visual() -> Node3D:
+	if escena_mundo == null:
+		return null
+
+	var raiz := escena_mundo.instantiate()
+	var visual := raiz.get_node_or_null(NODO_VISUAL) as Node3D
+	if visual != null:
+		raiz.remove_child(visual)
+	else:
+		push_warning(
+			"ItemDefinition %s: la escena %s no tiene un hijo '%s'."
+			% [id, escena_mundo.resource_path, NODO_VISUAL]
+		)
+	raiz.free()
+	return visual
 
 
 ## Devuelve si el item ofrece un verbo determinado.
