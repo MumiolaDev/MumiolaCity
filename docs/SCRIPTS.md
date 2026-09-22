@@ -8,7 +8,7 @@
 >
 > **Sistemas y decisiones abiertas:** ver [`SISTEMAS.md`](SISTEMAS.md) — cómo se comunican estos scripts entre sí, dónde vive cada dato y las once decisiones (D1–D11) que hay que cerrar antes de escribir el código de cada fase.
 >
-> **Firma de cada clase:** ver [`CLASES.md`](CLASES.md) — campos `@export`, señales, métodos e invariantes de las 43 clases. Este documento detalla **32**: las otras once son recursos de datos que aparecieron al revisar el diseño y se listan, con su fase y su motivo, en la tabla "Las once clases que esta tabla no detalla" de más abajo.
+> **Firma de cada clase:** ver [`CLASES.md`](CLASES.md) — campos `@export`, señales, métodos e invariantes de las 53 clases. Este documento detalla **38**: las otras nueve son recursos de datos que aparecieron al revisar el diseño y se listan, con su fase y su motivo, en la tabla "Las clases que esta tabla no detalla" de más abajo.
 >
 > **Checklist de implementación:** ver [`docs/IMPLEMENTACION.md`](IMPLEMENTACION.md) — qué definir, qué implementar y cómo verificar cada script antes de pasar al siguiente, en el mismo orden de esta tabla.
 
@@ -51,27 +51,33 @@ Antes de escribir un sistema, hay que revisar si el motor ya lo resuelve — y s
 | 15 | `SkillManager` | Autoload | Autoload | `Node` | 2 |
 | 16 | `InventoryManager` | Autoload | Autoload | `Node` | 2 |
 | 17 | `RecipeManager` | Autoload | Autoload | `Node` | 2 |
-| 18 | `TimeManager` | Autoload | Autoload | `Node` | 2 |
-| 19 | `GatherableNode` | Nodo/Escena | Escena | `Area3D` | 2 |
-| 20 | `CropPlot` | Nodo/Escena | Escena | `GatherableNode` | 2 |
-| 21 | `ContenedorBehavior` | Resource | Recurso | `InteractionBehavior` | 2 |
-| 22 | `ModifierStack` | Nodo | Componente | `Node` | 2 |
-| 23 | `EconomyManager` (básico) | Autoload | Autoload | `Node` | 2 |
-| 24 | `InventoryUI` | UI | Escena | `Control` | 3 |
-| 25 | `SkillsPanelUI` (sin ranking) | UI | Escena | `Control` | 3 |
-| 26 | `CraftingUI` | UI | Escena | `Control` | 3 |
-| 27 | `CraftingStation` | Nodo/Escena | Escena | `WorldObject` | 3 |
+| 18 | `TimeManager` | Autoload | Autoload | `Node` | 5 |
+| 19 | `GatherableNode` | Nodo/Escena | Escena | `Area3D` | 5 |
+| 20 | `CropPlot` | Nodo/Escena | Escena | `GatherableNode` | 5 |
+| 21 | `ContenedorBehavior` | Resource | Recurso | `InteractionBehavior` | 4 |
+| 22 | `ModifierStack` | Nodo | Componente | `Node` | — (sin buffs ni energia en el MVP) |
+| 23 | `EconomyManager` (básico) | Autoload | Autoload | `Node` | 5 |
+| 24 | `InventoryUI` | UI | Escena | `Control` | 4 |
+| 25 | `SkillsPanelUI` (sin ranking) | UI | Escena | `Control` | 4 |
+| 26 | `CraftingUI` | UI | Escena | `Control` | 4 |
+| 27 | `CraftingStation` | Nodo/Escena | Escena | `WorldObject` | 4 |
 | 28 | `RoomBuilderUI` | UI | Escena | `Control` | 3 (paleta del editor) |
 | 28b | `EditorSala` | Nodo | Componente | `Node3D` | 3 |
 | 29 | `EquiparBehavior` | Resource | Recurso | `InteractionBehavior` | 4 |
 | 30 | `MarketStall` | Nodo/Escena | Escena | `WorldObject` | 5 |
 | 31 | `NPCTrader` | Nodo | Componente | `Node` | 5 |
 | 32 | `MarketUI` | UI | Escena | `Control` | 5 |
+| 33 | `GenerarIconos` | Herramienta | `EditorScript` | `EditorScript` | 3 |
+| 34 | `PoseBehavior` | Resource | Recurso | `InteractionBehavior` | 4 |
+| 35 | `LevantarBehavior` | Resource | Recurso | `InteractionBehavior` | 4 |
+| 36 | `SuperficieBehavior` | Resource | Recurso | `InteractionBehavior` | 4 |
+| 37 | `AlternarBehavior` | Resource | Recurso | `InteractionBehavior` | 4 |
+| 38 | `AbrirCrafteoBehavior` | Resource | Recurso | `InteractionBehavior` | 4 |
 | — | Ranking/leaderboard, resto de §3.4, capa de red | — | — | — | 6 (fuera del MVP) |
 
-### Las once clases que esta tabla no detalla
+### Las clases que esta tabla no detalla
 
-La tabla de arriba cuenta **32 scripts**; [`CLASES.md`](CLASES.md) especifica **43 clases**. La diferencia no es un descuido: son clases que aparecieron al revisar el diseño en profundidad, y casi todas son recursos de datos diminutos —los diccionarios anidados de `items.json` (`receta`, `plantable`, `contenedor`, `efecto`) convertidos en `Resource` tipados, para que el inspector de Godot los valide en vez de dejarlos como `Dictionary` sueltos. Se listan acá para que nadie llegue a su fase y descubra que le falta una pieza; **su firma completa está en `CLASES.md`**, no en este documento.
+La tabla de arriba cuenta **38 scripts**; [`CLASES.md`](CLASES.md) especifica **53 clases**. La diferencia no es un descuido: son clases que aparecieron al revisar el diseño en profundidad, y casi todas son recursos de datos diminutos —los diccionarios anidados de `items.json` (`receta`, `plantable`, `contenedor`, `efecto`) convertidos en `Resource` tipados, para que el inspector de Godot los valide en vez de dejarlos como `Dictionary` sueltos. Se listan acá para que nadie llegue a su fase y descubra que le falta una pieza; **su firma completa está en `CLASES.md`**, no en este documento.
 
 | Clase | Capa | Extends | Fase | Por qué existe |
 |---|---|---|---|---|
@@ -193,7 +199,9 @@ IsoGrid (Node3D)        ← el script
 
 ---
 
-## Fase 2 — Ciclo económico vertical (Agricultura → Cosecha → Cocina → Consumo, un NPC comprador)
+## Fase 2 — Los datos y los managers de la economía
+
+> **La fase 2 se partió en dos y sólo la primera mitad se hizo.** La **2a** —catálogo, inventario, habilidades y crafteo, sin interfaz— está terminada y verificada: son las entradas 11 a 17 de acá abajo. El resto (`TimeManager`, `GatherableNode`, `CropPlot`, `EconomyManager`) se movió a la **fase 5** con el replan, porque la economía dejó de ser el MVP. Sus fichas están en esa sección.
 
 ### 11. `ItemDefinition` — Resource · Recurso, sin escena · `extends Resource`
 **Función:** esquema de `docs/items/items.json` (GDD §8): id, categoría, stack, valor base, receta embebida, efecto, etc.
@@ -276,74 +284,129 @@ IsoGrid (Node3D)        ← el script
 
 ---
 
-> **Las fases 3 a 5 de abajo son anteriores al replan del 21-09.** El MVP pasó a
-> ser el editor de sala: fase 3 es el editor, fase 4 las interacciones y fase 5 la
-> economía como contenido. La tabla de arriba ya está corregida; estas secciones
-> y `GDD.md` §9 todavía no, y hay que reescribirlas antes de cerrar la fase 3.
+## Fase 3 — El editor de sala
 
-## Fase 3 — Inventario + UI de crafteo genérica
+El MVP. Colocar y quitar muebles con vista previa, pintar suelo y paredes, deshacer, guardar y cargar. **Listo cuando** armás una sala entera desde cero, deshacés lo que no te gustó, la guardás, cerrás el juego, la abrís y está igual — y al volver a modo juego el personaje camina por el suelo nuevo y rodea las paredes nuevas.
+
+### 0c. `OperacionSala` — Definición · Global (`class_name`) · `extends Resource` · **hecho**
+**Función:** un cambio a una sala como dato en vez de como llamada: colocar, retirar, pintar, borrar. Es la costura por donde entra la red (**D23**).
+**Godot nativo:** `Resource` con `@export`, igual que el resto de los datos del proyecto; `to_dict()`/`desde_dict()` siguen la forma de `SaveGame`.
+**Interactúa con:** la construye `EditorSala` y la consume `RoomController.aplicar()`. Nadie más la toca.
+**Funciones clave:** `colocar()`, `retirar()`, `pintar()`, `borrar()` como constructores estáticos; `to_dict()`, `desde_dict()`.
+
+### 3b. `IndicadorCelda` (ampliado) — Nodo · Componente · `extends MeshInstance3D` · **hecho**
+**Función:** la vista previa de colocación: la huella completa en recuadros coloreados celda por celda, más un fantasma translúcido de la malla.
+**Godot nativo:** `PlaneMesh` reciclados como hijos; `GeometryInstance3D.transparency` para el fantasma —`modulate` es de `CanvasItem` y no hace nada en 3D—; `instantiate()` sin agregar al árbol para sacar el hijo `Visual` sin despertar al `WorldObject`.
+**Interactúa con:** `IsoGrid.celdas_de()`, `centro_de()` y `motivo_bloqueo()`; recibe qué mostrar de `RoomBuilderUI` vía `EditorSala`.
+**Funciones clave:** `elegir(definicion, rotacion)`, `mostrar(definicion, celda, rotacion)`, `ocultar()`, `motivo()`.
+
+### 33. `GenerarIconos` — Herramienta · `EditorScript`
+**Función:** ninguno de los 52 ítems tiene icono, y una paleta de 45 filas de texto es inusable. Renderiza cada `escena_mundo` y guarda un PNG en `arte/iconos/<id>.png`.
+**Godot nativo:** `SubViewport` con `render_target_update_mode = ONCE` y una `Camera3D` ortográfica; `get_texture().get_image().save_png()`. Corre una vez desde el editor, no en el juego.
+**Interactúa con:** lo lee `ImportarItems.gd`, que asigna `ItemDefinition.icono` si el archivo existe.
+**Funciones clave:** `_run() -> void`, `_render_de(escena: PackedScene) -> Image`.
+
+### 28. `RoomBuilderUI` — UI · Escena propia · `extends Control`
+**Función:** la paleta. Una pestaña por categoría más una de **estructura**, poblada de `CatalogoPiezas.PIEZAS`. Emite qué se eligió; **no coloca nada**.
+**Godot nativo:** `TabContainer` con un `ItemList` por pestaña en modo icono — `ItemList` ya hace la grilla, el scroll y la selección. La API de drag & drop de `Control` queda para cuando se arrastre desde el inventario en la fase 4.
+**Interactúa con:** lee `ItemDatabase.colocables()` y `CatalogoPiezas.PIEZAS`; su señal la escucha `EditorSala`.
+**Funciones clave:** `refrescar() -> void`, `seleccion_actual() -> Variant`, `signal item_elegido(def: ItemDefinition)`, `signal pieza_elegida(capa: StringName, pieza: StringName)`.
+
+### 28b. `EditorSala` — Nodo · Componente · `extends Node3D`
+**Función:** traduce gestos en `OperacionSala` y se las entrega a `RoomController.aplicar()`. **Nunca toca la sala directamente** — ésa es toda la gracia.
+**Godot nativo:** `_unhandled_input` para el arrastre; `IsoGrid.celda_bajo_puntero()` para el snap, sin matemática propia; `celdas_en_rectangulo()` para pintar arrastrando.
+**Interactúa con:** lee la selección de `RoomBuilderUI`, alimenta `IndicadorCelda`, y su única salida es `aplicar()`. Sólo existe mientras `GameManager.editando()`.
+**Funciones clave:** `_al_hacer_clic(celda: Vector2i) -> void`, `rotar() -> void`, `deshacer() -> void`.
+
+### 4b. `RoomController` (ampliado) — el documento de sala
+**Función:** `to_dict()` pasa a incluir la estructura de los dos `GridMap` **por nombre de pieza**, más `version_formato` y la versión del catálogo con que se creó. `from_dict()` la repinta. Sin esto una sala editada no sobrevive, y sin el nombre en vez del id no sobrevive a un re-export de la `MeshLibrary` (**D18**, **D24**).
+**Funciones clave:** ya escritas: `aplicar()`, `deshacer()`, `rehacer()`, `puede_editar()`. Faltan: la estructura en `to_dict()`/`from_dict()`.
+
+### 10b. `SaveManager` (ampliado) — salas como archivos
+**Función:** `guardar_sala()` y `cargar_sala()` contra `user://salas/<nombre>.json`. No es un extra: es la persistencia canónica de una sala y lo que un servidor almacenaría. Permite compartir salas y versionar mapas.
+**Godot nativo:** `JSON.stringify()`/`parse()` y `FileAccess`, igual que el guardado de partida; `DirAccess.make_dir_recursive_absolute()` para la carpeta.
+
+### Cámara
+Desplazamiento y zoom para trabajar en salas grandes. Es del `RoomController`, que ya es dueño del pivote y de la cámara.
+
+---
+
+## Fase 4 — Las interacciones
+
+Que agregar una interacción sea **datos, no código**. **Listo cuando** recorrés una sala amueblada y casi todo lo que clickeás hace algo.
+
+### 34. `PoseBehavior` — Resource · Recurso, sin escena · `extends InteractionBehavior`
+**Función:** generaliza `SentarseBehavior`. `sentarse`, `sentarse_piso` y `acostarse` pasan a ser tres `.tres` del mismo script.
+**Godot nativo:** `Resource` con `@export` para `animacion_entrada`/`bucle`/`salida`, `capacidad`, `offset_visual`, `giro_asiento`, `etiqueta` y `etiqueta_salir`. El pack trae las tres secuencias completas y toda la lógica difícil ya está escrita en `SentarseBehavior`: sólo hay que parametrizarla.
+**Y de paso, la costura 5:** los ocupantes pasan a guardarse **por id de actor y no por nodo**. Un nodo del cliente A no existe en el B. Como igual hay que reescribir el script, el cambio es gratis ahora y carísimo después.
+
+### 35. `LevantarBehavior` — Resource · Recurso, sin escena · `extends InteractionBehavior`
+**Función:** el verbo por defecto. La mayoría de los colocables no tiene ningún verbo; un `levantar` universal los vuelve interactivos a todos de una, con la animación `PickUp`.
+**Interactúa con:** `RoomController.retirar_objeto()` e `InventoryManager`. `generar_items.py` se lo agrega a todo colocable salvo exclusión explícita.
+
+### 36. `SuperficieBehavior` — Resource · Recurso, sin escena · `extends InteractionBehavior`
+**Función:** apoyar cosas encima de una mesa, un estante o un mostrador. **Es un objetivo de primer orden**, no un extra: el MVP es un sandbox de decoración y la expresividad de lo que un jugador arma es el producto.
+**Lo que hay que decidir antes de escribirlo: `SISTEMAS.md` D25.** Rompe el supuesto de un objeto por celda, del que dependen `objeto_en()`, `OperacionSala.retirar(celda)` y —cuando llegue— nombrar un objeto por la red. La forma recomendada es que **lo apoyado cuelgue del `WorldObject` de abajo** y no de la grilla, porque no toca `IsoGrid` y porque «lo que está sobre la mesa se va con la mesa» es una regla que el jugador entiende sin que se la expliquen.
+
+### 21. `ContenedorBehavior` · 37. `AlternarBehavior`
+**Función:** abrir y guardar; encender y apagar. Cubren estante, alacena, cajón y lámpara.
+**Godot nativo:** el contenido y el encendido viven en `WorldObject.instancia`, que ya se serializa — una lámpara encendida sigue encendida mañana, sin código de guardado nuevo.
+
+### 38. `AbrirCrafteoBehavior` y las estaciones (antes 27, `CraftingStation`)
+**Función:** estufa, fregadero, banco y tabla como `WorldObject` con este verbo. Acá se enchufa `RecipeManager`, ya escrito y probado, y desaparece la mentira de la tecla `2` del arnés de `Mundo.gd`, que hoy pasa la estación a mano.
+**Godot nativo:** no hace falta una clase `CraftingStation`: un `WorldObject` con un verbo más en su lista `interacciones` alcanza, y así una estación se define en `items.json` en vez de en una escena.
 
 ### 24. `InventoryUI` — UI · Escena propia · `extends Control`
 **Función:** muestra el contenido de `InventoryManager`, permite arrastrar/soltar y equipar.
-**Godot nativo:** `GridContainer` para la grilla de slots, y sobre todo la **API nativa de drag & drop de `Control`** (`_get_drag_data()`, `_can_drop_data()`, `_drop_data()`) — no hay que implementar el arrastre a mano. `ItemList` es una alternativa si alcanza con una lista simple en vez de una grilla de slots.
-**Interactúa con:** lee/escribe `InventoryManager` directamente.
+**Godot nativo:** `GridContainer` para la grilla de slots, y sobre todo la **API nativa de drag & drop de `Control`** (`_get_drag_data()`, `_can_drop_data()`, `_drop_data()`) — no hay que implementar el arrastre a mano.
 **Funciones clave:** `refrescar() -> void`, `_get_drag_data(pos: Vector2) -> Variant`, `_drop_data(pos: Vector2, data: Variant) -> void`.
 
-### 25. `SkillsPanelUI` (sin ranking) — UI · Escena propia · `extends Control`
-**Función:** muestra nivel y xp de cada habilidad. El ranking queda fuera del MVP (GDD §3.4) porque necesita otros jugadores.
-**Godot nativo:** `VBoxContainer` + un `ProgressBar` por habilidad; la señal `nivel_subido` de `SkillManager` dispara el refresco.
-**Interactúa con:** lee `SkillManager`.
-**Funciones clave:** `refrescar() -> void`.
-
 ### 26. `CraftingUI` — UI · Escena propia · `extends Control`
-**Función:** interfaz de crafteo genérica: lista de recetas disponibles según `RecipeDefinition` y nivel del jugador.
-**Godot nativo:** `ItemList` (o `Tree` si se quieren columnas de insumos) + `Button`; la barra de progreso del crafteo es un `ProgressBar` alimentado por el timer de `RecipeManager`.
-**Interactúa con:** invoca `RecipeManager`; lee `InventoryManager` para mostrar si hay insumos.
-**Funciones clave:** `mostrar_recetas(habilidad: String) -> void`, `_on_craftear_pressed(receta: RecipeDefinition) -> void`.
+**Función:** lista de recetas disponibles según `RecipeDefinition` y nivel del jugador.
+**Godot nativo:** `ItemList` (o `Tree` si se quieren columnas de insumos) + `Button`; la barra de progreso la alimenta el timer de `RecipeManager`.
+**Funciones clave:** `mostrar_recetas(habilidad: StringName) -> void`, `_al_craftear(receta: RecipeDefinition) -> void`.
 
-### 27. `CraftingStation` — Nodo/Escena · Escena propia · `extends WorldObject`
-**Función:** objeto del mundo (mesada de cocina, banco de carpintería) que abre `CraftingUI` filtrada por su habilidad.
-**Godot nativo:** hereda de `WorldObject`, o sea del `Area3D` con detección de click ya resuelta; el verbo que abre la UI es un `InteractionBehavior` más, sin mecanismo nuevo.
-**Interactúa con:** su lista `interacciones` incluye un comportamiento que abre `CraftingUI`; conecta con `RecipeManager` a través de esa UI.
-**Funciones clave:** `abrir_ui(actor: Node) -> void`.
-
----
-
-## Fase 4 — Parcela y construcción de sala
-
-### 28. `RoomBuilderUI` — UI · Escena propia · `extends Control`
-**Función:** modo construcción: colocar, rotar y eliminar `WorldObject` sobre la `IsoGrid`.
-**Godot nativo:** el "snap" a celda sale de `IsoGrid.celda_bajo_puntero(camara, pos)`, sin matemática propia; arrastrar ítems desde el inventario reusa la API de drag & drop de `Control`. **Código propio:** la validación de colocación contra la ocupación de `IsoGrid`. El fantasma de previsualización lo hace `IndicadorCelda` con `GeometryInstance3D.transparency` —`modulate` es de `CanvasItem` y no hace nada en 3D— y sobre el hijo `Visual` de la escena, no sobre el `WorldObject` entero.
-**Interactúa con:** usa `IsoGrid` para validar (`tamano_grilla`/`rotable` de `ItemDefinition`); instancia `WorldObject` a partir de ítems de `InventoryManager`; `RoomController` persiste el resultado.
-**Funciones clave:** `entrar_modo_construccion() -> void`, `colocar(item: ItemDefinition, celda: Vector2i) -> void`.
+### 25. `SkillsPanelUI` (sin ranking) — UI · Escena propia · `extends Control`
+**Función:** nivel y xp de cada habilidad. El ranking queda fuera del MVP porque necesita otros jugadores.
+**Godot nativo:** `VBoxContainer` + un `ProgressBar` por habilidad; la señal `nivel_subido` de `SkillManager` dispara el refresco.
 
 ### 29. `EquiparBehavior` — Resource · Recurso, sin escena · `extends InteractionBehavior`
-**Función:** "equipar" herramientas (Pala de hierro, Pico de minería) — mueve el ítem a un slot del jugador y aplica su bono.
-**Godot nativo:** `Resource` con `@export`, igual que el resto de comportamientos; el reflejo visual del equipo lo resuelve `AvatarComposer`.
-**Interactúa con:** modifica un slot en `PersonajeControlador`/`InventoryManager`; su bono lo lee `GatherableNode` al calcular velocidad.
-**Funciones clave:** `interactuar(actor: Node, objeto: WorldObject) -> void`, `quitar_equipo(actor: Node, slot: String) -> void`.
+**Función:** equipar herramientas; mueve el ítem a un slot del jugador.
+**Godot nativo:** el reflejo visual lo resuelve `AvatarComposer` sobre los huesos de enganche del rig (**D20**).
+
+### Emotes
+`Waving`, `Cheering` y las de herramienta. Son baratas —ya están en el pack y `AvatarComposer` ya las sabe reproducir— y son mucho de lo que hace que un sandbox social se sienta vivo.
 
 ---
 
-## Fase 5 — Mercado simulado (varios NPCs)
+## Fase 5 — La economía como contenido
 
-### 30. `MarketStall` — Nodo/Escena · Escena propia · `extends WorldObject`
+Ya no es el MVP: es contenido que se suma al sandbox, sobre managers que ya existen y están probados.
+
+### 18. `TimeManager` — Autoload · `extends Node`
+**Función:** el reloj del juego, del que dependen los cultivos y los ticks de mercado.
+**Godot nativo:** un `Timer` hijo en vez de contar frames en `_process`.
+
+### 19. `GatherableNode` · 20. `CropPlot` — Nodo/Escena · `extends Area3D` / `GatherableNode`
+**Función:** recolectar y plantar. Plantar es una receta cuya estación es la parcela, así que `RecipeManager` ya sirve sin cambios (por eso `PlantableData` se disolvió).
+**Interactúa con:** `TimeManager` para el crecimiento; `InventoryManager` para la cosecha.
+
+### 23. `EconomyManager` — Autoload · `extends Node`
+**Función:** Ducados, precios y transacciones. `items.json` ya trae `valor_base` y las tasas de compra/venta del NPC.
+
+### 30. `MarketStall` — Nodo/Escena · `extends WorldObject`
 **Función:** puesto de venta en una sala tipo Tienda; lista los precios que fija el dueño.
-**Godot nativo:** hereda la detección de interacción de `WorldObject`; la UI de compra es un `PopupPanel` o una escena de `Control`, no una ventana propia.
-**Interactúa con:** lee el `InventoryManager` del dueño; una compra mueve Ducados e ítems vía `EconomyManager`.
-**Funciones clave:** `listar_precio(item_id: String, precio: int) -> void`, `comprar(actor: Node, item_id: String) -> void`.
+**Godot nativo:** hereda la detección de interacción de `WorldObject`; la UI de compra es un `PopupPanel`, no una ventana propia.
+**Funciones clave:** `listar_precio(item_id: StringName, precio: int) -> Errores.Codigo`, `comprar(actor: Node, item_id: StringName) -> Errores.Codigo`.
 
 ### 31. `NPCTrader` — Nodo · Componente · `extends Node`
 **Función:** IA simple de compra/venta según oferta y demanda, para probar el balance antes de tener red real.
-**Godot nativo:** un nodo `Timer` hijo para el "tick" periódico de mercado en vez de contar frames en `_process`.
-**Interactúa con:** opera contra `EconomyManager` y `MarketStall`/tablón central.
-**Funciones clave:** `evaluar_precio(item_id: String) -> int`, `_on_tick_timeout() -> void`.
+**Godot nativo:** un `Timer` hijo para el tick de mercado.
+**Funciones clave:** `evaluar_precio(item_id: StringName) -> int`, `_al_tick() -> void`.
 
 ### 32. `MarketUI` — UI · Escena propia · `extends Control`
 **Función:** tablón centralizado para descubrir precios sin visitar sala por sala.
 **Godot nativo:** el nodo **`Tree`** está hecho para datos tabulares con columnas ordenables (ítem / precio / vendedor) — es la herramienta correcta acá, en vez de armar filas a mano con `HBoxContainer`.
-**Interactúa con:** lee ofertas agregadas de `EconomyManager`.
-**Funciones clave:** `refrescar_ofertas() -> void`.
 
 ---
 

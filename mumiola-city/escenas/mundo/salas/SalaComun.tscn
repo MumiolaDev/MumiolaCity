@@ -4,11 +4,7 @@
 [ext_resource type="Script" uid="uid://m7eix0mqswd0" path="res://escenas/mundo/IsoGrid.gd" id="2_grid"]
 [ext_resource type="Script" uid="uid://4krb1vk2eun1" path="res://escenas/mundo/IndicadorCelda.gd" id="3_indi"]
 [ext_resource type="MeshLibrary" uid="uid://c8nhht21rwsl3" path="res://data/mesh_librarys/suelos.meshlib" id="4_suelos"]
-[ext_resource type="PackedScene" uid="uid://b6vlfjc0gym71" path="res://escenas/objetos/generadas/alfombra.tscn" id="5_gxct6"]
 [ext_resource type="MeshLibrary" uid="uid://cvl46ng3xkj4l" path="res://data/mesh_librarys/paredes.meshlib" id="5_paredes"]
-[ext_resource type="PackedScene" uid="uid://db3gyxyoekxih" path="res://escenas/objetos/generadas/mesa.tscn" id="6_kb4ga"]
-[ext_resource type="PackedScene" uid="uid://d2np8rb5i2qva" path="res://escenas/objetos/generadas/cama.tscn" id="7_8tfeo"]
-[ext_resource type="PackedScene" uid="uid://dx5004qsdrawg" path="res://escenas/objetos/generadas/alacena.tscn" id="8_shtm7"]
 
 [node name="SalaComun" type="Node3D" unique_id=122686856]
 script = ExtResource("1_room")
@@ -36,18 +32,6 @@ data = {
 
 [node name="Objetos" type="Node3D" parent="." unique_id=961899763]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.632, 0)
-
-[node name="Alfombra" parent="Objetos" unique_id=242310790 instance=ExtResource("5_gxct6")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 5)
-
-[node name="Mesa" parent="Objetos" unique_id=509786688 instance=ExtResource("6_kb4ga")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 2)
-
-[node name="Cama" parent="Objetos" unique_id=828118528 instance=ExtResource("7_8tfeo")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 10)
-
-[node name="Alacena" parent="Objetos" unique_id=2048650458 instance=ExtResource("8_shtm7")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0, 1)
 
 [node name="Pivote" type="Node3D" parent="." unique_id=602669438]
 transform = Transform3D(0.7071067, -0.40860704, 0.57709634, 0, 0.8161376, 0.57785755, -0.7071067, -0.40860704, 0.57709634, 11.5, 0, 12)

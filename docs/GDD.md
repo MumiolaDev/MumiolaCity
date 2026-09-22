@@ -273,12 +273,32 @@ Puntos de diseño de datos clave:
 
 ## 9. Roadmap de fases
 
-| Fase | Objetivo |
-|---|---|
-| 0 | Este documento de diseño |
-| 1 | Sistema base: avatar moviéndose entre el área común y su sala privada, ambas isométricas, cámara fija |
-| 2 | Un ciclo económico vertical completo (Agricultura → Cosecha → Cocina → Consumo) con un solo NPC comprador |
-| 3 | Inventario + UI de crafteo genérica basada en `Resource` |
-| 4 | Parcela y construcción de sala (decoración tipo Habbo) |
-| 5 | Mercado simulado con varios NPCs de IA simple, para probar balance económico antes de meter red real |
-| 6 | Networking real y persistencia (servidor autoritativo + base de datos) |
+**El MVP es un sandbox de sala, no un bucle económico.** El plan original apuntaba a un ciclo vertical —plantar, cocinar, vender— con la decoración relegada al final. Las fases 1 y 2a se hicieron y quedaron verificadas, y ahí se vio el problema: **nada de eso se ve**. La economía sólo existe en la consola, la mayoría de los objetos colocables no tienen ningún verbo y no hay una sola animación de producción conectada.
+
+Así que el orden se invirtió. El MVP pasa a ser **un editor de sala más un modo de visita donde explorar lo que armaste**, y la economía pasa a ser contenido que se agrega encima de managers que ya existen y ya están probados.
+
+El editor además **le sirve al desarrollador**: armar una sala pintando celdas con vista previa es más rápido que hacerlo en el editor de Godot. La herramienta se paga sola y encima es contenido jugable.
+
+| Fase | Objetivo | Estado |
+|---|---|---|
+| 0 | Este documento de diseño | hecha |
+| 1 | Sistema base: avatar moviéndose entre el área común y su sala privada, cámara isométrica orbitable | hecha |
+| 2a | Catálogo, inventario, habilidades y crafteo, sin interfaz | hecha |
+| **3** | **El editor de sala**: colocar y quitar muebles con vista previa, pintar suelo y paredes, deshacer, guardar y cargar | en curso |
+| 4 | **Las interacciones**: que casi todo lo que hay en una sala haga algo, y que agregar un verbo sea datos y no código | |
+| 5 | **La economía como contenido**: tiempo, cultivos, mercado y NPCs, sobre lo que ya existe | |
+| 6 | Networking real y persistencia (servidor autoritativo + base de datos) | |
+
+**La fase 3 está lista cuando** armás una sala entera desde cero, deshacés lo que no te gustó, la guardás, cerrás el juego, la abrís y está igual — y al volver a modo juego el personaje camina por el suelo nuevo y rodea las paredes nuevas.
+
+**La fase 4 está lista cuando** recorrés una sala amueblada y casi todo lo que clickeás hace algo.
+
+### La restricción que ordena las fases 3 a 5: esto tiene que sobrevivir al multijugador
+
+La visión final es un juego en línea con servidor autoritativo, y el editor es lo que más riesgo corre, porque convierte la sala en **contenido creado por el jugador** que tiene que viajar entre clientes. La regla es **construir las costuras, no el puente**: nada de red ahora, pero cada decisión deja puesto el lugar por donde la red entra. Son cinco, y ninguna cuesta trabajo extra hoy:
+
+1. **El editor habla en operaciones, no muta el mundo** (**D23**). Una operación serializable por gesto, y `RoomController.aplicar()` como único punto que cambia una sala. Se paga hoy: da deshacer y rehacer casi gratis.
+2. **La forma canónica de una sala es un documento de datos, no una escena** (**D24**).
+3. **Todo viaja por nombre, nunca por id** (**D18**), porque dos clientes tienen que coincidir en qué es `suelo_base` sin compartir la misma `MeshLibrary` en memoria.
+4. **La autoridad tiene su lugar desde ahora**: `puede_editar(actor)` devuelve siempre `true` y lo importante es que exista el punto donde va.
+5. **El estado de sesión se indexa por identidad, no por nodo**: un nodo del cliente A no existe en el B. Lo que se replica es el hecho —«el jugador 7 está sentado en el objeto de la celda 3,4»— y cada cliente resuelve su propio nodo.

@@ -102,7 +102,7 @@ flowchart LR
 **Lo que este grafo hace evidente:**
 
 - **`InventoryManager` es el cuello de botella de todo el juego.** Recolectar, craftear, vender, equipar, colocar un mueble y guardar la partida pasan todos por él. Es el sistema que más caro sale cambiar después, y por eso la decisión **D1** (cómo representa un slot) es la primera que hay que cerrar de las once.
-- **`ItemDatabase` no estaba en el mapa de scripts original y hace falta** — ver **D10**. Sin él, `RecipeManager` no puede resolver un insumo pedido por `familia`. Ya figura en `SCRIPTS.md`, en la tabla de las once clases que ese documento no detalla.
+- **`ItemDatabase` no estaba en el mapa de scripts original y hace falta** — ver **D10**. Sin él, `RecipeManager` no puede resolver un insumo pedido por `familia`. Ya figura en `SCRIPTS.md` y está implementado.
 - **`SaveManager` depende de todos los demás y nadie depende de él.** Eso es correcto: es un sumidero. Debe ser el último autoload en el orden de carga (**D9**).
 - **Nadie llama al `TimeManager` salvo `CropPlot`, `ModifierStack` y `SaveManager`** — es un servicio pequeño y aislado, buen candidato a implementar temprano y olvidarse.
 
@@ -349,7 +349,7 @@ La tabla más importante del documento. La mayoría de los bugs de un juego de e
 
 ---
 
-## 6. Decisiones de arquitectura: dieciocho cerradas, tres pendientes
+## 6. Decisiones de arquitectura: dieciocho cerradas, cuatro pendientes
 
 Once decisiones que hay que cerrar antes de escribir el sistema correspondiente, ordenadas por lo caro que sale cambiarlas después. **Cinco ya están cerradas** — D1, D2 y D11 aplicadas en `items.json`, D3 resuelta acá abajo, y D7 postergada a la fase 2 a propósito — y **D5 tiene el lado de los datos hecho y el del código pendiente**. Las demás siguen abiertas.
 
@@ -476,7 +476,7 @@ Los autoloads se inicializan en el orden del Project Settings, y `_ready()` de u
 
 `RecipeDefinition` admite insumos pedidos por `familia` ("cualquier taza"). Para resolver eso hace falta un índice `familia -> [ItemDefinition]`, y **ningún script de `SCRIPTS.md` tiene ese trabajo asignado**. Godot no autocarga los `.tres` de una carpeta: hay que recorrerla con `ResourceLoader`.
 
-**Propuesta:** autoload `ItemDatabase` que en `_ready()` escanea `res://data/objetos/`, y expone `obtener(id)`, `items_de_familia(familia)`, `items_de_categoria(categoria)`. Con él y `GatherTable` (D6), más los recursos anidados que hoy son diccionarios sueltos, el catálogo real sube de los 32 scripts que detalla `SCRIPTS.md` a 43 clases — el índice completo está en [`CLASES.md`](CLASES.md) §7.
+**Propuesta:** autoload `ItemDatabase` que en `_ready()` escanea `res://data/objetos/`, y expone `obtener(id)`, `items_de_familia(familia)`, `items_de_categoria(categoria)`. Con él y `GatherTable` (D6), más los recursos anidados que hoy son diccionarios sueltos, el catálogo real sube de los scripts que detalla `SCRIPTS.md` a 53 clases — el índice completo está en [`CLASES.md`](CLASES.md) §7.
 
 **Implementado en `res://autoloads/ItemDatabase.gd`**, con los tres métodos propuestos más `existe()`, `cantidad()` y `recargar()`, escaneando `res://data/objetos/definiciones/`. Se adelantó a la fase 1 porque no era opcional: `ItemInstance` guarda `definicion_id` y no la referencia al recurso (§1.8), así que sin un índice por id no hay forma de resolver la definición de nada.
 
@@ -671,6 +671,24 @@ En la práctica eso significa: o el reemplazo se modela sobre el rig de KayKit, 
 Una escena no puede viajar por la red: lleva rutas de script, que es el mismo motivo por el que **D21** eligió JSON y no `.tres` para el guardado. A partir del editor, el `.tscn` de una sala es solo el molde vacío y **lo que la define es su documento de datos**: estructura, muebles y estado, con `version_formato` y la versión del catálogo con que se creó, para que una discrepancia se detecte en vez de dibujar cualquier cosa.
 
 De ahí que `IsoGrid.pintar()` reciba el **nombre** de la pieza y no su id, y que `pieza_en()` devuelva nombre: dos clientes tienen que coincidir en qué es `suelo_base` sin compartir la misma `MeshLibrary` en memoria. Es **D18** dejando de ser una precaución y volviéndose necesario.
+
+---
+
+### D25 — Una celda puede tener un objeto de piso y cosas apoyadas encima · **pendiente**
+
+**Lo que se decidió:** tiene que ser posible **apoyar objetos sobre otros** —mesas, estantes, mostradores—, porque el MVP es un sandbox de decoración y la expresividad de lo que un jugador arma *es* el producto. Lo que queda abierto es cómo.
+
+**Lo que rompe.** `IsoGrid` indexa la ocupación como `Vector2i -> WorldObject`, un objeto por celda, y sobre eso se apoyan tres cosas: que `objeto_en(celda)` alcance para identificar un objeto, que `OperacionSala.retirar(celda)` esté determinada, y —cuando llegue la red— que un cliente pueda nombrar un objeto por su celda. Apilar invalida las tres a la vez.
+
+**Por qué conviene decidirlo antes que la fase 4 y no durante.** Es exactamente la situación que advierte **D14**: agregar una dimensión a la identidad de un objeto cuando ya hay comportamientos, guardado y operaciones escritos encima obliga a tocar todas las llamadas. Hoy hay un solo punto que muta una sala (**D23**) y un solo índice de ocupación; es el momento barato.
+
+**Las tres formas candidatas.**
+
+1. **Un nivel más en la clave.** `_ocupadas` pasa a indexarse por `Vector3i(x, z, nivel)`, con 0 = piso y 1 = encima. Es lo más parecido a lo que ya hay y `celdas_de()` no cambia. A cambio, «encima» se vuelve una coordenada global de la sala y no una propiedad del mueble, así que una mesa alta y una baja tendrían el mismo nivel.
+2. **El objeto de superficie es el dueño.** Lo apoyado cuelga del `WorldObject` de abajo y no de la grilla; la grilla sigue viendo una sola cosa por celda. Encaja con que apoyar sea un **verbo** del mueble que hace de superficie —`SuperficieBehavior`, §4.5 del plan— y con que el estado viva en `WorldObject.instancia`, que ya se serializa. Retirar la mesa se lleva lo de encima, que además es lo que uno espera.
+3. **Identidad propia por objeto.** Cada `WorldObject` recibe un id y la celda deja de ser su identidad. Es lo más general y lo más caro: cambia el documento de sala, las operaciones y el guardado.
+
+**La recomendación es la 2**, porque no toca `IsoGrid` ni la identidad por celda de nada que ya funcione, y porque «lo que está sobre la mesa se va con la mesa» es una regla que el jugador entiende sin que se la expliquen. Lo que hay que resolver antes de escribirla es cómo se nombra un objeto apoyado en una `OperacionSala` —probablemente celda más índice dentro de la superficie— y si una superficie puede a su vez apoyarse sobre otra, que conviene que **no** en la primera versión.
 
 ---
 

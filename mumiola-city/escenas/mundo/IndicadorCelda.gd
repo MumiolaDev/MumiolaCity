@@ -190,7 +190,7 @@ func _dibujar_recuadros(celdas : Array[Vector2i]) -> void:
 
 		var c : Vector2i = celdas[i]
 		var pos := grid.celda_a_mundo(c)
-		pos.y = grid.altura_piso + alzado
+		pos.y += alzado
 		recuadro.global_position = pos
 		recuadro.visible = true
 		recuadro.material_override = (_material_libre
@@ -206,7 +206,6 @@ func _ubicar_fantasma(origen : Vector2i) -> void:
 	if _fantasma == null:
 		return
 	var pos := grid.centro_de(origen, huella(), _rotacion)
-	pos.y = grid.altura_piso
 	_fantasma.global_position = pos
 	_fantasma.rotation.y = -RoomController.PASO_ROTACION * _rotacion
 	_fantasma.visible = true

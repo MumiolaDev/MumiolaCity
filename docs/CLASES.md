@@ -1,10 +1,10 @@
 # MumiolaCity — Referencia de clases y objetos
 
-**Versión:** 0.4 · **Fecha:** 2026-09-15 (capa Mundo reescrita a 3D; D1, D2, D3, D7 y D11 cerradas; catálogo v0.4 con 42 ítems)
+**Versión:** 0.6 · **Fecha:** 2026-09-21 (fase 1 y fase 2a implementadas; costuras del editor puestas; D23, D24 y D25 agregadas; catálogo v0.5 con 52 ítems)
 **Complementa:** [`SCRIPTS.md`](SCRIPTS.md) (qué scripts existen y en qué orden) y [`SISTEMAS.md`](SISTEMAS.md) (cómo se comunican y qué decisiones faltan).
 **Este documento es la firma de cada clase:** de qué hereda, qué campos expone, qué estado guarda, qué señales emite, qué métodos ofrece y qué invariantes tiene que respetar. Es lo que se lee con el editor abierto, justo antes de escribir el archivo.
 
-> **Estado:** especificación, no código escrito. Las firmas marcadas con **(D#)** salen de una decisión de [`SISTEMAS.md`](SISTEMAS.md) §6 — cinco ya cerradas (D1, D2, D3, D7, D11), el resto todavía abiertas — si esa decisión cambia, cambia la firma. Las clases marcadas **NUEVA** aparecieron al revisar el diseño: `SCRIPTS.md` las lista en su tabla "Las once clases que esta tabla no detalla", pero su firma solo existe acá.
+> **Estado:** mezcla de código escrito y especificación. Todo lo de la fase 1 y la fase 2a está implementado y las firmas de acá son las reales; de la fase 3 en adelante siguen siendo especificación. Las firmas marcadas con **(D#)** salen de una decisión de [`SISTEMAS.md`](SISTEMAS.md) §6 —dieciocho cerradas y cuatro pendientes— y si esa decisión cambia, cambia la firma. Las clases marcadas **NUEVA** aparecieron al revisar el diseño: `SCRIPTS.md` las lista sin detallar, pero su firma solo existe acá.
 
 ---
 
@@ -1247,7 +1247,7 @@ stateDiagram-v2
 
 ## 7. Índice de clases
 
-47 clases, contra los 34 scripts que detalla `SCRIPTS.md`. Las marcadas **NUEVA** son las que aparecieron al revisar el diseño; `SCRIPTS.md` las nombra en una tabla aparte, pero no las desarrolla.
+53 clases, contra los 38 scripts que detalla `SCRIPTS.md`. Las marcadas **NUEVA** son las que aparecieron al revisar el diseño; `SCRIPTS.md` las nombra en una tabla aparte, pero no las desarrolla.
 
 | # | Clase | Capa | Extends | Fase |
 |---|---|---|---|---|
@@ -1258,6 +1258,7 @@ stateDiagram-v2
 | 1 | `IsoGrid` | Mundo | `Node3D` | 1 |
 | 2 | `PersonajeControlador` | Mundo | `CharacterBody3D` | 1 |
 | 3 | `AvatarComposer` | Mundo | `Node3D` | 1 |
+| 3b | `IndicadorCelda` | Mundo | `MeshInstance3D` | 1 y 3 |
 | 4 | `RoomController` | Mundo | `Node3D` | 1 |
 | 5 | `WorldObject` | Mundo | `Area3D` | 1 |
 | 6 | `InteractionBehavior` | Datos | `Resource` | 1 |
@@ -1271,32 +1272,37 @@ stateDiagram-v2
 | 14 | `ItemDefinition` | Datos | `Resource` | 2 |
 | 15 | `RecipeDefinition` | Datos | `Resource` | 2 |
 | 16 | **`InsumoReceta`** NUEVA | Datos | `Resource` | 2 |
-| 17 | **`PlantableData`** NUEVA | Datos | `Resource` | 2 |
-| 18 | **`ContenedorData`** NUEVA | Datos | `Resource` | 2 |
-| 19 | **`Modificador`** NUEVA (D5) | Datos | `Resource` | 2 |
+| 17 | **`PlantableData`** NUEVA | Datos | `Resource` | — disuelta |
+| 18 | **`ContenedorData`** NUEVA | Datos | `Resource` | — disuelta |
+| 19 | **`Modificador`** NUEVA (D5) | Datos | `Resource` | — disuelta |
 | 20 | `SkillDefinition` | Datos | `Resource` | 2 |
 | 21 | `ItemInstance` | Datos | `Resource` | 2 |
 | 22 | **`InventorySlot`** NUEVA (D1) | Datos | `Resource` | 2 |
-| 23 | **`GatherDrop`** NUEVA (D6) | Datos | `Resource` | 2 |
-| 24 | **`GatherTable`** NUEVA (D6) | Datos | `Resource` | 2 |
+| 23 | **`GatherDrop`** NUEVA (D6) | Datos | `Resource` | 5 |
+| 24 | **`GatherTable`** NUEVA (D6) | Datos | `Resource` | 5 |
 | 25 | `SkillManager` | Manager | `Node` | 2 |
 | 26 | `InventoryManager` | Manager | `Node` | 2 |
 | 27 | `RecipeManager` | Manager | `Node` | 2 |
-| 28 | `TimeManager` | Manager | `Node` | 2 |
-| 29 | `EconomyManager` | Manager | `Node` | 2 |
-| 30 | `GatherableNode` | Mundo | `Area3D` | 2 |
-| 31 | `CropPlot` | Mundo | `GatherableNode` | 2 |
-| 32 | `ContenedorBehavior` | Datos | `InteractionBehavior` | 2 |
-| 33 | `ModifierStack` (ex `BuffController`, D5) | Mundo | `Node` | 2 |
-| 34 | `InventoryUI` | UI | `Control` | 3 |
-| 35 | `SkillsPanelUI` | UI | `Control` | 3 |
-| 36 | `CraftingUI` | UI | `Control` | 3 |
-| 37 | `CraftingStation` | Mundo | `WorldObject` | 3 |
-| 38 | **`AbrirCrafteoBehavior`** NUEVA | Datos | `InteractionBehavior` | 3 |
-| 39 | `RoomBuilderUI` | UI | `Control` | 4 |
+| 28 | `TimeManager` | Manager | `Node` | 5 |
+| 29 | `EconomyManager` | Manager | `Node` | 5 |
+| 30 | `GatherableNode` | Mundo | `Area3D` | 5 |
+| 31 | `CropPlot` | Mundo | `GatherableNode` | 5 |
+| 32 | `ContenedorBehavior` | Datos | `InteractionBehavior` | 4 |
+| 33 | `ModifierStack` (ex `BuffController`, D5) | Mundo | `Node` | — sin buffs en el MVP |
+| 34 | `InventoryUI` | UI | `Control` | 4 |
+| 35 | `SkillsPanelUI` | UI | `Control` | 4 |
+| 36 | `CraftingUI` | UI | `Control` | 4 |
+| 37 | `CraftingStation` | Mundo | `WorldObject` | 4 |
+| 38 | **`AbrirCrafteoBehavior`** NUEVA | Datos | `InteractionBehavior` | 4 |
+| 39 | `RoomBuilderUI` | UI | `Control` | 3 |
 | 40 | `EquiparBehavior` | Datos | `InteractionBehavior` | 4 |
 | 41 | `MarketStall` | Mundo | `WorldObject` | 5 |
 | 42 | `NPCTrader` | Mundo | `Node` | 5 |
 | 43 | `MarketUI` | UI | `Control` | 5 |
+| 44 | **`EditorSala`** NUEVA (D23) | Mundo | `Node3D` | 3 |
+| 45 | **`PoseBehavior`** NUEVA | Datos | `InteractionBehavior` | 4 |
+| 46 | **`LevantarBehavior`** NUEVA | Datos | `InteractionBehavior` | 4 |
+| 47 | **`SuperficieBehavior`** NUEVA (D25) | Datos | `InteractionBehavior` | 4 |
+| 48 | **`AlternarBehavior`** NUEVA | Datos | `InteractionBehavior` | 4 |
 
-**Son 43, no 32.** Once más que `SCRIPTS.md` porque los diccionarios anidados de `items.json` (`receta`, `plantable`, `contenedor`, `efecto`) se convierten en `Resource` tipados en vez de quedar como `Dictionary` sueltos. Eso no es más trabajo del que parece: seis de esas once clases son diez líneas de `@export` sin un solo método, y a cambio el editor de Godot valida cada campo y el inspector muestra formularios en lugar de un diccionario a mano.
+**Son más que los scripts de `SCRIPTS.md`,** porque los diccionarios anidados de `items.json` se convierten en `Resource` tipados en vez de quedar como `Dictionary` sueltos. Eso no es más trabajo del que parece: varias de esas clases son diez líneas de `@export` sin un solo método, y a cambio el editor de Godot valida cada campo y el inspector muestra formularios en lugar de un diccionario a mano. Tres de las que este documento preveía —`PlantableData`, `ContenedorData` y `Modificador`— se disolvieron con el catálogo v0.5 y sus secciones explican por qué.

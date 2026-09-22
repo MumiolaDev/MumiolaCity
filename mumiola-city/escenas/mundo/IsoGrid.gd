@@ -67,7 +67,14 @@ var _astar : AStarGrid2D = null
 
 ## Devuelve la posicion en el mundo dado el indice de la celda.
 func celda_a_mundo(celda: Vector2i) -> Vector3:
-	return suelo.map_to_local(Vector3i(celda.x, 0, celda.y))
+	var pos := suelo.map_to_local(Vector3i(celda.x, 0, celda.y))
+	# La altura la pone la grilla y no quien llama. map_to_local() devuelve el
+	# centro de la celda del GridMap, que no es la cara superior de la losa: la
+	# pieza de suelo mide 0.632 y la celda 1. Todas las llamadas de este proyecto
+	# terminaban parcheando .y a mano justo despues, y la unica que se olvido
+	# —colocar_objeto()— dejaba los muebles hundidos en el piso.
+	pos.y = altura_piso
+	return pos
 
 
 ## Devuelve el indice de la celda correspondiente a una posicion en el mundo.

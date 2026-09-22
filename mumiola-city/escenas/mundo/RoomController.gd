@@ -106,7 +106,6 @@ func esta_activa() -> bool:
 ## piso de esta sala.
 func posicion_de_entrada() -> Vector3:
 	var pos := grid.celda_a_mundo(celda_entrada)
-	pos.y = grid.altura_piso
 	return pos
 
 

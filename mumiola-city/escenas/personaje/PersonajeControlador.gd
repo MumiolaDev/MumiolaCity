@@ -156,7 +156,6 @@ func sentarse_en(objeto : WorldObject, offset : Vector2 = Vector2.ZERO,
 	var def := objeto.definicion()
 	var size := Vector2i.ONE if def == null else def.tamano_grilla
 	var pos := grid.centro_de(objeto.celda_origen, size, objeto.rotacion_grilla)
-	pos.y = grid.altura_piso
 	pos.x += offset.x
 	pos.z += offset.y
 	global_position = pos
@@ -202,7 +201,6 @@ func levantarse() -> bool:
 
 	if destino != IsoGrid.SIN_CELDA:
 		var pos := grid.celda_a_mundo(destino)
-		pos.y = grid.altura_piso
 		global_position = pos
 
 	_celda_salida = IsoGrid.SIN_CELDA
@@ -252,7 +250,6 @@ func ubicar_en_celda(celda : Vector2i) -> void:
 			destino = alternativa
 
 	var pos := grid.celda_a_mundo(destino)
-	pos.y = grid.altura_piso
 	global_position = pos
 
 
