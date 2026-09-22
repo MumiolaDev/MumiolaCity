@@ -349,7 +349,7 @@ La tabla más importante del documento. La mayoría de los bugs de un juego de e
 
 ---
 
-## 6. Decisiones de arquitectura: dieciocho cerradas, cuatro pendientes
+## 6. Decisiones de arquitectura: veintiuna cerradas, dos suspendidas, una pendiente
 
 Once decisiones que hay que cerrar antes de escribir el sistema correspondiente, ordenadas por lo caro que sale cambiarlas después. **Cinco ya están cerradas** — D1, D2 y D11 aplicadas en `items.json`, D3 resuelta acá abajo, y D7 postergada a la fase 2 a propósito — y **D5 tiene el lado de los datos hecho y el del código pendiente**. Las demás siguen abiertas.
 
@@ -492,7 +492,7 @@ Verificado sobre los 29 ítems: para todo ítem con receta, `habilidad_origen` e
 
 ---
 
-### D12 — Paredes estructurales contra paredes del jugador · **decidida en dirección, pendiente de detalle**
+### D12 — Paredes estructurales contra paredes del jugador · **suspendida por el replan**
 
 **El problema.** Si el jugador puede levantar paredes, hay dos clases de pared con reglas opuestas: el perímetro de un departamento, que nadie debe poder tocar, y los tabiques con los que el propietario divide su sala. Tratarlas igual permite que alguien demuela la fachada; tratarlas como cosas sin relación obliga a dos sistemas de colocación, dos de guardado y dos de inventario.
 
@@ -512,22 +512,24 @@ Verificado sobre los 29 ítems: para todo ítem con receta, `habilidad_origen` e
 
 **Dónde vive el permiso.** No en `IsoGrid`, que solo sabe qué celdas existen y cuáles están ocupadas. La sala declara qué parte de sí misma es editable por el propietario, y `RoomController` es quien valida — como ya dice §3.1 de este documento. El límite de cuánto se puede ampliar se engancha con la habilidad de Construcción (GDD §3.3).
 
-**Lo que queda por definir:** la forma exacta de esa área editable —un `Rect2i`, un conjunto de celdas, o una marca por celda— y si el perímetro es simplemente "lo que está fuera del área editable" o una lista aparte.
+**Suspendida.** El MVP pasó a ser un sandbox donde el jugador edita su sala entera sin límites, así que no hay un área editable que definir: todo lo es. `Errores.Codigo.FUERA_DEL_AREA` queda en el enum esperando, y el día que haya salas ajenas o parcelas compradas la decisión se reabre con el hueco ya hecho. Lo que sí sobrevivió del razonamiento es dónde vive el permiso: en `RoomController.puede_editar()`, no en `IsoGrid`.
 
 ---
 
-### D13 — El revestimiento de pared, ¿por sala o por celda? · **abierta, bloquea la fase 4**
+### D13 — El revestimiento de pared, ¿por sala o por celda? · **resuelta: por celda**
 
 Aplicar una pared como revestimiento **no coloca nada en la grilla**: cambia el aspecto de una celda estructural que ya existe. Por eso no es un `ItemInstance` en una celda y necesita su propio sitio.
 
 - **Por sala** (lo que hace Habbo): un solo revestimiento para todos los muros. Un dato por sala, una interfaz trivial, y el ítem se consume una vez.
 - **Por celda:** permite paredes de acento y decorar cada habitación distinto. Es más fiel a la idea de simulador de la vida (§1 del GDD), pero es estado nuevo por celda que hay que guardar, y una interfaz que exige elegir superficie.
 
-**Recomendación: empezar por sala y dejar la puerta abierta.** Guardarlo como `Dictionary` de celda a revestimiento desde el principio cuesta lo mismo que guardar un solo valor, y permite pasar a por-celda después sin migrar el guardado. Lo que sí hay que decidir de entrada es **dónde vive ese dato**: es del emplazamiento, no del objeto, así que va en `RoomController.to_dict()` junto a `celda_origen` y `rotacion_grilla` (**D3**), nunca en el `ItemInstance` de la pared.
+**Resuelta por celda**, y el replan la resolvió sin discutirla: el editor pinta celda a celda, así que la capa `GridParedes` *ya es* un revestimiento por celda y no hace falta estado nuevo. `IsoGrid.pintar(capa, celda, pieza)` es la operación, y lo que se guarda es el nombre de la pieza en esa celda (**D18**, **D24**). La opción "por sala" habría sido menos trabajo con un editor de menú, pero con uno de pincel es más.
+
+Lo que sí se mantiene del razonamiento original: el dato es **del emplazamiento, no del objeto**, así que va en `RoomController.to_dict()` junto a `celda_origen` y `rotacion_grilla` (**D3**), nunca en el `ItemInstance` de la pared.
 
 ---
 
-### D14 — Colocar un tabique no puede dejar la sala partida · **abierta, bloquea `RoomBuilderUI` (fase 4)**
+### D14 — Colocar un tabique no puede dejar la sala partida · **suspendida por el replan**
 
 **El problema.** Un jugador puede tapiar su propia puerta o aislar media casa. Con sus muebles es problema suyo y reversible, pero **una visita que entra a una sala mal dividida queda encerrada** o no puede llegar a la mitad de las habitaciones, y no tiene forma de arreglarlo porque los objetos no son suyos.
 
@@ -538,6 +540,8 @@ Aplicar una pared como revestimiento **no coloca nada en la grilla**: cambia el 
 **Cuándo implementarlo:** en la **fase 4**, junto con `RoomBuilderUI` y en el mismo momento en que se escriba `colocar_objeto()` — no después, como validación agregada. La regla es que ninguna colocación llegue a ejecutarse sin haber pasado por ahí, y eso solo se sostiene si la comprobación vive dentro de la transacción de colocación, igual que `esta_libre()`.
 
 **Nota de alcance:** la comprobación es necesaria solo para lo que bloquea el paso. Una silla no puede partir una sala, así que conviene que solo la paguen los objetos cuyo `tamano_grilla` los convierte en obstáculo — o directamente los que declaren que bloquean, si más adelante hay objetos atravesables.
+
+**Suspendida con D12.** En un sandbox de una sola persona, encerrarse es problema de quien se encierra y se deshace con `Ctrl+Z`. Vuelve a hacer falta el día que alguien visite la sala de otro, que es cuando el problema original —una visita atrapada sin poder tocar nada— existe de verdad. El hueco sigue escrito en `colocar_objeto()` y `PARTIRIA_LA_SALA` sigue en el enum: agregarla después no cambia ninguna firma, que era justo lo que esta decisión quería evitar.
 
 ---
 
@@ -649,6 +653,16 @@ En la práctica eso significa: o el reemplazo se modela sobre el rig de KayKit, 
 **Dos detalles del formato que muerden.** JSON no tiene vectores, así que todo `Vector2i` viaja como array de dos enteros. Y **todo número vuelve como float**, incluso los que se escribieron enteros: sin `int()` al leer, una celda sería `Vector2i(3.0, 4.0)` y fallaría el tipado.
 
 **`version_formato` desde el primer día**, y `_migrar()` existe aunque hoy no migre nada. Cuando cambie el esquema — y va a cambiar, porque quedan siete decisiones abiertas — el lugar donde va el arreglo ya está decidido, y no hay que inventarlo con guardados rotos sobre la mesa.
+
+---
+
+### D22 — El editor coloca desde catálogo infinito, no desde el inventario · **decidida**
+
+En modo edición el jugador elige de una paleta con el catálogo entero y coloca sin gastar nada; el inventario es del **modo juego**. Son dos actividades distintas y mezclarlas hace peor a las dos: un editor que se queda sin sillas no sirve para diseñar, y una economía donde los muebles salen gratis no tiene sentido.
+
+La consecuencia práctica es que `RoomController.colocar_objeto()` recibe un `ItemInstance` recién creado y no uno sacado de `InventoryManager`. El paso 1 de la transacción —`quitar_instancia()`— sigue documentado y sigue vacío; cuando el modo juego coloque muebles de verdad, se llena ahí y en ningún otro lado.
+
+Para el desarrollador el catálogo infinito además es el punto: armar un mapa de prueba no debería obligar a farmear los muebles.
 
 ---
 
