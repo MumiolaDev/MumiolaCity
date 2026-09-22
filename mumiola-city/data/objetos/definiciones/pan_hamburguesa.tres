@@ -2,6 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://biag3xab0y4fj" path="res://escenas/objetos/generadas/pan_hamburguesa.tscn" id="1_smh3v"]
 [ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_3x21t"]
+[ext_resource type="Texture2D" uid="uid://cfcd487ua451e" path="res://arte/iconos/pan_hamburguesa.png" id="2_12wms"]
 [ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_12wms"]
 
 [resource]
@@ -12,4 +13,5 @@ descripcion = "Insumo de panaderia. Todavia no se craftea."
 categoria = "intermedio"
 peso = 0.2
 valor_base = 5
+icono = ExtResource("2_12wms")
 escena_mundo = ExtResource("1_smh3v")

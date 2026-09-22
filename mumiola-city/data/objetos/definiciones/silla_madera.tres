@@ -2,29 +2,30 @@
 
 [ext_resource type="PackedScene" uid="uid://d2nood7mvp4pt" path="res://escenas/objetos/generadas/silla_madera.tscn" id="1_a0w41"]
 [ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_0qgou"]
+[ext_resource type="Texture2D" uid="uid://bfki73dmtyg04" path="res://arte/iconos/silla_madera.png" id="2_eljuu"]
 [ext_resource type="Resource" path="res://data/objetos/comportamientos/sentarse.tres" id="3_eljuu"]
 [ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="4_swf3h"]
 [ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="5_kk4n7"]
 [ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="6_7v36c"]
 
-[sub_resource type="Resource" id="Resource_46mgy"]
+[sub_resource type="Resource" id="Resource_0qgou"]
 script = ExtResource("4_swf3h")
 id = &"tabla_madera"
 cantidad = 3
 
-[sub_resource type="Resource" id="Resource_hw0hb"]
+[sub_resource type="Resource" id="Resource_eljuu"]
 script = ExtResource("4_swf3h")
 id = &"serrucho"
 consume = false
 
-[sub_resource type="Resource" id="Resource_bcf0u"]
+[sub_resource type="Resource" id="Resource_swf3h"]
 script = ExtResource("4_swf3h")
 id = &"martillo"
 consume = false
 
-[sub_resource type="Resource" id="Resource_6jinv"]
+[sub_resource type="Resource" id="Resource_kk4n7"]
 script = ExtResource("5_kk4n7")
-insumos = Array[ExtResource("4_swf3h")]([SubResource("Resource_46mgy"), SubResource("Resource_hw0hb"), SubResource("Resource_bcf0u")])
+insumos = Array[ExtResource("4_swf3h")]([SubResource("Resource_0qgou"), SubResource("Resource_eljuu"), SubResource("Resource_swf3h")])
 habilidad = &"carpinteria"
 xp_otorgada = 10
 tiempo_crafteo_seg = 6.0
@@ -41,6 +42,7 @@ stack_maximo = 1
 valor_base = 45
 comprable = false
 interacciones = Array[ExtResource("2_0qgou")]([ExtResource("3_eljuu")])
-receta = SubResource("Resource_6jinv")
+receta = SubResource("Resource_kk4n7")
 rotable = true
+icono = ExtResource("2_eljuu")
 escena_mundo = ExtResource("1_a0w41")

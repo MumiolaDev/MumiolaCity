@@ -3,16 +3,16 @@
 [ext_resource type="Script" uid="uid://ciucb8xus6nnu" path="res://escenas/objetos/WorldObject.gd" id="1_oqnnq"]
 [ext_resource type="PackedScene" uid="uid://c3suq7e1o3854" path="res://arte/modelos_3d/restoran/food_ingredient_burger_cooked.gltf" id="2_ckc62"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_558hw"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_oqnnq"]
 size = Vector3(0.9, 1, 0.9)
 
-[node name="CarneCocida" type="Area3D" unique_id=896055092]
+[node name="CarneCocida" type="Area3D" unique_id=1694097959]
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("1_oqnnq")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1585682159]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=214454155]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-shape = SubResource("BoxShape3D_558hw")
+shape = SubResource("BoxShape3D_oqnnq")
 
 [node name="Visual" type="Node3D" parent="." unique_id=124734624 instance=ExtResource("2_ckc62")]

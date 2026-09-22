@@ -2,6 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://bwpqkwhovufer" path="res://escenas/objetos/generadas/frasco.tscn" id="1_e5jth"]
 [ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_e8upk"]
+[ext_resource type="Texture2D" uid="uid://byix1eiu32q0w" path="res://arte/iconos/frasco.png" id="2_nbbl4"]
 [ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_nbbl4"]
 
 [resource]
@@ -13,4 +14,5 @@ peso = 0.5
 apilable = false
 stack_maximo = 1
 valor_base = 18
+icono = ExtResource("2_nbbl4")
 escena_mundo = ExtResource("1_e5jth")

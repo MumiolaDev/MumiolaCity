@@ -3,16 +3,16 @@
 [ext_resource type="Script" uid="uid://ciucb8xus6nnu" path="res://escenas/objetos/WorldObject.gd" id="1_fbqr0"]
 [ext_resource type="PackedScene" uid="uid://drnqrxgp3lp1j" path="res://arte/modelos_3d/restoran/food_stew.gltf" id="2_kn0kh"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_ribl6"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_fbqr0"]
 size = Vector3(0.9, 1, 0.9)
 
-[node name="Guiso" type="Area3D" unique_id=966273058]
+[node name="Guiso" type="Area3D" unique_id=1538828435]
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("1_fbqr0")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1178788485]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1752476684]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-shape = SubResource("BoxShape3D_ribl6")
+shape = SubResource("BoxShape3D_fbqr0")
 
 [node name="Visual" type="Node3D" parent="." unique_id=1826486474 instance=ExtResource("2_kn0kh")]

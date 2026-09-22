@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://bdvdh50fra6ml"]
 
 [ext_resource type="PackedScene" uid="uid://c1t7pywgt6plg" path="res://escenas/objetos/generadas/cuchillo.tscn" id="1_5d1ay"]
+[ext_resource type="Texture2D" uid="uid://dgx358xliusfq" path="res://arte/iconos/cuchillo.png" id="2_do5fj"]
 [ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_p0f55"]
 [ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_do5fj"]
 
@@ -14,4 +15,5 @@ peso = 0.3
 apilable = false
 stack_maximo = 1
 valor_base = 30
+icono = ExtResource("2_do5fj")
 escena_mundo = ExtResource("1_5d1ay")

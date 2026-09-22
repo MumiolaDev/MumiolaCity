@@ -2,38 +2,39 @@
 
 [ext_resource type="PackedScene" uid="uid://c8shf3744x8e" path="res://escenas/objetos/generadas/hamburguesa_veggie.tscn" id="1_dp8w4"]
 [ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_hyfp8"]
+[ext_resource type="Texture2D" uid="uid://be2l4xi5e33nn" path="res://arte/iconos/hamburguesa_veggie.png" id="2_noj1o"]
 [ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_noj1o"]
 [ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_exbes"]
 [ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_fjuwj"]
 
-[sub_resource type="Resource" id="Resource_fnpy0"]
+[sub_resource type="Resource" id="Resource_hyfp8"]
 script = ExtResource("3_noj1o")
 id = &"pan_hamburguesa"
 
-[sub_resource type="Resource" id="Resource_sdpgp"]
+[sub_resource type="Resource" id="Resource_noj1o"]
 script = ExtResource("3_noj1o")
 id = &"papa_pure"
 
-[sub_resource type="Resource" id="Resource_mjhdp"]
+[sub_resource type="Resource" id="Resource_exbes"]
 script = ExtResource("3_noj1o")
 id = &"tomate_rodajas"
 
-[sub_resource type="Resource" id="Resource_d382c"]
+[sub_resource type="Resource" id="Resource_fjuwj"]
 script = ExtResource("3_noj1o")
 id = &"lechuga_picada"
 
-[sub_resource type="Resource" id="Resource_3kmxv"]
+[sub_resource type="Resource" id="Resource_fnpy0"]
 script = ExtResource("3_noj1o")
 id = &"queso_fetas"
 
-[sub_resource type="Resource" id="Resource_mo6ce"]
+[sub_resource type="Resource" id="Resource_sdpgp"]
 script = ExtResource("3_noj1o")
 id = &"plato"
 consume = false
 
-[sub_resource type="Resource" id="Resource_5s26e"]
+[sub_resource type="Resource" id="Resource_mjhdp"]
 script = ExtResource("4_exbes")
-insumos = Array[ExtResource("3_noj1o")]([SubResource("Resource_fnpy0"), SubResource("Resource_sdpgp"), SubResource("Resource_mjhdp"), SubResource("Resource_d382c"), SubResource("Resource_3kmxv"), SubResource("Resource_mo6ce")])
+insumos = Array[ExtResource("3_noj1o")]([SubResource("Resource_hyfp8"), SubResource("Resource_noj1o"), SubResource("Resource_exbes"), SubResource("Resource_fjuwj"), SubResource("Resource_fnpy0"), SubResource("Resource_sdpgp")])
 habilidad = &"cocina"
 nivel_requerido = 4
 xp_otorgada = 24
@@ -50,5 +51,6 @@ apilable = false
 stack_maximo = 1
 valor_base = 86
 comprable = false
-receta = SubResource("Resource_5s26e")
+receta = SubResource("Resource_mjhdp")
+icono = ExtResource("2_noj1o")
 escena_mundo = ExtResource("1_dp8w4")

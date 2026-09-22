@@ -3,16 +3,16 @@
 [ext_resource type="Script" uid="uid://ciucb8xus6nnu" path="res://escenas/objetos/WorldObject.gd" id="1_jclwe"]
 [ext_resource type="PackedScene" uid="uid://binxr1yyrbanp" path="res://arte/modelos_3d/restoran/food_dinner.gltf" id="2_w4ilh"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_a102w"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_jclwe"]
 size = Vector3(0.9, 1, 0.9)
 
-[node name="PlatoDelDia" type="Area3D" unique_id=1584417955]
+[node name="PlatoDelDia" type="Area3D" unique_id=215849717]
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("1_jclwe")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=2129419655]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1384348582]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-shape = SubResource("BoxShape3D_a102w")
+shape = SubResource("BoxShape3D_jclwe")
 
 [node name="Visual" type="Node3D" parent="." unique_id=846554291 instance=ExtResource("2_w4ilh")]

@@ -2,28 +2,29 @@
 
 [ext_resource type="PackedScene" uid="uid://cauw3wr3vjgoo" path="res://escenas/objetos/generadas/estante.tscn" id="1_y7kbb"]
 [ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_ttscu"]
+[ext_resource type="Texture2D" uid="uid://bulsqp5x6v4k5" path="res://arte/iconos/estante.png" id="2_vufta"]
 [ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_vufta"]
 [ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_d1hi7"]
 [ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_kbpa4"]
 
-[sub_resource type="Resource" id="Resource_abmky"]
+[sub_resource type="Resource" id="Resource_ttscu"]
 script = ExtResource("3_vufta")
 id = &"tabla_madera"
 cantidad = 5
 
-[sub_resource type="Resource" id="Resource_38y60"]
+[sub_resource type="Resource" id="Resource_vufta"]
 script = ExtResource("3_vufta")
 id = &"serrucho"
 consume = false
 
-[sub_resource type="Resource" id="Resource_ojlxj"]
+[sub_resource type="Resource" id="Resource_d1hi7"]
 script = ExtResource("3_vufta")
 id = &"martillo"
 consume = false
 
-[sub_resource type="Resource" id="Resource_y753t"]
+[sub_resource type="Resource" id="Resource_kbpa4"]
 script = ExtResource("4_d1hi7")
-insumos = Array[ExtResource("3_vufta")]([SubResource("Resource_abmky"), SubResource("Resource_38y60"), SubResource("Resource_ojlxj")])
+insumos = Array[ExtResource("3_vufta")]([SubResource("Resource_ttscu"), SubResource("Resource_vufta"), SubResource("Resource_d1hi7")])
 habilidad = &"carpinteria"
 nivel_requerido = 3
 xp_otorgada = 18
@@ -40,6 +41,7 @@ apilable = false
 stack_maximo = 1
 valor_base = 75
 comprable = false
-receta = SubResource("Resource_y753t")
+receta = SubResource("Resource_kbpa4")
 rotable = true
+icono = ExtResource("2_vufta")
 escena_mundo = ExtResource("1_y7kbb")

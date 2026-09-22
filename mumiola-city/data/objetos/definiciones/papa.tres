@@ -2,17 +2,18 @@
 
 [ext_resource type="PackedScene" uid="uid://ds3nmwd3tcn77" path="res://escenas/objetos/generadas/papa.tscn" id="1_7gunl"]
 [ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_ontu3"]
+[ext_resource type="Texture2D" uid="uid://cdgjbvr383s8r" path="res://arte/iconos/papa.png" id="2_ygrqw"]
 [ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_ygrqw"]
 [ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_80nh7"]
 [ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_074fr"]
 
-[sub_resource type="Resource" id="Resource_3tgkh"]
+[sub_resource type="Resource" id="Resource_ontu3"]
 script = ExtResource("3_ygrqw")
 id = &"semilla_papa"
 
-[sub_resource type="Resource" id="Resource_dv55l"]
+[sub_resource type="Resource" id="Resource_ygrqw"]
 script = ExtResource("4_80nh7")
-insumos = Array[ExtResource("3_ygrqw")]([SubResource("Resource_3tgkh")])
+insumos = Array[ExtResource("3_ygrqw")]([SubResource("Resource_ontu3")])
 habilidad = &"agricultura"
 nivel_requerido = 2
 xp_otorgada = 9
@@ -28,5 +29,6 @@ categoria = "materia_prima"
 peso = 0.2
 valor_base = 10
 comprable = false
-receta = SubResource("Resource_dv55l")
+receta = SubResource("Resource_ygrqw")
+icono = ExtResource("2_ygrqw")
 escena_mundo = ExtResource("1_7gunl")

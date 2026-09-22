@@ -2,6 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://dhmgaufygxrht" path="res://escenas/objetos/generadas/bol_sucio.tscn" id="1_urw3m"]
 [ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_hkoxc"]
+[ext_resource type="Texture2D" uid="uid://cjuw4t2kyj50r" path="res://arte/iconos/bol_sucio.png" id="2_syyay"]
 [ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_syyay"]
 
 [resource]
@@ -16,4 +17,5 @@ stack_maximo = 1
 valor_base = 0
 comprable = false
 vendible = false
+icono = ExtResource("2_syyay")
 escena_mundo = ExtResource("1_urw3m")

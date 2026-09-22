@@ -2,26 +2,27 @@
 
 [ext_resource type="PackedScene" uid="uid://bobdw1o3j35ey" path="res://escenas/objetos/generadas/plato_del_dia.tscn" id="1_k8fen"]
 [ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_usgyg"]
+[ext_resource type="Texture2D" uid="uid://b7mmryp57wsfa" path="res://arte/iconos/plato_del_dia.png" id="2_xppd5"]
 [ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_xppd5"]
 [ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_kuco0"]
 [ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_nry7n"]
 
-[sub_resource type="Resource" id="Resource_m30ij"]
+[sub_resource type="Resource" id="Resource_usgyg"]
 script = ExtResource("3_xppd5")
 id = &"hamburguesa"
 
-[sub_resource type="Resource" id="Resource_vjyv7"]
+[sub_resource type="Resource" id="Resource_xppd5"]
 script = ExtResource("3_xppd5")
 id = &"guiso"
 
-[sub_resource type="Resource" id="Resource_7gbo3"]
+[sub_resource type="Resource" id="Resource_kuco0"]
 script = ExtResource("3_xppd5")
 id = &"plato"
 consume = false
 
-[sub_resource type="Resource" id="Resource_571ev"]
+[sub_resource type="Resource" id="Resource_nry7n"]
 script = ExtResource("4_kuco0")
-insumos = Array[ExtResource("3_xppd5")]([SubResource("Resource_m30ij"), SubResource("Resource_vjyv7"), SubResource("Resource_7gbo3")])
+insumos = Array[ExtResource("3_xppd5")]([SubResource("Resource_usgyg"), SubResource("Resource_xppd5"), SubResource("Resource_kuco0")])
 habilidad = &"cocina"
 nivel_requerido = 8
 xp_otorgada = 70
@@ -38,5 +39,6 @@ apilable = false
 stack_maximo = 1
 valor_base = 260
 comprable = false
-receta = SubResource("Resource_571ev")
+receta = SubResource("Resource_nry7n")
+icono = ExtResource("2_xppd5")
 escena_mundo = ExtResource("1_k8fen")

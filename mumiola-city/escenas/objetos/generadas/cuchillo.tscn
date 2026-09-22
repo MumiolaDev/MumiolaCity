@@ -3,16 +3,16 @@
 [ext_resource type="Script" uid="uid://ciucb8xus6nnu" path="res://escenas/objetos/WorldObject.gd" id="1_h73tx"]
 [ext_resource type="PackedScene" uid="uid://r0lfsdgbxn8x" path="res://arte/modelos_3d/restoran/knife.gltf" id="2_8hndp"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_pa1d4"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_h73tx"]
 size = Vector3(0.9, 1, 0.9)
 
-[node name="Cuchillo" type="Area3D" unique_id=615304025]
+[node name="Cuchillo" type="Area3D" unique_id=1961699526]
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("1_h73tx")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=644009481]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=512460279]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-shape = SubResource("BoxShape3D_pa1d4")
+shape = SubResource("BoxShape3D_h73tx")
 
 [node name="Visual" type="Node3D" parent="." unique_id=2138301429 instance=ExtResource("2_8hndp")]

@@ -1,18 +1,19 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://hncju75xx1a1"]
 
 [ext_resource type="PackedScene" uid="uid://binom0rf4yg23" path="res://escenas/objetos/generadas/cebolla.tscn" id="1_dck78"]
+[ext_resource type="Texture2D" uid="uid://cexiax81xrspo" path="res://arte/iconos/cebolla.png" id="2_dgn8t"]
 [ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_i5hta"]
 [ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_dgn8t"]
 [ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_nydmw"]
 [ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_h4vna"]
 
-[sub_resource type="Resource" id="Resource_goyew"]
+[sub_resource type="Resource" id="Resource_i5hta"]
 script = ExtResource("3_dgn8t")
 id = &"semilla_cebolla"
 
-[sub_resource type="Resource" id="Resource_r5g2r"]
+[sub_resource type="Resource" id="Resource_dgn8t"]
 script = ExtResource("4_nydmw")
-insumos = Array[ExtResource("3_dgn8t")]([SubResource("Resource_goyew")])
+insumos = Array[ExtResource("3_dgn8t")]([SubResource("Resource_i5hta")])
 habilidad = &"agricultura"
 nivel_requerido = 2
 xp_otorgada = 9
@@ -28,5 +29,6 @@ categoria = "materia_prima"
 peso = 0.2
 valor_base = 10
 comprable = false
-receta = SubResource("Resource_r5g2r")
+receta = SubResource("Resource_dgn8t")
+icono = ExtResource("2_dgn8t")
 escena_mundo = ExtResource("1_dck78")

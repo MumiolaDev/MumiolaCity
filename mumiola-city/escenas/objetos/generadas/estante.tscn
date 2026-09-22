@@ -3,16 +3,16 @@
 [ext_resource type="Script" uid="uid://ciucb8xus6nnu" path="res://escenas/objetos/WorldObject.gd" id="1_53v4k"]
 [ext_resource type="PackedScene" uid="uid://wuhjpwi7escd" path="res://arte/modelos_3d/muebles/shelf_A_small.gltf" id="2_hbo8p"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_wtxg3"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_53v4k"]
 size = Vector3(0.9, 1, 0.9)
 
-[node name="Estante" type="Area3D" unique_id=696432876]
+[node name="Estante" type="Area3D" unique_id=1778168542]
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("1_53v4k")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=27430473]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=92124248]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-shape = SubResource("BoxShape3D_wtxg3")
+shape = SubResource("BoxShape3D_53v4k")
 
 [node name="Visual" type="Node3D" parent="." unique_id=599807632 instance=ExtResource("2_hbo8p")]

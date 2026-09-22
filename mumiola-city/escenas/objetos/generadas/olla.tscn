@@ -3,16 +3,16 @@
 [ext_resource type="Script" uid="uid://ciucb8xus6nnu" path="res://escenas/objetos/WorldObject.gd" id="1_bdrk3"]
 [ext_resource type="PackedScene" uid="uid://bvcefe03vwk54" path="res://arte/modelos_3d/restoran/pot_A.gltf" id="2_3lshs"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_un4lf"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_bdrk3"]
 size = Vector3(0.9, 1, 0.9)
 
-[node name="Olla" type="Area3D" unique_id=939337569]
+[node name="Olla" type="Area3D" unique_id=1647527661]
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("1_bdrk3")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1918893083]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1451077197]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-shape = SubResource("BoxShape3D_un4lf")
+shape = SubResource("BoxShape3D_bdrk3")
 
 [node name="Visual" type="Node3D" parent="." unique_id=1933956548 instance=ExtResource("2_3lshs")]

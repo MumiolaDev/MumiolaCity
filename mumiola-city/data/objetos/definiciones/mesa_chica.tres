@@ -1,29 +1,30 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://cj2b0imo3nox1"]
 
 [ext_resource type="PackedScene" uid="uid://cosbga3op0ak2" path="res://escenas/objetos/generadas/mesa_chica.tscn" id="1_ehtwy"]
+[ext_resource type="Texture2D" uid="uid://dwtqdmq0v4c7x" path="res://arte/iconos/mesa_chica.png" id="2_0avaq"]
 [ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_jot17"]
 [ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_0avaq"]
 [ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_ykc6q"]
 [ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_qigod"]
 
-[sub_resource type="Resource" id="Resource_laoc5"]
+[sub_resource type="Resource" id="Resource_jot17"]
 script = ExtResource("3_0avaq")
 id = &"tabla_madera"
 cantidad = 4
 
-[sub_resource type="Resource" id="Resource_pylxy"]
+[sub_resource type="Resource" id="Resource_0avaq"]
 script = ExtResource("3_0avaq")
 id = &"serrucho"
 consume = false
 
-[sub_resource type="Resource" id="Resource_tykvo"]
+[sub_resource type="Resource" id="Resource_ykc6q"]
 script = ExtResource("3_0avaq")
 id = &"martillo"
 consume = false
 
-[sub_resource type="Resource" id="Resource_cmxhh"]
+[sub_resource type="Resource" id="Resource_qigod"]
 script = ExtResource("4_ykc6q")
-insumos = Array[ExtResource("3_0avaq")]([SubResource("Resource_laoc5"), SubResource("Resource_pylxy"), SubResource("Resource_tykvo")])
+insumos = Array[ExtResource("3_0avaq")]([SubResource("Resource_jot17"), SubResource("Resource_0avaq"), SubResource("Resource_ykc6q")])
 habilidad = &"carpinteria"
 nivel_requerido = 2
 xp_otorgada = 14
@@ -40,6 +41,7 @@ apilable = false
 stack_maximo = 1
 valor_base = 60
 comprable = false
-receta = SubResource("Resource_cmxhh")
+receta = SubResource("Resource_qigod")
 rotable = true
+icono = ExtResource("2_0avaq")
 escena_mundo = ExtResource("1_ehtwy")

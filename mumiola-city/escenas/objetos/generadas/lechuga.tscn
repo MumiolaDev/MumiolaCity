@@ -3,16 +3,16 @@
 [ext_resource type="Script" uid="uid://ciucb8xus6nnu" path="res://escenas/objetos/WorldObject.gd" id="1_f0prm"]
 [ext_resource type="PackedScene" uid="uid://boqpyahf2il6s" path="res://arte/modelos_3d/restoran/food_ingredient_lettuce.gltf" id="2_5m6q5"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_c3rmb"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_f0prm"]
 size = Vector3(0.9, 1, 0.9)
 
-[node name="Lechuga" type="Area3D" unique_id=1090189295]
+[node name="Lechuga" type="Area3D" unique_id=1758461907]
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("1_f0prm")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=241278975]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1994617268]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-shape = SubResource("BoxShape3D_c3rmb")
+shape = SubResource("BoxShape3D_f0prm")
 
 [node name="Visual" type="Node3D" parent="." unique_id=1788062338 instance=ExtResource("2_5m6q5")]

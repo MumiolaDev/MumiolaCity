@@ -2,6 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://q6ehyo5ardhv" path="res://escenas/objetos/generadas/carne_cruda.tscn" id="1_xf62j"]
 [ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_l6njj"]
+[ext_resource type="Texture2D" uid="uid://cbaedbgwjdc3j" path="res://arte/iconos/carne_cruda.png" id="2_oep88"]
 [ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_oep88"]
 
 [resource]
@@ -12,4 +13,5 @@ descripcion = "Insumo de carniceria. Todavia no se craftea."
 categoria = "intermedio"
 peso = 0.2
 valor_base = 14
+icono = ExtResource("2_oep88")
 escena_mundo = ExtResource("1_xf62j")

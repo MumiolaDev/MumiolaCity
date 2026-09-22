@@ -2,6 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://c1fxrh83sej4f" path="res://escenas/objetos/generadas/carne_quemada.tscn" id="1_ernuu"]
 [ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_i7myv"]
+[ext_resource type="Texture2D" uid="uid://g37sts550hww" path="res://arte/iconos/carne_quemada.png" id="2_jsvxl"]
 [ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_jsvxl"]
 
 [resource]
@@ -14,4 +15,5 @@ peso = 0.2
 valor_base = 0
 comprable = false
 vendible = false
+icono = ExtResource("2_jsvxl")
 escena_mundo = ExtResource("1_ernuu")

@@ -2,6 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://cvx7dypcjdpgf" path="res://escenas/objetos/generadas/sarten.tscn" id="1_44ed4"]
 [ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_c4wjn"]
+[ext_resource type="Texture2D" uid="uid://rd58y3cj8f61" path="res://arte/iconos/sarten.png" id="2_cevgm"]
 [ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_cevgm"]
 
 [resource]
@@ -14,4 +15,5 @@ peso = 1.5
 apilable = false
 stack_maximo = 1
 valor_base = 40
+icono = ExtResource("2_cevgm")
 escena_mundo = ExtResource("1_44ed4")

@@ -2,34 +2,35 @@
 
 [ext_resource type="PackedScene" uid="uid://ddigxsdufdyrx" path="res://escenas/objetos/generadas/hamburguesa.tscn" id="1_p5uo1"]
 [ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_7sdua"]
+[ext_resource type="Texture2D" uid="uid://bvpkshimmoj15" path="res://arte/iconos/hamburguesa.png" id="2_urbml"]
 [ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_urbml"]
 [ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_sln5k"]
 [ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_bkoga"]
 
-[sub_resource type="Resource" id="Resource_f51v8"]
+[sub_resource type="Resource" id="Resource_7sdua"]
 script = ExtResource("3_urbml")
 id = &"pan_hamburguesa"
 
-[sub_resource type="Resource" id="Resource_3ke5d"]
+[sub_resource type="Resource" id="Resource_urbml"]
 script = ExtResource("3_urbml")
 id = &"carne_cocida"
 
-[sub_resource type="Resource" id="Resource_281im"]
+[sub_resource type="Resource" id="Resource_sln5k"]
 script = ExtResource("3_urbml")
 id = &"tomate_rodajas"
 
-[sub_resource type="Resource" id="Resource_6dda5"]
+[sub_resource type="Resource" id="Resource_bkoga"]
 script = ExtResource("3_urbml")
 id = &"lechuga_picada"
 
-[sub_resource type="Resource" id="Resource_0xydb"]
+[sub_resource type="Resource" id="Resource_f51v8"]
 script = ExtResource("3_urbml")
 id = &"plato"
 consume = false
 
-[sub_resource type="Resource" id="Resource_58l0m"]
+[sub_resource type="Resource" id="Resource_3ke5d"]
 script = ExtResource("4_sln5k")
-insumos = Array[ExtResource("3_urbml")]([SubResource("Resource_f51v8"), SubResource("Resource_3ke5d"), SubResource("Resource_281im"), SubResource("Resource_6dda5"), SubResource("Resource_0xydb")])
+insumos = Array[ExtResource("3_urbml")]([SubResource("Resource_7sdua"), SubResource("Resource_urbml"), SubResource("Resource_sln5k"), SubResource("Resource_bkoga"), SubResource("Resource_f51v8")])
 habilidad = &"cocina"
 nivel_requerido = 4
 xp_otorgada = 20
@@ -46,5 +47,6 @@ apilable = false
 stack_maximo = 1
 valor_base = 78
 comprable = false
-receta = SubResource("Resource_58l0m")
+receta = SubResource("Resource_3ke5d")
+icono = ExtResource("2_urbml")
 escena_mundo = ExtResource("1_p5uo1")

@@ -2,6 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://bov3yt0y86b4a" path="res://escenas/objetos/generadas/tabla_madera.tscn" id="1_1edej"]
 [ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_i4282"]
+[ext_resource type="Texture2D" uid="uid://bkjiew5lxegok" path="res://arte/iconos/tabla_madera.png" id="2_sjicm"]
 [ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_sjicm"]
 
 [resource]
@@ -12,4 +13,5 @@ descripcion = "Materia prima del taller. Todavia no se produce."
 categoria = "materia_prima"
 peso = 2.0
 valor_base = 10
+icono = ExtResource("2_sjicm")
 escena_mundo = ExtResource("1_1edej")

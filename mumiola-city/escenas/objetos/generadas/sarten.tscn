@@ -3,16 +3,16 @@
 [ext_resource type="Script" uid="uid://ciucb8xus6nnu" path="res://escenas/objetos/WorldObject.gd" id="1_qx603"]
 [ext_resource type="PackedScene" uid="uid://xmiccwcvulv" path="res://arte/modelos_3d/restoran/pan_A.gltf" id="2_7qm7f"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_xqlw6"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_qx603"]
 size = Vector3(0.9, 1, 0.9)
 
-[node name="Sarten" type="Area3D" unique_id=1456368466]
+[node name="Sarten" type="Area3D" unique_id=1394931469]
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("1_qx603")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=2075093998]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=863526214]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-shape = SubResource("BoxShape3D_xqlw6")
+shape = SubResource("BoxShape3D_qx603")
 
 [node name="Visual" type="Node3D" parent="." unique_id=841411454 instance=ExtResource("2_7qm7f")]

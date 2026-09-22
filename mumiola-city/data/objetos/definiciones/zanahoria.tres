@@ -2,17 +2,18 @@
 
 [ext_resource type="PackedScene" uid="uid://cn8hchj4a1lfk" path="res://escenas/objetos/generadas/zanahoria.tscn" id="1_fcewt"]
 [ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_r6otf"]
+[ext_resource type="Texture2D" uid="uid://bnlgwy5bbenb8" path="res://arte/iconos/zanahoria.png" id="2_woc2o"]
 [ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_woc2o"]
 [ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_x4alb"]
 [ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_eoqrb"]
 
-[sub_resource type="Resource" id="Resource_d7177"]
+[sub_resource type="Resource" id="Resource_r6otf"]
 script = ExtResource("3_woc2o")
 id = &"semilla_zanahoria"
 
-[sub_resource type="Resource" id="Resource_3mcyc"]
+[sub_resource type="Resource" id="Resource_woc2o"]
 script = ExtResource("4_x4alb")
-insumos = Array[ExtResource("3_woc2o")]([SubResource("Resource_d7177")])
+insumos = Array[ExtResource("3_woc2o")]([SubResource("Resource_r6otf")])
 habilidad = &"agricultura"
 nivel_requerido = 3
 xp_otorgada = 12
@@ -28,5 +29,6 @@ categoria = "materia_prima"
 peso = 0.2
 valor_base = 12
 comprable = false
-receta = SubResource("Resource_3mcyc")
+receta = SubResource("Resource_woc2o")
+icono = ExtResource("2_woc2o")
 escena_mundo = ExtResource("1_fcewt")

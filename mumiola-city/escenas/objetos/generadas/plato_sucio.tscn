@@ -3,16 +3,16 @@
 [ext_resource type="Script" uid="uid://ciucb8xus6nnu" path="res://escenas/objetos/WorldObject.gd" id="1_pkgeg"]
 [ext_resource type="PackedScene" uid="uid://b1vptnirbstll" path="res://arte/modelos_3d/restoran/plate_dirty.gltf" id="2_xhh6r"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_pn6gp"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_pkgeg"]
 size = Vector3(0.9, 1, 0.9)
 
-[node name="PlatoSucio" type="Area3D" unique_id=921851527]
+[node name="PlatoSucio" type="Area3D" unique_id=1360808025]
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("1_pkgeg")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=2056792508]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1530168808]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-shape = SubResource("BoxShape3D_pn6gp")
+shape = SubResource("BoxShape3D_pkgeg")
 
 [node name="Visual" type="Node3D" parent="." unique_id=389686910 instance=ExtResource("2_xhh6r")]

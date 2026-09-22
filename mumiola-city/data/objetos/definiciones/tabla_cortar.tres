@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://dagoen0hdpy3f"]
 
 [ext_resource type="PackedScene" uid="uid://bow0t5mtwf7yi" path="res://escenas/objetos/generadas/tabla_cortar.tscn" id="1_faq8i"]
+[ext_resource type="Texture2D" uid="uid://bncoiipenq3tl" path="res://arte/iconos/tabla_cortar.png" id="2_l0y8b"]
 [ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_siwtl"]
 [ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_l0y8b"]
 
@@ -14,4 +15,5 @@ peso = 1.0
 apilable = false
 stack_maximo = 1
 valor_base = 25
+icono = ExtResource("2_l0y8b")
 escena_mundo = ExtResource("1_faq8i")
