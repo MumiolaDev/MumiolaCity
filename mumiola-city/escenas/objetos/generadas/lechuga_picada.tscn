@@ -6,13 +6,14 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_rf0pe"]
 size = Vector3(0.9, 1, 0.9)
 
-[node name="LechugaPicada" type="Area3D" unique_id=416257660]
+[node name="LechugaPicada" type="Area3D" unique_id=1671014952]
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("1_rf0pe")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=2026252503]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=6014612]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("BoxShape3D_rf0pe")
 
 [node name="Visual" type="Node3D" parent="." unique_id=1569519464 instance=ExtResource("2_ohumq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.032190483, 0)

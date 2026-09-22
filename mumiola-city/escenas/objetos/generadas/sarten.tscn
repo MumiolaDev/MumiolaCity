@@ -6,12 +6,12 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_qx603"]
 size = Vector3(0.9, 1, 0.9)
 
-[node name="Sarten" type="Area3D" unique_id=1394931469]
+[node name="Sarten" type="Area3D" unique_id=2027982576]
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("1_qx603")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=863526214]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1405745611]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("BoxShape3D_qx603")
 

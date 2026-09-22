@@ -6,13 +6,14 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_feb2i"]
 size = Vector3(0.9, 1, 0.9)
 
-[node name="Frasco" type="Area3D" unique_id=778547868]
+[node name="Frasco" type="Area3D" unique_id=30586826]
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("1_feb2i")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1354668812]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1959011649]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("BoxShape3D_feb2i")
 
 [node name="Visual" type="Node3D" parent="." unique_id=1670252608 instance=ExtResource("2_eyl5c")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.9604645e-08, 0)

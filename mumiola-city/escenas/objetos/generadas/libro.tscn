@@ -6,13 +6,14 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_2obip"]
 size = Vector3(0.9, 1, 0.9)
 
-[node name="Libro" type="Area3D" unique_id=1480221657]
+[node name="Libro" type="Area3D" unique_id=1800062633]
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("1_2obip")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=177964888]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1903241668]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("BoxShape3D_2obip")
 
 [node name="Visual" type="Node3D" parent="." unique_id=1273754043 instance=ExtResource("2_0v5rs")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.24999973, 0)

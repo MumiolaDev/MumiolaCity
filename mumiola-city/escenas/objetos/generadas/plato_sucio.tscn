@@ -6,13 +6,14 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_pkgeg"]
 size = Vector3(0.9, 1, 0.9)
 
-[node name="PlatoSucio" type="Area3D" unique_id=1360808025]
+[node name="PlatoSucio" type="Area3D" unique_id=87337740]
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("1_pkgeg")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1530168808]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1299619294]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("BoxShape3D_pkgeg")
 
 [node name="Visual" type="Node3D" parent="." unique_id=389686910 instance=ExtResource("2_xhh6r")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.7252903e-09, 0)
