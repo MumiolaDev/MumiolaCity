@@ -62,6 +62,8 @@ enum Codigo {
 	ARCHIVO_NO_EXISTE = 601,
 	ARCHIVO_CORRUPTO = 602,
 	FORMATO_DESCONOCIDO = 603,
+	NO_SE_PUDO_ESCRIBIR = 604,
+	NOMBRE_INVALIDO = 605,
 }
 
 ## Texto que se le muestra al jugador para cada codigo.
@@ -102,6 +104,8 @@ const MENSAJES := {
 	Codigo.ARCHIVO_NO_EXISTE: "No encontre ese archivo.",
 	Codigo.ARCHIVO_CORRUPTO: "Ese archivo esta danado y no se pudo leer.",
 	Codigo.FORMATO_DESCONOCIDO: "Eso es de una version mas nueva del juego.",
+	Codigo.NO_SE_PUDO_ESCRIBIR: "No se pudo guardar el archivo.",
+	Codigo.NOMBRE_INVALIDO: "Ese nombre no sirve para un archivo.",
 }
 
 

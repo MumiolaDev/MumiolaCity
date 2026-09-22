@@ -323,9 +323,10 @@ El MVP. Colocar y quitar muebles con vista previa, pintar suelo y paredes, desha
 **Función:** `to_dict()` pasa a incluir la estructura de los dos `GridMap` **por nombre de pieza**, más `version_formato` y la versión del catálogo con que se creó. `from_dict()` la repinta. Sin esto una sala editada no sobrevive, y sin el nombre en vez del id no sobrevive a un re-export de la `MeshLibrary` (**D18**, **D24**).
 **Funciones clave:** hechas. `to_dict()` incluye la estructura por nombre, `version_formato` y la versión del catálogo; `from_dict()` limpia las capas, repinta y recién después repone los muebles, y devuelve `Errores.Codigo`.
 
-### 10b. `SaveManager` (ampliado) — salas como archivos
-**Función:** `guardar_sala()` y `cargar_sala()` contra `user://salas/<nombre>.json`. No es un extra: es la persistencia canónica de una sala y lo que un servidor almacenaría. Permite compartir salas y versionar mapas.
+### 10b. `SaveManager` (ampliado) — salas como archivos · **hecho**
+**Función:** `guardar_sala()`, `cargar_sala()`, `salas_guardadas()` y `existe_sala()` contra `user://salas/<nombre>.json`. No es un extra: es la persistencia canónica de una sala y lo que un servidor almacenaría. Permite compartir salas y versionar mapas.
 **Godot nativo:** `JSON.stringify()`/`parse()` y `FileAccess`, igual que el guardado de partida; `DirAccess.make_dir_recursive_absolute()` para la carpeta.
+**Código propio:** el saneado del nombre de archivo, que es el borde por donde entra lo que escribe una persona — y algún día la red.
 
 ### Cámara
 Desplazamiento y zoom para trabajar en salas grandes. Es del `RoomController`, que ya es dueño del pivote y de la cámara.

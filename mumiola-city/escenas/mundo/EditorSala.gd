@@ -15,6 +15,10 @@ extends Node
 ## Reparto de responsabilidades: la paleta dice *que*, este nodo dice *donde* y
 ## *cuando*, la sala decide *si se puede*. Ninguno de los tres sabe hacer el
 ## trabajo de los otros.
+##
+## Atajos: clic izquierdo coloca o pinta, derecho quita, R gira, Ctrl+Z deshace,
+## Ctrl+Y rehace, Ctrl+S guarda la sala en un archivo, Ctrl+O la vuelve a cargar,
+## Esc suelta la seleccion.
 
 ## Se aplico una operacion. Lleva el codigo para que la interfaz pueda reaccionar
 ## sin volver a preguntar.
@@ -70,6 +74,10 @@ func _unhandled_input(evento : InputEvent) -> void:
 		_deshacer()
 	elif tecla.keycode == KEY_Y and tecla.ctrl_pressed:
 		_rehacer()
+	elif tecla.keycode == KEY_S and tecla.ctrl_pressed:
+		_guardar_sala()
+	elif tecla.keycode == KEY_O and tecla.ctrl_pressed:
+		_cargar_sala()
 	elif tecla.keycode == KEY_ESCAPE and paleta != null:
 		paleta.limpiar()
 
@@ -226,6 +234,39 @@ func _clase_elegida() -> RoomBuilderUI.Clase:
 
 func _item_elegido() -> ItemDefinition:
 	return null if paleta == null else paleta.item()
+
+
+## Guarda la sala activa como archivo suelto, con su propio nombre.
+##
+## Es una accion del editor y no del juego: la partida guarda tu estado, y esto
+## guarda un documento de sala, que no tiene dueno y se puede compartir.
+func _guardar_sala() -> void:
+	var sala := GameManager.sala_actual()
+	if sala == null:
+		return
+
+	var codigo := SaveManager.guardar_sala(sala)
+	if Errores.ok(codigo):
+		GameManager.avisar("Sala guardada como '%s'." % sala.nombre_sala)
+	else:
+		GameManager.avisar_error(codigo)
+
+
+## Vuelve a cargar la sala activa desde su archivo.
+##
+## Pisa lo que haya sin preguntar, porque en un editor con deshacer eso no es
+## destructivo: Ctrl+Z devuelve... salvo que cargar olvida el historial a
+## proposito. Cuando haya interfaz de archivos, aca va la confirmacion.
+func _cargar_sala() -> void:
+	var sala := GameManager.sala_actual()
+	if sala == null:
+		return
+
+	var codigo := SaveManager.cargar_sala(sala, sala.nombre_sala)
+	if Errores.ok(codigo):
+		GameManager.avisar("Sala '%s' cargada." % sala.nombre_sala)
+	else:
+		GameManager.avisar_error(codigo)
 
 
 func _deshacer() -> void:

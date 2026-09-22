@@ -22,6 +22,23 @@ signal carga_completada()
 const RUTA := "user://partida.json"
 const VERSION_ACTUAL := 1
 
+## Donde viven las salas sueltas, una por archivo.
+##
+## Son otra cosa que la partida: la partida es *tu* estado —inventario,
+## habilidades, donde estas—, y una sala guardada es un documento portable que
+## no tiene dueno. Sirve para armar mapas y versionarlos, para compartir una
+## sala, y es lo que un servidor almacenaria (D24).
+const DIR_SALAS := "user://salas"
+
+## Que puede tener el nombre de un archivo de sala. Todo lo demas se descarta.
+const PERMITIDOS := "abcdefghijklmnopqrstuvwxyz0123456789-_"
+
+## Las letras con tilde se pasan a su version pelada antes del filtro, para que
+## "Mi Habitacion" y "Mi Habitación" no terminen en dos archivos distintos.
+const SIN_TILDE := {
+	"á": "a", "é": "e", "í": "i", "ó": "o", "ú": "u", "ü": "u", "ñ": "n",
+}
+
 
 ## Devuelve si hay una partida guardada.
 func existe_partida() -> bool:
@@ -32,6 +49,109 @@ func existe_partida() -> bool:
 func borrar() -> void:
 	if existe_partida():
 		DirAccess.remove_absolute(RUTA)
+
+
+## Guarda una sala como archivo suelto, con el nombre que se le pase o el suyo.
+##
+## Devuelve un codigo y no un Error del motor porque esto se le muestra al
+## jugador: "no se pudo guardar" y "ese nombre no sirve" son cosas distintas que
+## tiene que poder leer.
+func guardar_sala(sala : RoomController, nombre : String = "") -> Errores.Codigo:
+	if sala == null:
+		return Errores.Codigo.NO_TIENE_ITEM
+
+	var archivo_nombre := _nombre_archivo(nombre if nombre != "" else sala.nombre_sala)
+	if archivo_nombre == "":
+		return Errores.Codigo.NOMBRE_INVALIDO
+
+	DirAccess.make_dir_recursive_absolute(DIR_SALAS)
+	var ruta := "%s/%s.json" % [DIR_SALAS, archivo_nombre]
+
+	var archivo := FileAccess.open(ruta, FileAccess.WRITE)
+	if archivo == null:
+		push_error("SaveManager: no se pudo escribir %s (%d)."
+			% [ruta, FileAccess.get_open_error()])
+		return Errores.Codigo.NO_SE_PUDO_ESCRIBIR
+
+	archivo.store_string(JSON.stringify(sala.to_dict(), "\t"))
+	archivo.close()
+
+	# Comprobar que el archivo aparecio en vez de confiar en que no hubo error.
+	# Es la misma leccion que dejo el importador, que reporto 52 guardados y
+	# escribio uno.
+	if not FileAccess.file_exists(ruta):
+		push_error("SaveManager: se escribio %s sin error pero el archivo no existe." % ruta)
+		return Errores.Codigo.NO_SE_PUDO_ESCRIBIR
+
+	guardado_completado.emit()
+	return Errores.Codigo.OK
+
+
+## Carga una sala guardada sobre una sala viva, reemplazando lo que tuviera.
+func cargar_sala(sala : RoomController, nombre : String) -> Errores.Codigo:
+	if sala == null:
+		return Errores.Codigo.NO_TIENE_ITEM
+
+	var archivo_nombre := _nombre_archivo(nombre)
+	if archivo_nombre == "":
+		return Errores.Codigo.NOMBRE_INVALIDO
+
+	var ruta := "%s/%s.json" % [DIR_SALAS, archivo_nombre]
+	if not FileAccess.file_exists(ruta):
+		return Errores.Codigo.ARCHIVO_NO_EXISTE
+
+	var archivo := FileAccess.open(ruta, FileAccess.READ)
+	if archivo == null:
+		return Errores.Codigo.ARCHIVO_NO_EXISTE
+
+	var crudo = JSON.parse_string(archivo.get_as_text())
+	archivo.close()
+	if not (crudo is Dictionary):
+		push_error("SaveManager: %s no es un documento de sala valido." % ruta)
+		return Errores.Codigo.ARCHIVO_CORRUPTO
+
+	var codigo := sala.from_dict(crudo)
+	if Errores.ok(codigo):
+		carga_completada.emit()
+	return codigo
+
+
+## Devuelve los nombres de archivo de las salas guardadas, ordenados.
+func salas_guardadas() -> Array[String]:
+	var salida : Array[String] = []
+	var dir := DirAccess.open(DIR_SALAS)
+	if dir == null:
+		return salida
+	for archivo in dir.get_files():
+		if archivo.ends_with(".json"):
+			salida.append(archivo.trim_suffix(".json"))
+	salida.sort()
+	return salida
+
+
+## Devuelve si existe una sala guardada con ese nombre.
+func existe_sala(nombre : String) -> bool:
+	var archivo_nombre := _nombre_archivo(nombre)
+	return archivo_nombre != "" and FileAccess.file_exists("%s/%s.json" % [DIR_SALAS, archivo_nombre])
+
+
+## Convierte un nombre visible en un nombre de archivo seguro.
+##
+## "Mi Sala Linda" -> "mi_sala_linda". Devuelve vacio si no queda nada utilizable.
+##
+## No es cosmetica: un nombre de sala lo escribe una persona y algun dia va a
+## llegar de la red. Sin filtrar, un nombre con "../" escribiria fuera de la
+## carpeta de salas, que es la clase de agujero que conviene no abrir nunca —
+## menos todavia en un juego que apunta a compartir salas entre jugadores.
+func _nombre_archivo(nombre : String) -> String:
+	var limpio := ""
+	for caracter in nombre.strip_edges().to_lower():
+		var c : String = SIN_TILDE.get(caracter, caracter)
+		if c in PERMITIDOS:
+			limpio += c
+		elif c == " ":
+			limpio += "_"
+	return limpio.substr(0, 64)
 
 
 ## Guarda el estado actual. Devuelve OK, o el error de escritura.

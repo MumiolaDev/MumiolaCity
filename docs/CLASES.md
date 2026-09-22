@@ -65,6 +65,7 @@ enum Codigo {
 	SIN_PERMISO = 501, SALA_LLENA = 502,
 	# 6xx  datos y archivos
 	ARCHIVO_NO_EXISTE = 601, ARCHIVO_CORRUPTO = 602, FORMATO_DESCONOCIDO = 603,
+	NO_SE_PUDO_ESCRIBIR = 604, NOMBRE_INVALIDO = 605,
 }
 
 const MENSAJES := { ... }                       # codigo -> texto para el jugador
@@ -712,18 +713,33 @@ signal carga_completada
 
 const RUTA := "user://partida.json"   # D21
 const VERSION_ACTUAL := 1
+const DIR_SALAS := "user://salas"     # una sala por archivo
 
+# La partida
 func guardar() -> Error
 func cargar() -> Error
 func existe_partida() -> bool
 func borrar() -> void
 func _migrar(datos: Dictionary) -> Dictionary    # segun version_formato
 func _aplicar(partida: SaveGame) -> void
+
+# Las salas sueltas (D24)
+func guardar_sala(sala: RoomController, nombre := "") -> Errores.Codigo
+func cargar_sala(sala: RoomController, nombre: String) -> Errores.Codigo
+func salas_guardadas() -> Array[String]
+func existe_sala(nombre: String) -> bool
+func _nombre_archivo(nombre: String) -> String   # "Mi Habitación" -> "mi_habitacion"
 ```
 
 **Orquesta, no serializa.** Pide `to_dict()` a cada manager y lo mete en el `SaveGame`. Agregar un campo a `InventoryManager` no debería obligar a tocar este archivo.
 
 **`ResourceSaver` con `SaveGame` es lo más corto**, y el propio `SCRIPTS.md` ya anota la alternativa: `FileAccess` + `JSON` da un archivo inspeccionable y sin riesgo de ejecutar código al cargar. Para un juego que apunta a ser online, la versión JSON es la que envejece mejor — un `.tres` cargado desde fuera puede contener rutas de script.
+
+**Una partida y una sala son cosas distintas.** La partida es *tu* estado —inventario, habilidades, dónde estás— y vive en un archivo. Una sala guardada es un **documento portable que no tiene dueño**: sirve para armar mapas y versionarlos, para compartir una sala, y es lo que un servidor almacenaría (**D24**). De ahí que sean dos APIs y no una con un parámetro.
+
+**`_nombre_archivo()` no es cosmética, es el borde.** Un nombre de sala lo escribe una persona y algún día va a llegar de la red: sin filtrar, un nombre con `../` escribiría fuera de la carpeta de salas. Pasa las tildes a su letra pelada antes de filtrar, para que «Mi Habitación» y «Mi Habitacion» no terminen en dos archivos distintos, y corta a 64 caracteres.
+
+**Comprueba que el archivo haya aparecido** en vez de confiar en que no hubo error. Es la lección que dejó el importador, que reportó 52 guardados y escribió uno.
 
 ---
 
