@@ -86,7 +86,12 @@ func _ready() -> void:
 ## regenerar los iconos o de agregar items, y no tiene efectos fuera de esta
 ## escena.
 func refrescar() -> void:
+	# remove_child antes de queue_free, y no solo queue_free: el nodo sigue
+	# siendo hijo hasta el final del cuadro, asi que su nombre sigue ocupado y
+	# Godot renombra al nuevo a "@ItemList@63". La pestania entonces se llama
+	# asi, porque TabContainer usa el nombre del hijo como titulo.
 	for hijo in _pestanias.get_children():
+		_pestanias.remove_child(hijo)
 		hijo.queue_free()
 	_listas.clear()
 	limpiar()

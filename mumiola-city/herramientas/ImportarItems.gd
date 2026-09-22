@@ -128,6 +128,16 @@ func _armar_escena(d : Dictionary, malla : PackedScene) -> PackedScene:
 
 	var visual := malla.instantiate()
 	visual.name = "Visual"
+
+	# Apoyar el modelo sobre su base. Los modelos de KayKit no siguen una sola
+	# convencion: la mayoria trae el origen en la base, pero catorce lo traen en
+	# el centro, y esos se hundian hasta medio metro en el piso — la zanahoria
+	# 58 cm, el cuadro 45. Se corrige aca y no al colocar para que lo hereden
+	# todos a la vez: el mundo, el fantasma de la vista previa y cualquier otro
+	# que instancie la escena.
+	if visual is Node3D:
+		(visual as Node3D).position.y = Volumen.apoyo_de(visual)
+
 	raiz.add_child(visual)
 	visual.owner = raiz
 

@@ -94,7 +94,7 @@ func _run() -> void:
 			continue
 
 		vista.add_child(visual)
-		var caja := _caja_de(visual)
+		var caja := Volumen.caja_de(visual)
 		if caja.size == Vector3.ZERO:
 			fallidos.append("%s: el modelo no tiene ninguna malla con volumen" % def.id)
 			vista.remove_child(visual)
@@ -221,45 +221,6 @@ static func _encuadrar(camara : Camera3D, caja : AABB) -> void:
 	camara.transform = Transform3D(base, posicion)
 	var lado := maxf(maximo.x - minimo.x, maximo.y - minimo.y)
 	camara.size = maxf(lado, 0.01) * MARGEN
-
-
-## Devuelve la caja que envuelve a todas las mallas del modelo, en el espacio de
-## su propia raiz.
-##
-## Hay que recorrerlo porque un modelo de KayKit trae varias MeshInstance3D, y
-## quedarse con la primera encuadraria por una pata de la silla.
-static func _caja_de(raiz : Node3D) -> AABB:
-	var mallas : Array[VisualInstance3D] = []
-	_juntar_mallas(raiz, mallas)
-	if mallas.is_empty():
-		return AABB()
-
-	var total := _transformada_hasta(mallas[0], raiz) * mallas[0].get_aabb()
-	for i in range(1, mallas.size()):
-		total = total.merge(_transformada_hasta(mallas[i], raiz) * mallas[i].get_aabb())
-	return total
-
-
-## Acumula las transformadas locales desde una malla hasta la raiz del modelo.
-##
-## No usa global_transform por lo mismo que _encuadrar(): tiene que dar el mismo
-## resultado este el nodo dentro del arbol o no.
-static func _transformada_hasta(nodo : Node3D, raiz : Node3D) -> Transform3D:
-	var t := Transform3D.IDENTITY
-	var actual := nodo
-	while actual != null:
-		t = actual.transform * t
-		if actual == raiz:
-			break
-		actual = actual.get_parent() as Node3D
-	return t
-
-
-static func _juntar_mallas(nodo : Node, salida : Array[VisualInstance3D]) -> void:
-	if nodo is VisualInstance3D:
-		salida.append(nodo)
-	for hijo in nodo.get_children():
-		_juntar_mallas(hijo, salida)
 
 
 ## Devuelve si la imagen salio enteramente transparente.
