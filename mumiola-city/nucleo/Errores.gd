@@ -33,6 +33,9 @@ enum Codigo {
 	FUERA_DEL_AREA = 104,
 	PARTIRIA_LA_SALA = 105,
 	NO_APOYADO = 106,
+	NO_ES_SUPERFICIE = 107,
+	SUPERFICIE_LLENA = 108,
+	NO_SE_APILA = 109,
 
 	# 2xx — inventario y propiedad
 	NO_ES_TUYO = 201,
@@ -70,6 +73,9 @@ const MENSAJES := {
 	Codigo.FUERA_DEL_AREA: "Eso queda fuera del area que podes modificar.",
 	Codigo.PARTIRIA_LA_SALA: "Asi quedaria una parte de la sala sin salida.",
 	Codigo.NO_APOYADO: "Esto necesita apoyarse en algo.",
+	Codigo.NO_ES_SUPERFICIE: "Ahi no se puede apoyar nada.",
+	Codigo.SUPERFICIE_LLENA: "No queda lugar encima.",
+	Codigo.NO_SE_APILA: "Eso no se puede apoyar encima de otra cosa.",
 
 	Codigo.NO_ES_TUYO: "Eso no es tuyo.",
 	Codigo.INVENTARIO_LLENO: "No te entra nada mas en el inventario.",

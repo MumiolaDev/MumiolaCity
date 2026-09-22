@@ -53,6 +53,7 @@ enum Codigo {
 	# 1xx  grilla y colocacion
 	CELDA_INEXISTENTE = 101, CELDA_OCUPADA = 102, HAY_PARED = 103,
 	FUERA_DEL_AREA = 104, PARTIRIA_LA_SALA = 105, NO_APOYADO = 106,
+	NO_ES_SUPERFICIE = 107, SUPERFICIE_LLENA = 108, NO_SE_APILA = 109,
 	# 2xx  inventario y propiedad
 	NO_ES_TUYO = 201, INVENTARIO_LLENO = 202, NO_TIENE_ITEM = 203, ITEM_EN_USO = 204,
 	# 3xx  economia
@@ -90,8 +91,11 @@ class_name OperacionSala extends Resource
 
 enum Tipo { COLOCAR, RETIRAR, PINTAR, BORRAR }
 
+const SIN_RANURA := -1                   # el objeto esta en el piso
+
 @export var tipo: Tipo
 @export var celda: Vector2i
+@export var ranura: int                  # -1 = piso, 0+ = encima de la superficie (D25)
 @export var item: StringName             # COLOCAR
 @export var rotacion: int                # COLOCAR
 @export var estado: Dictionary           # COLOCAR
@@ -99,8 +103,8 @@ enum Tipo { COLOCAR, RETIRAR, PINTAR, BORRAR }
 @export var pieza: StringName            # PINTAR
 @export var orientacion: int             # PINTAR
 
-static func colocar(item_id: StringName, en_celda: Vector2i, giro := 0, estado_inicial := {}) -> OperacionSala
-static func retirar(en_celda: Vector2i) -> OperacionSala
+static func colocar(item_id: StringName, en_celda: Vector2i, giro := 0, estado_inicial := {}, en_ranura := SIN_RANURA) -> OperacionSala
+static func retirar(en_celda: Vector2i, en_ranura := SIN_RANURA) -> OperacionSala
 static func pintar(en_capa: StringName, en_celda: Vector2i, que_pieza: StringName, giro := 0) -> OperacionSala
 static func borrar(en_capa: StringName, en_celda: Vector2i) -> OperacionSala
 
@@ -118,6 +122,10 @@ Vive en `res://nucleo/OperacionSala.gd`, al lado de `Errores`. **No es autoload:
 **`desde_dict()` devuelve `null` en vez de una operación a medias.** Lo que llega de un archivo —o algún día de la red— no es confiable, y una operación con la celda puesta pero el tipo en basura es peor que ninguna: se aplicaría.
 
 **Los constructores estáticos y no `OperacionSala.new()` suelto.** Cada tipo usa un subconjunto distinto de los campos, y `colocar(&"silla_madera", Vector2i(3, 4))` no deja lugar a una operación de colocar con `capa` llena y `item` vacío.
+
+**`celda` más `ranura` son la identidad de un objeto (D25).** Dos enteros y una coordenada, estables entre clientes sin ponerse de acuerdo en nada — que es justo lo que hace falta el día del servidor. `ranura` se serializa **sólo cuando dice algo**, así que mientras nada se apoye sobre nada ningún documento de sala engorda por esto.
+
+**El campo existe antes que su comportamiento, a propósito.** `SuperficieBehavior` es fase 4, pero el documento de sala y el historial se escriben en la fase 3: si la identidad les creciera un campo después, habría que rehacerlos enteros. Por eso `RoomController.aplicar()` **rechaza** hoy cualquier ranura distinta de `-1` con `NO_ES_SUPERFICIE`, en lugar de ignorarla — un campo que existiera y se ignorara colocaría la taza en el piso sin decir nada.
 
 ---
 
@@ -1005,6 +1013,32 @@ Si el inventario conserva la referencia *y* el `WorldObject` también, el mismo 
 **La profundidad ya no es asunto de nadie.** Con el render 3D la resuelve el búfer de profundidad: desapareció el y-sort, el `z_index` y toda la clase de bugs de objetos dibujados en el orden equivocado. `contenedor_objetos` queda solo como agrupador de la escena.
 
 **La cámara vive en la escena de la sala**, no acá: un `Node3D` pivote centrado con una `Camera3D` ortográfica como hija (GDD §7). Rotar la sala al estilo Habbo es interpolar `pivote.rotation.y` en pasos de 90°.
+
+### 3.4b `SuperficieBehavior extends InteractionBehavior` — **fase 4 (D25)**
+
+El verbo de apoyar cosas encima. Es lo que le da espacio a la decoración personal, que en un sandbox es el producto y no un extra.
+
+```gdscript
+class_name SuperficieBehavior extends InteractionBehavior
+
+@export var capacidad: int = 4              # cuantas ranuras ofrece
+@export var altura_apoyo: float = 0.75      # Y local de la cara de apoyo
+@export var filas: int = 2                  # como se reparten sobre la huella
+@export var columnas: int = 2
+@export var margen: float = 0.15
+@export var acepta: Array[String] = []      # categorias; vacio = cualquiera que no sea superficie
+
+func punto_de(ranura: int, huella: Vector2i) -> Vector3
+func ranura_libre(objeto: WorldObject) -> int        # -1 si no hay
+```
+
+**La superficie es la dueña de lo que tiene encima.** Lo apoyado cuelga del `WorldObject` de abajo, no de `contenedor_objetos` ni de `IsoGrid`, y **no ocupa ninguna celda**: una taza sobre la mesa es invisible para `esta_libre()` y para el A\*, que es lo correcto.
+
+**Retirar la superficie se lleva lo de encima.** Es lo que cualquiera espera, y es la única parte de D25 que le cuesta trabajo a **D23**: `RoomController._inversa_de()` de un retiro deja de ser una operación y pasa a ser una lista, porque deshacer tiene que devolver el mueble **y** todo lo que estaba sobre él.
+
+**Un estante de tres repisas es una superficie con más ranuras, no tres superficies apiladas.** No se anida (**D25**): con anidamiento la identidad pasa a ser una ruta de longitud arbitraria y el documento de sala se vuelve recursivo sin límite.
+
+**Es un `Resource` compartido y sin estado**, como todos los comportamientos: la capacidad y la disposición son del *tipo* de mueble; qué hay apoyado ahora mismo es de la *unidad* y vive en su `WorldObject`.
 
 ### 3.5 `WorldObject extends Area3D`
 

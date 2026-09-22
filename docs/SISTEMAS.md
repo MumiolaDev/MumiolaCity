@@ -349,7 +349,7 @@ La tabla más importante del documento. La mayoría de los bugs de un juego de e
 
 ---
 
-## 6. Decisiones de arquitectura: veintiuna cerradas, dos suspendidas, una pendiente
+## 6. Decisiones de arquitectura: veintidós cerradas y dos suspendidas
 
 Once decisiones que hay que cerrar antes de escribir el sistema correspondiente, ordenadas por lo caro que sale cambiarlas después. **Cinco ya están cerradas** — D1, D2 y D11 aplicadas en `items.json`, D3 resuelta acá abajo, y D7 postergada a la fase 2 a propósito — y **D5 tiene el lado de los datos hecho y el del código pendiente**. Las demás siguen abiertas.
 
@@ -688,21 +688,56 @@ De ahí que `IsoGrid.pintar()` reciba el **nombre** de la pieza y no su id, y qu
 
 ---
 
-### D25 — Una celda puede tener un objeto de piso y cosas apoyadas encima · **pendiente**
+### D25 — Lo apoyado cuelga del mueble de abajo, no de la grilla · **decidida**
 
-**Lo que se decidió:** tiene que ser posible **apoyar objetos sobre otros** —mesas, estantes, mostradores—, porque el MVP es un sandbox de decoración y la expresividad de lo que un jugador arma *es* el producto. Lo que queda abierto es cómo.
+**La meta primero:** tiene que poder apoyarse cosas sobre mesas, estantes y mostradores. El MVP es un sandbox de decoración, así que **lo que un jugador puede armar es el producto**, y una sala donde nada se apoya sobre nada es una sala vacía con muebles.
 
-**Lo que rompe.** `IsoGrid` indexa la ocupación como `Vector2i -> WorldObject`, un objeto por celda, y sobre eso se apoyan tres cosas: que `objeto_en(celda)` alcance para identificar un objeto, que `OperacionSala.retirar(celda)` esté determinada, y —cuando llegue la red— que un cliente pueda nombrar un objeto por su celda. Apilar invalida las tres a la vez.
+**La decisión: la superficie es la dueña.** Un objeto apoyado cuelga del `WorldObject` de abajo. `IsoGrid` **no cambia**: sigue indexando una sola cosa por celda, y esa cosa es el mueble de piso.
 
-**Por qué conviene decidirlo antes que la fase 4 y no durante.** Es exactamente la situación que advierte **D14**: agregar una dimensión a la identidad de un objeto cuando ya hay comportamientos, guardado y operaciones escritos encima obliga a tocar todas las llamadas. Hoy hay un solo punto que muta una sala (**D23**) y un solo índice de ocupación; es el momento barato.
+| | Vive en | Ocupa celdas | Lo persiste |
+|---|---|---|---|
+| Mueble de piso | `contenedor_objetos` de la sala | sí, su `tamano_grilla` | `RoomController.to_dict()` |
+| Objeto apoyado | el `WorldObject` de la superficie | **no**, ninguna | el dict de su superficie, anidado |
 
-**Las tres formas candidatas.**
+**Por qué ésta y no las otras dos.** Un nivel más en la clave de `_ocupadas` habría hecho de «encima» una coordenada global de la sala, con lo que una mesa alta y una baja tendrían el mismo nivel. Darle un id propio a cada objeto era lo más general y lo más caro: cambia el documento de sala, las operaciones y el guardado a la vez. Ésta no toca `IsoGrid` ni la identidad por celda de nada que ya funcione, y **«lo que está sobre la mesa se va con la mesa» es una regla que el jugador entiende sin que se la expliquen**.
 
-1. **Un nivel más en la clave.** `_ocupadas` pasa a indexarse por `Vector3i(x, z, nivel)`, con 0 = piso y 1 = encima. Es lo más parecido a lo que ya hay y `celdas_de()` no cambia. A cambio, «encima» se vuelve una coordenada global de la sala y no una propiedad del mueble, así que una mesa alta y una baja tendrían el mismo nivel.
-2. **El objeto de superficie es el dueño.** Lo apoyado cuelga del `WorldObject` de abajo y no de la grilla; la grilla sigue viendo una sola cosa por celda. Encaja con que apoyar sea un **verbo** del mueble que hace de superficie —`SuperficieBehavior`, §4.5 del plan— y con que el estado viva en `WorldObject.instancia`, que ya se serializa. Retirar la mesa se lleva lo de encima, que además es lo que uno espera.
-3. **Identidad propia por objeto.** Cada `WorldObject` recibe un id y la celda deja de ser su identidad. Es lo más general y lo más caro: cambia el documento de sala, las operaciones y el guardado.
+#### La identidad: celda más ranura
 
-**La recomendación es la 2**, porque no toca `IsoGrid` ni la identidad por celda de nada que ya funcione, y porque «lo que está sobre la mesa se va con la mesa» es una regla que el jugador entiende sin que se la expliquen. Lo que hay que resolver antes de escribirla es cómo se nombra un objeto apoyado en una `OperacionSala` —probablemente celda más índice dentro de la superficie— y si una superficie puede a su vez apoyarse sobre otra, que conviene que **no** en la primera versión.
+Un objeto se nombra con su celda y un número de ranura. `OperacionSala.SIN_RANURA` (`-1`) es el mueble del piso; `0` en adelante son las posiciones de apoyo de la superficie que está en esa celda.
+
+```
+{ op: "colocar", item: "taza", celda: [3,4], ranura: 2 }   # sobre la mesa
+{ op: "retirar", celda: [3,4] }                             # la mesa, con todo
+```
+
+Dos enteros y una coordenada alcanzan, y son **estables entre clientes sin ponerse de acuerdo en nada**, que es lo que hace falta el día del servidor.
+
+#### No se anida, y es a propósito
+
+Una superficie no se apoya sobre otra. Con anidamiento la identidad pasa a ser una **ruta de longitud arbitraria**, el documento de sala se vuelve recursivo sin límite, y deshacer un retiro tiene que capturar un árbol entero en vez de una lista. Un estante de tres repisas se modela como **una superficie con más ranuras**, no como tres superficies apiladas — que además es más fiel a cómo se ve.
+
+Si más adelante hace falta —una caja sobre una mesa, con cosas dentro de la caja— se reabre. El coste de reabrirla es real pero acotado, porque el campo ya existe y lo único que cambia es su tipo.
+
+#### Qué se rechaza y con qué código
+
+| Situación | Código |
+|---|---|
+| El objeto necesita apoyo y lo dejás en el piso | `NO_APOYADO` (106, ya existía) |
+| Ahí abajo no hay nada donde apoyar | `NO_ES_SUPERFICIE` (107) |
+| No queda ranura libre | `SUPERFICIE_LLENA` (108) |
+| Eso es una superficie y no se apila | `NO_SE_APILA` (109) |
+
+#### Las tres consecuencias que hay que respetar
+
+1. **Retirar la superficie se lleva lo de encima**, y por lo tanto **la inversa de ese retiro tiene que capturar el subárbol completo**, no sólo el mueble. Es lo único de esta decisión que le cuesta trabajo a **D23**: `_inversa_de()` de un retiro deja de ser una operación y pasa a ser una lista.
+2. **Un objeto apoyado no ocupa celdas**, así que es invisible para el A\* y para `esta_libre()`. Una taza sobre la mesa no estorba a nadie, que es lo correcto.
+3. **Apoyar es un verbo**, no un caso especial de la grilla: `SuperficieBehavior` es un `InteractionBehavior` más, con la capacidad y la disposición de las ranuras como `@export`. Una mesa declara que es superficie en `items.json`, igual que una silla declara que se puede sentar.
+
+#### Qué está puesto y qué falta
+
+Puesto en la fase 3, porque el documento de sala y el historial se escriben ahora y rehacerlos después sale caro: el campo `ranura` en `OperacionSala` con su ida y vuelta a JSON, los tres códigos nuevos, y un **rechazo explícito** en `RoomController.aplicar()` para cualquier ranura distinta de `-1`. Un campo que existiera y se ignorara colocaría la taza en el piso sin decir nada.
+
+Falta, en la fase 4: `SuperficieBehavior`, las ranuras en `WorldObject`, el anidado en `to_dict()` y la inversa que captura el subárbol.
 
 ---
 

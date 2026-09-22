@@ -240,6 +240,13 @@ func aplicar(op : OperacionSala, registrar : bool = true) -> Errores.Codigo:
 	if not puede_editar(GameManager.jugador_actual()):
 		return Errores.Codigo.SIN_PERMISO
 
+	# D25 esta decidida pero no escrita: la superficie es la duena de lo que tiene
+	# encima, y eso vive en SuperficieBehavior, que es fase 4. Hasta entonces una
+	# operacion con ranura se rechaza en vez de aplicarse al piso, que seria
+	# colocar la taza en el lugar equivocado sin decir nada.
+	if op.ranura != OperacionSala.SIN_RANURA:
+		return Errores.Codigo.NO_ES_SUPERFICIE
+
 	# La inversa se calcula **antes**, mirando la sala como esta ahora: despues de
 	# aplicar ya no se puede saber que habia.
 	var inversa := _inversa_de(op) if registrar else null
