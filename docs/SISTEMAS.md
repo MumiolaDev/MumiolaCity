@@ -476,7 +476,7 @@ Los autoloads se inicializan en el orden del Project Settings, y `_ready()` de u
 
 `RecipeDefinition` admite insumos pedidos por `familia` ("cualquier taza"). Para resolver eso hace falta un índice `familia -> [ItemDefinition]`, y **ningún script de `SCRIPTS.md` tiene ese trabajo asignado**. Godot no autocarga los `.tres` de una carpeta: hay que recorrerla con `ResourceLoader`.
 
-**Propuesta:** autoload `ItemDatabase` que en `_ready()` escanea `res://data/objetos/`, y expone `obtener(id)`, `items_de_familia(familia)`, `items_de_categoria(categoria)`. Con él y `GatherTable` (D6), más los recursos anidados que hoy son diccionarios sueltos, el catálogo real sube de los scripts que detalla `SCRIPTS.md` a 54 clases — el índice completo está en [`CLASES.md`](CLASES.md) §7.
+**Propuesta:** autoload `ItemDatabase` que en `_ready()` escanea `res://data/objetos/`, y expone `obtener(id)`, `items_de_familia(familia)`, `items_de_categoria(categoria)`. Con él y `GatherTable` (D6), más los recursos anidados que hoy son diccionarios sueltos, el catálogo real sube de los scripts que detalla `SCRIPTS.md` a 55 clases — el índice completo está en [`CLASES.md`](CLASES.md) §7.
 
 **Implementado en `res://autoloads/ItemDatabase.gd`**, con los tres métodos propuestos más `existe()`, `cantidad()` y `recargar()`, escaneando `res://data/objetos/definiciones/`. Se adelantó a la fase 1 porque no era opcional: `ItemInstance` guarda `definicion_id` y no la referencia al recurso (§1.8), así que sin un índice por id no hay forma de resolver la definición de nada.
 
@@ -685,6 +685,8 @@ Para el desarrollador el catálogo infinito además es el punto: armar un mapa d
 Una escena no puede viajar por la red: lleva rutas de script, que es el mismo motivo por el que **D21** eligió JSON y no `.tres` para el guardado. A partir del editor, el `.tscn` de una sala es solo el molde vacío y **lo que la define es su documento de datos**: estructura, muebles y estado, con `version_formato` y la versión del catálogo con que se creó, para que una discrepancia se detecte en vez de dibujar cualquier cosa.
 
 De ahí que `IsoGrid.pintar()` reciba el **nombre** de la pieza y no su id, y que `pieza_en()` devuelva nombre: dos clientes tienen que coincidir en qué es `suelo_base` sin compartir la misma `MeshLibrary` en memoria. Es **D18** dejando de ser una precaución y volviéndose necesario.
+
+**Implementada.** `RoomController.to_dict()` vuelca las dos capas celda por celda y por nombre de pieza, con `version_formato`, la versión del catálogo, el nombre, el tipo, el propietario y la entrada; `from_dict()` limpia, repinta y recién después repone los muebles. La versión del catálogo hubo que traerla a runtime con `CatalogoInfo`, porque vivía sólo en `items.json`, que es fuente y no dato de juego.
 
 ---
 

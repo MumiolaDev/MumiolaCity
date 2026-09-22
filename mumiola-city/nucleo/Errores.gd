@@ -57,6 +57,11 @@ enum Codigo {
 	# 5xx — permisos y salas
 	SIN_PERMISO = 501,
 	SALA_LLENA = 502,
+
+	# 6xx — datos y archivos
+	ARCHIVO_NO_EXISTE = 601,
+	ARCHIVO_CORRUPTO = 602,
+	FORMATO_DESCONOCIDO = 603,
 }
 
 ## Texto que se le muestra al jugador para cada codigo.
@@ -93,6 +98,10 @@ const MENSAJES := {
 
 	Codigo.SIN_PERMISO: "No tenes permiso para hacer eso aca.",
 	Codigo.SALA_LLENA: "La sala esta llena.",
+
+	Codigo.ARCHIVO_NO_EXISTE: "No encontre ese archivo.",
+	Codigo.ARCHIVO_CORRUPTO: "Ese archivo esta danado y no se pudo leer.",
+	Codigo.FORMATO_DESCONOCIDO: "Eso es de una version mas nueva del juego.",
 }
 
 

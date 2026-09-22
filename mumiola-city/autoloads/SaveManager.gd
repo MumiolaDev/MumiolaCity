@@ -113,8 +113,12 @@ func _aplicar(partida : SaveGame) -> void:
 	SkillManager.from_dict(partida.habilidades)
 
 	for sala in GameManager.salas():
-		if partida.salas.has(sala.scene_file_path):
-			sala.from_dict(partida.salas[sala.scene_file_path])
+		if not partida.salas.has(sala.scene_file_path):
+			continue
+		var codigo := sala.from_dict(partida.salas[sala.scene_file_path])
+		if not Errores.ok(codigo):
+			push_warning("SaveManager: no se pudo restaurar la sala '%s': %s"
+				% [sala.name, Errores.mensaje(codigo)])
 
 	# La sala se cambia despues de repoblarla, para que el jugador no aparezca en
 	# una habitacion a medio armar.

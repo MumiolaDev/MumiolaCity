@@ -11,10 +11,12 @@ extends Node
 ## definiciones.
 
 const CARPETA := "res://data/objetos/definiciones"
+const RUTA_INFO := "res://data/objetos/catalogo.tres"
 
 var _por_id : Dictionary = {}          # StringName -> ItemDefinition
 var _por_familia : Dictionary = {}     # StringName -> Array[ItemDefinition]
 var _por_categoria : Dictionary = {}   # String     -> Array[ItemDefinition]
+var _info : CatalogoInfo = null        # version del catalogo, o null si falta
 
 
 func _ready() -> void:
@@ -26,6 +28,11 @@ func recargar() -> void:
 	_por_id.clear()
 	_por_familia.clear()
 	_por_categoria.clear()
+
+	# Sin aviso si falta: un catalogo importado con una version vieja de la
+	# herramienta no tiene este archivo, y el juego funciona igual — lo unico
+	# que se pierde es poder anotar la version en los documentos de sala.
+	_info = load(RUTA_INFO) as CatalogoInfo if ResourceLoader.exists(RUTA_INFO) else null
 
 	var dir := DirAccess.open(CARPETA)
 	if dir == null:
@@ -85,6 +92,15 @@ func colocables() -> Array[ItemDefinition]:
 		if def.colocable and def.escena_mundo != null:
 			salida.append(def)
 	return salida
+
+
+## La version del catalogo con que se genero este contenido, o vacio si no la hay.
+##
+## La escribe el importador desde items.json al importar. La guarda cada
+## documento de sala (D24), para poder detectar al abrir una sala que se hizo con
+## otro catalogo en vez de cargarla a medias y dejar solo avisos por consola.
+func version() -> String:
+	return "" if _info == null else _info.version
 
 
 ## Cuantas definiciones tiene cargadas el catalogo.

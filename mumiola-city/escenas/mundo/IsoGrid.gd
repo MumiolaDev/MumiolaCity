@@ -221,6 +221,34 @@ func _grid_de(capa : StringName) -> GridMap:
 	return null
 
 
+## Devuelve todas las celdas pintadas de una capa.
+##
+## Ojo con lo que significa: son las celdas donde se *coloco* una pieza, no las
+## que la pieza ocupa. Con piezas de una celda —que es la regla del proyecto,
+## D15— coinciden, y por eso alcanza para guardar la sala.
+func celdas_pintadas(capa : StringName) -> Array[Vector2i]:
+	var salida : Array[Vector2i] = []
+	var grid_map := _grid_de(capa)
+	if grid_map == null:
+		return salida
+	for celda in grid_map.get_used_cells():
+		salida.append(Vector2i(celda.x, celda.z))
+	return salida
+
+
+## Borra una capa entera.
+##
+## Hace falta antes de repintar una sala desde su documento: sin esto, cargar
+## sobre una sala ya pintada deja lo viejo donde el documento no diga nada, y la
+## sala cargada seria la union de dos.
+func limpiar_capa(capa : StringName) -> void:
+	var grid_map := _grid_de(capa)
+	if grid_map == null:
+		return
+	grid_map.clear()
+	_tras_cambiar_estructura(capa)
+
+
 ## Devuelve la MeshLibrary de una capa, o null si esa capa no existe.
 ##
 ## Existe para que quien necesite las piezas de una capa —la paleta del editor,

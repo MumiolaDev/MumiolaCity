@@ -31,6 +31,16 @@ signal operacion_aplicada(op : OperacionSala)
 ## el contenido: los objetos siguen en sus mismas celdas.
 const PASO_ROTACION := PI / 2.0
 
+## Version del documento de sala.
+##
+## Existe desde la primera version, con migracion vacia, por lo mismo que en
+## SaveGame: agregarla cuando ya hay salas guardadas afuera obliga a adivinar que
+## formato tiene un archivo sin numero.
+const VERSION_FORMATO := 1
+
+## Las capas de escenario que guarda el documento.
+const CAPAS : Array[StringName] = [CatalogoPiezas.SUELO, CatalogoPiezas.PAREDES]
+
 ## comun | vivienda | produccion | tienda
 @export_enum("comun", "vivienda", "produccion", "tienda") var tipo : String = "comun"
 ## Nombre visible de la sala.
@@ -383,19 +393,82 @@ func to_dict() -> Dictionary:
 			"contenido": String(obj.instancia.contenido_id),
 			"contenido_cantidad": obj.instancia.contenido_cantidad,
 		})
-	return {"objetos": lista}
+
+	return {
+		"version_formato": VERSION_FORMATO,
+		"catalogo": ItemDatabase.version(),
+		"nombre": nombre_sala,
+		"tipo": tipo,
+		"propietario": String(propietario_id),
+		"entrada": [celda_entrada.x, celda_entrada.y],
+		"estructura": _estructura_a_dict(),
+		"objetos": lista,
+	}
 
 
-## Repuebla la sala desde un diccionario, reemplazando lo que hubiera.
+## Vuelca las dos capas de escenario, pieza por pieza y por nombre.
 ##
-## Vacia primero: cargar una partida sobre una sala que ya tiene muebles los
-## sumaria a los guardados en vez de reemplazarlos.
+## Por nombre y nunca por id (D18): los ids de una MeshLibrary se asignan al
+## exportarla desde su escena fuente, asi que un re-export los reasigna y una
+## sala guardada por id se repinta con mallas distintas sin que nada de error.
+## Las paredes se vuelven suelo y lo descubris mirando.
+##
+## Cada celda sale como [x, z, "pieza", orientacion]. Es plano y repetido a
+## proposito: agrupar por pieza ahorraria algo de espacio y costaria poder abrir
+## el archivo y entender que dice.
+func _estructura_a_dict() -> Dictionary:
+	var salida := {}
+	for capa in CAPAS:
+		var celdas : Array = []
+		for celda in grid.celdas_pintadas(capa):
+			var pieza := grid.pieza_en(capa, celda)
+			if pieza.is_empty():
+				continue
+			celdas.append([celda.x, celda.y, String(pieza["pieza"]), int(pieza["orientacion"])])
+		salida[String(capa)] = celdas
+	return salida
+
+
+## Repuebla la sala desde su documento, reemplazando lo que hubiera.
+##
+## Vacia primero: cargar sobre una sala que ya tiene cosas las sumaria a las
+## guardadas en vez de reemplazarlas. Vale para los muebles y tambien para el
+## escenario.
+##
+## Devuelve un codigo y no void porque cargar puede ser rechazado de verdad: un
+## documento de una version mas nueva no se puede interpretar, y adivinar es peor
+## que decir que no. Lo que **no** lo aborta es que falte un mueble: eso se avisa
+## por consola y la sala entra igual, porque media sala es mejor que ninguna.
 ##
 ## Los numeros llegan como float desde JSON, que no distingue enteros, de ahi los
 ## int(). Sin eso una celda seria Vector2i(3.0, 4.0) y fallaria el tipado.
-func from_dict(d : Dictionary) -> void:
+func from_dict(d : Dictionary) -> Errores.Codigo:
+	var version := int(d.get("version_formato", 0))
+	if version > VERSION_FORMATO:
+		push_warning("RoomController '%s': el documento es version %d y esta version entiende hasta la %d."
+			% [nombre_sala, version, VERSION_FORMATO])
+		return Errores.Codigo.FORMATO_DESCONOCIDO
+
+	# Una discrepancia de catalogo no impide cargar: casi siempre la sala entra
+	# entera igual. Pero se avisa, porque si despues falta un mueble, este es el
+	# motivo y sin el aviso no habria como saberlo.
+	var catalogo := str(d.get("catalogo", ""))
+	if catalogo != "" and catalogo != ItemDatabase.version():
+		push_warning("RoomController '%s': la sala se hizo con el catalogo %s y este es el %s."
+			% [nombre_sala, catalogo, ItemDatabase.version()])
+
 	for obj in objetos():
 		retirar_objeto(obj)
+
+	# La estructura primero: sin suelo debajo, todo mueble seria rechazado por
+	# CELDA_INEXISTENTE y la sala se cargaria vacia.
+	if d.has("estructura"):
+		_estructura_desde_dict(d["estructura"])
+
+	if d.has("entrada"):
+		var e : Array = d["entrada"]
+		if e.size() == 2:
+			celda_entrada = Vector2i(int(e[0]), int(e[1]))
 
 	for entrada in d.get("objetos", []):
 		var inst := ItemInstance.new()
@@ -412,6 +485,35 @@ func from_dict(d : Dictionary) -> void:
 		if not Errores.ok(resultado):
 			push_warning("RoomController '%s': no se pudo restaurar '%s' en %s: %s"
 				% [nombre_sala, inst.definicion_id, celda, Errores.mensaje(resultado)])
+
+	# Lo cargado no se deshace: el historial es de lo que hiciste en esta sesion
+	# de edicion, y un Ctrl+Z que empiece a desarmar una sala recien abierta no
+	# es lo que nadie espera.
+	olvidar_historial()
+	return Errores.Codigo.OK
+
+
+## Repinta las dos capas de escenario desde el documento.
+##
+## Limpia antes de pintar: si no, cargar sobre una sala ya pintada deja lo viejo
+## en las celdas que el documento no menciona, y el resultado es la union de dos
+## salas en vez de la guardada.
+func _estructura_desde_dict(estructura : Dictionary) -> void:
+	for capa in CAPAS:
+		grid.limpiar_capa(capa)
+
+	for capa in CAPAS:
+		for entrada in estructura.get(String(capa), []):
+			if not (entrada is Array) or entrada.size() < 3:
+				push_warning("RoomController '%s': entrada de estructura mal formada en '%s'."
+					% [nombre_sala, capa])
+				continue
+			var celda := Vector2i(int(entrada[0]), int(entrada[1]))
+			var pieza := StringName(str(entrada[2]))
+			var orientacion := int(entrada[3]) if entrada.size() > 3 else 0
+			if not grid.pintar(capa, celda, pieza, orientacion):
+				push_warning("RoomController '%s': no existe la pieza '%s' para la capa '%s'."
+					% [nombre_sala, pieza, capa])
 
 
 ## Crea el nodo del objeto: su escena propia si la tiene, o un WorldObject pelado.

@@ -23,6 +23,7 @@ const DIR_COMPORTAMIENTOS := "res://data/objetos/comportamientos"
 const DIR_ESCENAS := "res://escenas/objetos/generadas"
 const DIR_MODELOS := "res://arte/modelos_3d"
 const DIR_ICONOS := "res://arte/iconos"
+const RUTA_CATALOGO := "res://data/objetos/catalogo.tres"
 
 var _avisos : Array[String] = []
 
@@ -41,6 +42,7 @@ func _run() -> void:
 	var escenas := _generar_escenas(items)
 	var n_items := _generar_items(items, escenas)
 	var n_hab := _generar_habilidades(habilidades)
+	_generar_info(datos, items)
 
 	print("\n--- importacion terminada ---")
 	print("  reportado: %d definiciones, %d escenas, %d habilidades" % [n_items, escenas.size(), n_hab])
@@ -148,6 +150,17 @@ func _armar_escena(d : Dictionary, malla : PackedScene) -> PackedScene:
 		return null
 	raiz.free()
 	return empaquetada
+
+
+## Guarda la version del catalogo para que exista en runtime.
+##
+## items.json es fuente y no dato de juego, asi que su numero de version se
+## perderia al importar. El documento de sala lo necesita (D24).
+func _generar_info(datos : Dictionary, items : Array) -> void:
+	var info := CatalogoInfo.new()
+	info.version = str(datos.get("version", ""))
+	info.cantidad_items = items.size()
+	_guardar(info, RUTA_CATALOGO)
 
 
 ## Crea un ItemDefinition por entrada del catalogo.

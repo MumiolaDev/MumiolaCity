@@ -63,6 +63,8 @@ enum Codigo {
 	FALTA_ESTACION = 404, FALTA_UTENSILIO = 405,
 	# 5xx  permisos y salas
 	SIN_PERMISO = 501, SALA_LLENA = 502,
+	# 6xx  datos y archivos
+	ARCHIVO_NO_EXISTE = 601, ARCHIVO_CORRUPTO = 602, FORMATO_DESCONOCIDO = 603,
 }
 
 const MENSAJES := { ... }                       # codigo -> texto para el jugador
@@ -497,6 +499,7 @@ func obtener(id: StringName) -> ItemDefinition
 func items_de_familia(familia: StringName) -> Array[ItemDefinition]
 func items_de_categoria(categoria: String) -> Array[ItemDefinition]
 func colocables() -> Array[ItemDefinition]   # colocable y con escena, ordenados por id
+func version() -> String                     # la del catalogo, para el documento de sala
 func recetas_de(habilidad: StringName) -> Array[ItemDefinition]
 func validar_catalogo() -> Array[String]     # ids duplicados, insumos rotos, etc.
 ```
@@ -781,6 +784,9 @@ func pieza_en(capa: StringName, celda: Vector2i) -> Dictionary   # {pieza, orien
 func pintar(capa: StringName, celda: Vector2i, pieza: StringName, orientacion := 0) -> bool
 func borrar_celda(capa: StringName, celda: Vector2i) -> bool
 func celdas_en_rectangulo(desde: Vector2i, hasta: Vector2i) -> Array[Vector2i]
+func celdas_pintadas(capa: StringName) -> Array[Vector2i]        # para guardar la sala
+func limpiar_capa(capa: StringName) -> void                      # antes de repintarla
+func biblioteca_de(capa: StringName) -> MeshLibrary              # la usa la paleta
 
 # Rutas
 func ruta(origen: Vector2i, destino: Vector2i) -> Array[Vector2i]
@@ -965,7 +971,7 @@ func objetos() -> Array[WorldObject]
 func colocar_objeto(inst: ItemInstance, celda: Vector2i, rotacion: int = 0) -> Errores.Codigo
 func retirar_objeto(obj: WorldObject) -> ItemInstance
 func to_dict() -> Dictionary
-func from_dict(d: Dictionary) -> void
+func from_dict(d: Dictionary) -> Errores.Codigo
 
 # Operaciones (D23)
 func puede_editar(actor: Node) -> bool           # hoy siempre true
@@ -986,6 +992,24 @@ func olvidar_historial() -> void
 **`puede_editar(actor)` devuelve siempre `true` hoy, y está bien.** Lo importante no es la comprobación sino que exista el lugar donde va (la costura 4 del replan). `Errores.Codigo.NO_ES_TUYO` y `SIN_PERMISO` ya están en el enum esperándola, y `propietario_id` ya existe.
 
 **`indicador` es opcional por contrato**, como la interfaz: sacar el nodo del árbol quita la ayuda visual y no rompe nada.
+
+#### El documento de sala (D24)
+
+`to_dict()` no vuelca sólo los muebles: incluye **la estructura de las dos capas de escenario**, más `version_formato`, la versión del catálogo con que se creó, el nombre, el tipo, el propietario y la celda de entrada. Eso es lo que convierte una sala en un dato que puede viajar, y la razón por la que el `.tscn` pasa a ser sólo el molde vacío.
+
+```json
+"estructura": { "suelo": [[3, 4, "suelo_base", 0], …], "paredes": [[0, 0, "pilar_base", 22], …] }
+```
+
+**Cada celda por nombre de pieza y nunca por id (D18).** Los ids de una `MeshLibrary` se asignan al exportarla, así que un re-export los reasigna y una sala guardada por id se repinta con mallas distintas **sin que nada dé error**: las paredes se vuelven suelo y lo descubrís mirando.
+
+**Plano y repetido a propósito.** Agrupar por pieza ahorraría algo de espacio —una sala de 700 celdas ocupa 19 KB— y costaría poder abrir el archivo y entender qué dice.
+
+**`from_dict()` pinta la estructura antes que los muebles.** Sin suelo debajo, cada mueble sería rechazado con `CELDA_INEXISTENTE` y la sala se cargaría vacía. Y **limpia las capas antes de pintar**: si no, cargar sobre una sala ya pintada deja lo viejo donde el documento no diga nada, y el resultado es la unión de dos salas.
+
+**Devuelve un código y no `void`.** Un documento de una versión más nueva no se puede interpretar, y adivinar es peor que decir que no. Lo que **no** lo aborta es que falte un mueble: eso se avisa y la sala entra igual, porque media sala es mejor que ninguna.
+
+**Cargar olvida el historial.** El deshacer es de lo que hiciste en esta sesión de edición; un `Ctrl+Z` que empiece a desarmar una sala recién abierta no es lo que nadie espera.
 
 **La sala no conoce al personaje.** `activar()` enciende la sala y le da la cámara; quien cambia de sala es el que ubica al jugador con `PersonajeControlador.entrar_en(sala)`. Si `RoomController` importara `PersonajeControlador`, una sala no podría existir sin un jugador adentro — y eso rompe los NPCs, el guardado y cualquier previsualización de sala. Es la regla de dirección de dependencias de `SISTEMAS.md` §1.
 
@@ -1301,7 +1325,7 @@ stateDiagram-v2
 
 ## 7. Índice de clases
 
-54 clases, contra los 39 scripts que detalla `SCRIPTS.md`. Las marcadas **NUEVA** son las que aparecieron al revisar el diseño; `SCRIPTS.md` las nombra en una tabla aparte, pero no las desarrolla.
+55 clases, contra los 39 scripts que detalla `SCRIPTS.md`. Las marcadas **NUEVA** son las que aparecieron al revisar el diseño; `SCRIPTS.md` las nombra en una tabla aparte, pero no las desarrolla.
 
 | # | Clase | Capa | Extends | Fase |
 |---|---|---|---|---|
@@ -1309,6 +1333,7 @@ stateDiagram-v2
 | 0b | `CatalogoPiezas` | Transversal | `RefCounted` | 1 |
 | 0c | `Habilidades` | Transversal | `RefCounted` | 2 |
 | 0d | `OperacionSala` | Transversal | `Resource` | 3 |
+| 0e | **`CatalogoInfo`** NUEVA (D24) | Datos | `Resource` | 3 |
 | 1 | `IsoGrid` | Mundo | `Node3D` | 1 |
 | 2 | `PersonajeControlador` | Mundo | `CharacterBody3D` | 1 |
 | 3 | `AvatarComposer` | Mundo | `Node3D` | 1 |
