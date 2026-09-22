@@ -70,6 +70,9 @@ var _material_libre : StandardMaterial3D
 var _material_bloqueado : StandardMaterial3D
 
 var _fantasma : Node3D
+## Que genero el fantasma que hay ahora: una ItemDefinition o una Mesh. Se guarda
+## para no reconstruirlo sesenta veces por segundo cuando no cambio nada.
+var _fuente : Variant = null
 var _definicion : ItemDefinition
 var _origen : Vector2i = IsoGrid.SIN_CELDA
 var _rotacion : int = 0
@@ -116,21 +119,48 @@ func _process(_delta : float) -> void:
 ## Pasar null deja solo el recuadro de una celda, que es lo que corresponde al
 ## pintar suelo o paredes, donde no hay malla que previsualizar.
 func elegir(definicion : ItemDefinition, rotacion : int = 0) -> void:
-	if definicion != _definicion:
+	if definicion != _fuente:
 		_cambiar_fantasma(definicion)
+	_definicion = definicion
 	_rotacion = rotacion
 	if _origen != IsoGrid.SIN_CELDA:
 		_actualizar(_origen)
 
 
+## Elige una pieza de escenario para previsualizar, por su malla.
+##
+## Existe para que girar una pared no sea a ciegas. Una pieza no tiene
+## ItemDefinition —es una entrada de MeshLibrary, no un item— asi que entra por
+## su malla, y su huella es siempre una celda (D15).
+func elegir_pieza(malla : Mesh, rotacion : int = 0) -> void:
+	if malla != _fuente:
+		_cambiar_fantasma(malla)
+	_definicion = null
+	_rotacion = rotacion
+	if _origen != IsoGrid.SIN_CELDA:
+		_actualizar(_origen)
+
+
+## Ubica la vista previa sin tocar lo elegido.
+##
+## Es la pareja de elegir() y elegir_pieza(): una dice **que** y esta dice
+## **donde**. Existe porque mostrar() interpreta un null como "no hay nada
+## elegido" y destruye el fantasma, asi que usarla para ubicar una pieza —que no
+## tiene ItemDefinition— borraba el fantasma recien creado en cada cuadro.
+func mostrar_en(celda : Vector2i, rotacion : int = 0) -> void:
+	_rotacion = rotacion
+	_actualizar(celda)
+
+
 ## Muestra la vista previa de un item en una celda, con una rotacion en pasos de
 ## noventa grados.
 ##
-## Es la otra mitad, la que usa el editor: ahi quien decide la celda es el
-## editor y no el puntero.
+## Atajo de elegir() mas mostrar_en() para el caso de un item. Para una pieza de
+## escenario hay que usar los dos por separado.
 func mostrar(definicion : ItemDefinition, celda : Vector2i, rotacion : int = 0) -> void:
-	if definicion != _definicion:
+	if definicion != _fuente:
 		_cambiar_fantasma(definicion)
+	_definicion = definicion
 	_rotacion = rotacion
 	_actualizar(celda)
 
@@ -219,16 +249,19 @@ func _ubicar_fantasma(origen : Vector2i) -> void:
 ##
 ## Solo se llama cuando cambia el item elegido, no cada cuadro: instanciar una
 ## escena por cuadro seria caro y ademas inutil.
-func _cambiar_fantasma(definicion : ItemDefinition) -> void:
+func _cambiar_fantasma(fuente : Variant) -> void:
 	if _fantasma != null:
 		_fantasma.queue_free()
 		_fantasma = null
-	_definicion = definicion
+	_fuente = fuente
 
-	if definicion == null:
-		return
+	if fuente is ItemDefinition:
+		_fantasma = (fuente as ItemDefinition).instanciar_visual()
+	elif fuente is Mesh:
+		var nodo := MeshInstance3D.new()
+		nodo.mesh = fuente as Mesh
+		_fantasma = nodo
 
-	_fantasma = definicion.instanciar_visual()
 	if _fantasma == null:
 		return
 

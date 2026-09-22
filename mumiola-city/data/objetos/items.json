@@ -183,7 +183,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/food_ingredient_tomato",
 			"interacciones": [],
@@ -219,7 +219,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/food_ingredient_lettuce",
 			"interacciones": [],
@@ -255,7 +255,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/food_ingredient_potato",
 			"interacciones": [],
@@ -291,7 +291,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/food_ingredient_onion",
 			"interacciones": [],
@@ -327,7 +327,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/food_ingredient_carrot",
 			"interacciones": [],
@@ -363,7 +363,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/crate_tomatoes",
 			"interacciones": [
@@ -387,7 +387,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/food_ingredient_bun",
 			"interacciones": [],
@@ -409,7 +409,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/food_ingredient_cheese",
 			"interacciones": [],
@@ -431,7 +431,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/food_ingredient_burger_uncooked",
 			"interacciones": [],
@@ -453,7 +453,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/food_ingredient_ham",
 			"interacciones": [],
@@ -475,7 +475,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/food_ingredient_tomato_slices",
 			"interacciones": [],
@@ -514,7 +514,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/food_ingredient_lettuce_chopped",
 			"interacciones": [],
@@ -553,7 +553,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/food_ingredient_cheese_slice",
 			"interacciones": [],
@@ -592,7 +592,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/food_ingredient_onion_rings",
 			"interacciones": [],
@@ -631,7 +631,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/food_ingredient_carrot_pieces",
 			"interacciones": [],
@@ -670,7 +670,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/food_ingredient_potato_mashed",
 			"interacciones": [],
@@ -708,7 +708,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/food_ingredient_burger_cooked",
 			"interacciones": [],
@@ -746,7 +746,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/food_ingredient_ham_cooked",
 			"interacciones": [],
@@ -784,7 +784,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/food_ingredient_burger_trash",
 			"interacciones": [],
@@ -806,7 +806,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/food_burger",
 			"interacciones": [],
@@ -856,7 +856,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/food_vegetableburger",
 			"interacciones": [],
@@ -910,7 +910,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/food_stew",
 			"interacciones": [],
@@ -961,7 +961,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/food_dinner",
 			"interacciones": [],
@@ -1003,7 +1003,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/knife",
 			"interacciones": [],
@@ -1025,7 +1025,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/cuttingboard",
 			"interacciones": [],
@@ -1047,7 +1047,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/pan_A",
 			"interacciones": [],
@@ -1069,7 +1069,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/pot_A",
 			"interacciones": [],
@@ -1091,7 +1091,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/plate",
 			"interacciones": [
@@ -1130,7 +1130,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/bowl",
 			"interacciones": [
@@ -1169,7 +1169,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/plate_dirty",
 			"interacciones": [],
@@ -1191,7 +1191,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/bowl_dirty",
 			"interacciones": [],
@@ -1213,7 +1213,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "restoran/jar_A_medium",
 			"interacciones": [],
@@ -1235,7 +1235,7 @@
 				1,
 				1
 			],
-			"rotable": false,
+			"rotable": true,
 			"colocable": true,
 			"modelo": "prototipo/Primitive_Beam",
 			"interacciones": [],

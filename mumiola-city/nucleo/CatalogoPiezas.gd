@@ -43,6 +43,35 @@ const PIEZAS := {
 }
 
 
+## Los cuatro giros de un cuarto de vuelta, como indices de orientacion de GridMap.
+##
+## Un GridMap no guarda grados sino un indice ortogonal de 0 a 23, que cubre las
+## veinticuatro orientaciones de un cubo. Solo cuatro de ellas son un giro en Y,
+## y son estas.
+##
+## El orden no es el natural [0, 16, 10, 22] sino este, y la razon importa: el 16
+## es +90 grados, pero los objetos colocados giran con -PASO_ROTACION, o sea -90.
+## Con el orden natural, girar una pared y girar una silla irian para lados
+## opuestos con la misma tecla. Asi hay una sola regla: un paso es un cuarto de
+## vuelta en el mismo sentido, sea lo que sea que estes girando.
+const ORIENTACIONES : Array[int] = [0, 22, 10, 16]
+
+
+## Convierte pasos de un cuarto de vuelta en indice de orientacion de GridMap.
+static func orientacion_de(pasos : int) -> int:
+	return ORIENTACIONES[posmod(pasos, ORIENTACIONES.size())]
+
+
+## Convierte un indice de orientacion en pasos, o 0 si no es un giro en Y.
+##
+## Devuelve 0 para las orientaciones que no son un giro en Y —una pieza puesta de
+## costado, que el editor no produce pero una sala pintada a mano si puede
+## tener—, porque no hay un numero de pasos que las describa.
+static func pasos_de(orientacion : int) -> int:
+	var indice := ORIENTACIONES.find(orientacion)
+	return 0 if indice == -1 else indice
+
+
 ## Devuelve el id de una pieza por su nombre, o -1 si la biblioteca no la tiene.
 ##
 ## Es el primitivo de D18: todo lo que se guarde o se lea de afuera viaja por

@@ -9,14 +9,22 @@ I = []  # items
 
 def item(id, nombre, categoria, valor, modelo=None, desc="", peso=0.2,
          apilable=True, stack=99, comprable=False, vendible=True, familia="",
-         size=(1, 1), rotable=False, colocable=None, interacciones=None, receta=None):
+         size=(1, 1), rotable=None, colocable=None, interacciones=None, receta=None):
+	# Por defecto, todo lo que se puede colocar se puede girar.
+	#
+	# Antes el defecto era False y solo doce de los cuarenta y cinco colocables
+	# rotaban, que en un editor de salas es media herramienta: un mueble que solo
+	# mira al norte sirve para una pared de cuatro. Girar algo con simetria
+	# radial —un tomate, un plato— no se nota, pero nunca esta mal; no poder
+	# girar algo que lo necesita si.
+	se_coloca = (modelo is not None) if colocable is None else colocable
 	I.append({
 		"id": id, "nombre": nombre, "descripcion": desc, "categoria": categoria,
 		"peso": peso, "apilable": apilable, "stack_maximo": stack,
 		"valor_base": valor, "comprable": comprable, "vendible": vendible,
 		"familia": familia,
-		"tamano_grilla": list(size), "rotable": rotable,
-		"colocable": (modelo is not None) if colocable is None else colocable,
+		"tamano_grilla": list(size), "rotable": se_coloca if rotable is None else rotable,
+		"colocable": se_coloca,
 		"modelo": modelo,
 		"interacciones": interacciones or [],
 		"receta": receta,
