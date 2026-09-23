@@ -10,6 +10,14 @@ extends Node3D
 ## enganche tipo handslot.l, que son donde van a colgar las herramientas.
 const SLOTS := [&"cuerpo", &"piernas", &"torso", &"cabeza", &"tocado"]
 
+## Se emite cuando una animacion de transicion termino y arranca la que encadena.
+##
+## Existe para que quien pidio la transicion pueda esperarla. Levantarse de una
+## cama, por ejemplo, tiene que mover al personaje recien cuando la animacion
+## termino; moverlo antes lo hace aparecer de pie al costado del mueble mientras
+## todavia se esta incorporando.
+signal transicion_terminada(destino : StringName)
+
 ## Traduce los nombres logicos del juego a los del pack de animaciones.
 ##
 ## Es lo que evita que el resto del codigo conozca a KayKit: el juego pide
@@ -100,17 +108,20 @@ func reproducir(animacion : StringName) -> void:
 ##
 ## Solo funciona con animaciones que no esten en en_bucle: una animacion ciclica
 ## no termina nunca, asi que animation_finished no se emite jamas.
-func reproducir_encadenado(transicion : StringName, destino : StringName) -> void:
+## Devuelve si de verdad va a encadenar. Con false, quien llamo sabe que no hay
+## ninguna transicion que esperar y que el estado final ya esta puesto.
+func reproducir_encadenado(transicion : StringName, destino : StringName) -> bool:
 	if animador == null:
-		return
+		return false
 	if not animaciones.has(transicion):
 		# Sin la transicion, al menos que el estado final se vea.
 		reproducir(destino)
-		return
+		return false
 
 	_encadenada = destino
 	_actual = &""      # forzar el play aunque la transicion ya estuviera sonando
 	reproducir(transicion)
+	return true
 
 
 ## Encadena la animacion pendiente, si la hay.
@@ -120,6 +131,7 @@ func _al_terminar_animacion(_nombre : StringName) -> void:
 	var siguiente := _encadenada
 	_encadenada = &""
 	reproducir(siguiente)
+	transicion_terminada.emit(siguiente)
 
 
 ## Devuelve el nombre logico de la animacion que se esta reproduciendo.

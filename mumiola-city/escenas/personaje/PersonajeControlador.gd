@@ -29,8 +29,15 @@ var _en_pose_sobre : WorldObject = null
 ## que hay que recordarla: levantarse de una silla y de una cama no son lo mismo.
 var _animacion_salida : StringName = &"levantarse"
 
-## Por que celda bajarse al levantarse: la que queda al frente del asiento.
-var _celda_salida : Vector2i = IsoGrid.SIN_CELDA
+## Hacia donde dar el paso al salir de la pose, en celdas. De una silla es hacia
+## adelante; de una cama, hacia el costado.
+var _paso_salida : Vector2i = Vector2i.ZERO
+
+## El mueble del que se esta levantando ahora mismo, mientras dura la animacion.
+var _saliendo_de : WorldObject = null
+
+## A donde ir en cuanto termine de levantarse, si el jugador clickeo mientras.
+var _destino_tras_pose : Vector2i = IsoGrid.SIN_CELDA
 
 ## Que hacer al terminar de caminar, si se camino para interactuar con algo.
 var _pendiente_objeto : WorldObject = null
@@ -44,7 +51,15 @@ func _ready() -> void:
 	# Se anota el mismo en vez de que el manager lo busque por ruta: asi cambiar
 	# de lugar al personaje en el arbol no rompe nada.
 	GameManager.registrar_jugador(self)
+	# Levantarse termina cuando termina su animacion, no cuando se pide.
+	avatar.transicion_terminada.connect(_al_terminar_transicion)
 	avatar.reproducir(&"idle")
+
+
+## Completa la salida de la pose en cuanto la animacion de levantarse termino.
+func _al_terminar_transicion(_destino : StringName) -> void:
+	if _saliendo_de != null:
+		_terminar_salida()
 
 
 func _unhandled_input(evento : InputEvent) -> void:
@@ -103,11 +118,18 @@ func _physics_process(delta : float) -> void:
 ##
 ## Devuelve false si la celda no existe, esta bloqueada o no hay camino.
 func ir_a_celda(destino : Vector2i) -> bool:
-	# Salir de la pose primero y no despues: sentado, el personaje esta parado
-	# sobre la celda del mueble, que es solida, y el A* no traza rutas desde ahi.
-	# Calcular el camino antes de bajarse devolveria siempre vacio.
+	# Levantarse es una animacion, no un salto: se guarda a donde iba y se camina
+	# recien cuando termino de incorporarse. Ademas resuelve un problema viejo:
+	# en pose el personaje esta sobre una celda solida y el A* no traza rutas
+	# desde ahi, asi que calcular el camino antes de salir daba siempre vacio.
 	if esta_en_pose():
+		_destino_tras_pose = destino
 		dejar_pose()
+		return true
+
+	if estado == &"saliendo_pose":
+		_destino_tras_pose = destino
+		return true
 
 	var camino := grid.ruta(grid.mundo_a_celda(global_position), destino)
 	if camino.is_empty():
@@ -137,6 +159,7 @@ func entrar_en(sala : RoomController) -> void:
 	# la sala anterior, que es una referencia viva a otro mundo.
 	if esta_en_pose():
 		dejar_pose()
+	_terminar_salida()
 	detener()
 	grid = sala.grid
 	camara = sala.camara
@@ -163,8 +186,15 @@ func adoptar_pose(objeto : WorldObject, pose : Dictionary) -> bool:
 	if objeto == null or grid == null or esta_en_pose():
 		return false
 
+	# Si venia levantandose de otra cosa, se termina de levantar antes. Sin esto,
+	# la salida pendiente se dispara despues —cuando la animacion de entrar a la
+	# pose nueva termina— y teletransporta al personaje fuera del mueble en el
+	# que se acaba de acomodar.
+	_terminar_salida()
+
 	var offset : Vector2 = pose.get("offset", Vector2.ZERO)
 	var giro_grados : float = pose.get("giro", 180.0)
+	var altura : float = pose.get("altura", 0.0)
 	var entrada : StringName = pose.get("entrada", &"sentarse")
 	var bucle : StringName = pose.get("bucle", &"sentado")
 	_animacion_salida = pose.get("salida", &"levantarse")
@@ -176,6 +206,9 @@ func adoptar_pose(objeto : WorldObject, pose : Dictionary) -> bool:
 	var pos := grid.centro_de(objeto.celda_origen, size, objeto.rotacion_grilla)
 	pos.x += offset.x
 	pos.z += offset.y
+	# Las animaciones del pack estan hechas al ras del suelo, asi que sobre una
+	# cama hay que subir el cuerpo hasta el colchon o el avatar queda enterrado.
+	pos.y += altura
 	global_position = pos
 
 	# El modelo del mueble y el del avatar no tienen por que mirar al mismo lado,
@@ -183,11 +216,11 @@ func adoptar_pose(objeto : WorldObject, pose : Dictionary) -> bool:
 	var giro := objeto.global_rotation.y + deg_to_rad(giro_grados)
 	avatar.global_rotation.y = giro
 
-	# La celda de salida se calcula del giro que se aplico de verdad y no del
-	# rotacion_grilla del mueble: asi bajarse por adelante y mirar hacia adelante
-	# no pueden discrepar nunca.
-	var frente := Vector3(-sin(giro), 0.0, -cos(giro))
-	_celda_salida = objeto.celda_origen + Vector2i(roundi(frente.x), roundi(frente.z))
+	# Por donde salir es otra cosa que hacia donde se mira: de una silla se sale
+	# por delante, pero de una cama se sale por el costado y no por la cabecera.
+	var salida := objeto.global_rotation.y + deg_to_rad(pose.get("angulo_salida", giro_grados))
+	var hacia := Vector3(-sin(salida), 0.0, -cos(salida))
+	_paso_salida = Vector2i(roundi(hacia.x), roundi(hacia.z))
 
 	_en_pose_sobre = objeto
 	estado = &"en_pose"
@@ -210,22 +243,66 @@ func dejar_pose() -> bool:
 	# PoseBehavior.salir() vuelve a llamar aca, y la guarda de arriba lo detiene
 	# porque para entonces el personaje ya no esta en pose.
 	_en_pose_sobre = null
-
-	# Por delante del asiento si se puede; si esa celda no sirve, cualquier
-	# vecina libre, que sigue siendo mejor que quedarse clavado.
-	var destino := _celda_salida
-	if destino == IsoGrid.SIN_CELDA or not grid.se_puede_caminar(destino):
-		destino = grid.celda_libre_vecina(objeto.celda_origen)
-
-	if destino != IsoGrid.SIN_CELDA:
-		var pos := grid.celda_a_mundo(destino)
-		global_position = pos
-
-	_celda_salida = IsoGrid.SIN_CELDA
-	estado = &"idle"
-	avatar.reproducir_encadenado(_animacion_salida, &"idle")
 	_desanotar_de(objeto)
+
+	# El paso al costado se da al *terminar* la animacion y no antes. Moviendolo
+	# primero, el personaje aparece de pie junto al mueble mientras todavia se
+	# esta incorporando, que es lo que se veia al levantarse de la cama.
+	estado = &"saliendo_pose"
+	_saliendo_de = objeto
+	if not avatar.reproducir_encadenado(_animacion_salida, &"idle"):
+		# Sin animacion de salida no hay nada que esperar.
+		_terminar_salida()
 	return true
+
+
+## Completa la salida de la pose: da el paso al costado y retoma lo pendiente.
+##
+## El paso no es cosmetico: en pose el personaje esta parado sobre la celda del
+## mueble, que es solida, y desde una celda solida el A* no traza ninguna ruta.
+## Sin esto, levantarse dejaria al personaje clavado.
+func _terminar_salida() -> void:
+	if _saliendo_de == null:
+		return
+
+	var objeto := _saliendo_de
+	_saliendo_de = null
+
+	var destino := _buscar_salida(objeto)
+	if destino != IsoGrid.SIN_CELDA:
+		global_position = grid.celda_a_mundo(destino)
+
+	_paso_salida = Vector2i.ZERO
+	estado = &"idle"
+
+	var pendiente := _destino_tras_pose
+	_destino_tras_pose = IsoGrid.SIN_CELDA
+	if pendiente != IsoGrid.SIN_CELDA:
+		ir_a_celda(pendiente)
+
+
+## Busca donde pararse al salir de la pose.
+##
+## Avanza en la direccion de salida hasta dejar el mueble, y por eso no alcanza
+## con mirar la celda de al lado: una cama de dos por tres tiene celdas propias a
+## uno y dos pasos de distancia, y salir "al lado" seria salir encima de ella.
+## Si por ese lado no hay lugar, sirve cualquier celda pegada a la huella.
+func _buscar_salida(objeto : WorldObject) -> Vector2i:
+	var desde := grid.mundo_a_celda(global_position)
+
+	if _paso_salida != Vector2i.ZERO:
+		for paso in range(1, 6):
+			var celda := desde + _paso_salida * paso
+			if grid.se_puede_caminar(celda):
+				return celda
+
+	var def := objeto.definicion()
+	var size := Vector2i.ONE if def == null else def.tamano_grilla
+	for propia in grid.celdas_de(objeto.celda_origen, size, objeto.rotacion_grilla):
+		var vecina := grid.celda_libre_vecina(propia)
+		if vecina != IsoGrid.SIN_CELDA:
+			return vecina
+	return IsoGrid.SIN_CELDA
 
 
 ## Avisa a los comportamientos del mueble que este actor ya no lo esta usando.

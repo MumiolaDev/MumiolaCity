@@ -37,9 +37,27 @@ const CLAVE_OCUPANTES := &"pose_ocupantes"
 ##
 ## No es un ajuste fino sino un desfase de modelado: el frente de una silla y el
 ## frente de un avatar no tienen por que ser el mismo eje. Con 180 el avatar
-## queda mirando hacia afuera del respaldo. Ademas decide por donde se sale, que
-## es siempre la celda que tiene enfrente.
-@export_range(-180.0, 180.0, 90.0) var giro_salida : float = 180.0
+## queda mirando hacia afuera del respaldo.
+@export_range(-180.0, 180.0, 90.0) var giro_cuerpo : float = 180.0
+
+## A que altura sobre el piso queda el cuerpo, en metros.
+##
+## Las animaciones del pack estan hechas al ras del suelo: Lie_Down es acostarse
+## *en el piso*. Sobre una cama hay que subir el cuerpo hasta el colchon o el
+## avatar queda enterrado en el mueble. Es un numero por pose y no una cuenta
+## sobre la malla porque el AABB de una cama incluye la cabecera, que es mucho
+## mas alta que el colchon.
+##
+## Cuando lleguen animaciones y modelos definitivos, esto es lo unico que hay que
+## reajustar — y es un @export, asi que se hace mirando, no recompilando.
+@export var altura : float = 0.0
+
+## Hacia donde se sale de la pose, en grados respecto del mueble.
+##
+## Separado del giro del cuerpo porque no siempre coinciden: de una silla se sale
+## por donde se mira, pero de una cama se sale por el costado y no por la
+## cabecera. Con NAN se usa el giro del cuerpo, que es lo correcto para sentarse.
+@export var angulo_salida : float = NAN
 
 @export_group("Animacion")
 ## La que entra en la pose. Se reproduce una vez.
@@ -94,7 +112,9 @@ func etiqueta_para(actor : Node, objeto : WorldObject) -> String:
 func datos_de_pose() -> Dictionary:
 	return {
 		"offset": offset_visual,
-		"giro": giro_salida,
+		"giro": giro_cuerpo,
+		"altura": altura,
+		"angulo_salida": giro_cuerpo if is_nan(angulo_salida) else angulo_salida,
 		"entrada": animacion_entrada,
 		"bucle": animacion_bucle,
 		"salida": animacion_salida,
