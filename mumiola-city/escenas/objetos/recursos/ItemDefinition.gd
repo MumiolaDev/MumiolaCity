@@ -67,7 +67,7 @@ const NODO_VISUAL := ^"Visual"
 @export var familia : StringName = &""
 @export var slot_equipo : StringName = &""
 ## Los verbos que ofrece este item. Son recursos compartidos y sin estado: las
-## cincuenta sillas de una sala apuntan al mismo SentarseBehavior.
+## cincuenta sillas de una sala apuntan al mismo PoseBehavior.
 @export var interacciones : Array[InteractionBehavior] = []
 
 @export_group("Produccion")

@@ -18,9 +18,19 @@ const SLOTS := [&"cuerpo", &"piernas", &"torso", &"cabeza", &"tocado"]
 @export var animaciones : Dictionary = {
 	&"idle": "Rig_Medium_General/Idle_A",
 	&"caminar": "Rig_Medium_MovementBasic/Walking_A",
-	&"sentado": "Rig_Medium_Simulation/Sit_Chair_Idle",
+	# Las tres poses vienen completas del pack: entrar, mantenerse y salir. Es
+	# lo que permite que PoseBehavior sea un solo script con tres .tres.
 	&"sentarse": "Rig_Medium_Simulation/Sit_Chair_Down",
+	&"sentado": "Rig_Medium_Simulation/Sit_Chair_Idle",
 	&"levantarse": "Rig_Medium_Simulation/Sit_Chair_StandUp",
+
+	&"sentarse_piso": "Rig_Medium_Simulation/Sit_Floor_Down",
+	&"sentado_piso": "Rig_Medium_Simulation/Sit_Floor_Idle",
+	&"levantarse_piso": "Rig_Medium_Simulation/Sit_Floor_StandUp",
+
+	&"acostarse": "Rig_Medium_Simulation/Lie_Down",
+	&"acostado": "Rig_Medium_Simulation/Lie_Idle",
+	&"levantarse_cama": "Rig_Medium_Simulation/Lie_StandUp",
 }
 
 ## El AnimationPlayer que trae el modelo importado, con las bibliotecas cargadas.
@@ -36,7 +46,8 @@ const SLOTS := [&"cuerpo", &"piernas", &"torso", &"cabeza", &"tocado"]
 ## formato no distingue las ciclicas de las que se reproducen una vez, asi que
 ## hay que marcarlas a mano. Sin esto, caminar un trayecto largo deja al avatar
 ## congelado en el ultimo cuadro cuando la animacion termina.
-@export var en_bucle : Array[StringName] = [&"idle", &"caminar", &"sentado"]
+@export var en_bucle : Array[StringName] = [&"idle", &"caminar",
+	&"sentado", &"sentado_piso", &"acostado"]
 
 var _actual : StringName = &""
 

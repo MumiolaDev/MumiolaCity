@@ -8,7 +8,7 @@ extends Resource
 ## en self. Lo que haya que recordar va en objeto.estado_runtime si es de la
 ## sesion, o en objeto.instancia si tiene que sobrevivir a cerrar el juego (D3).
 ##
-## Solo la base. Los comportamientos concretos —SentarseBehavior el primero— son
+## Solo la base. Los comportamientos concretos —PoseBehavior el primero— son
 ## el paso 6; esto existe ahora porque ItemDefinition.interacciones y
 ## WorldObject.ejecutar() necesitan el tipo.
 

@@ -416,26 +416,28 @@ func interactuar(actor: Node, objeto: WorldObject) -> bool      # (D8)
 
 **`-> bool`, no `-> void` (D8).** El retorno es lo que el día del servidor autoritativo permite rechazar una acción sin haber mutado nada. Cambiar la firma después de tener quince comportamientos escritos es tocar quince archivos.
 
-**Regla que no se puede romper:** ni `puede_interactuar` ni `interactuar` escriben en `self`. Si un comportamiento necesita recordar algo, va en `objeto.estado_runtime` o en `objeto.instancia` **(D3)**. Cincuenta sillas comparten un `SentarseBehavior.tres`.
+**Regla que no se puede romper:** ni `puede_interactuar` ni `interactuar` escriben en `self`. Si un comportamiento necesita recordar algo, va en `objeto.estado_runtime` o en `objeto.instancia` **(D3)**. Cincuenta sillas comparten un `sentarse.tres`.
 
 **El actor se comprueba por método, no por tipo.** El parámetro es `Node` a propósito, para que un NPC pueda sentarse sin heredar de `PersonajeControlador`; los comportamientos usan `actor.has_method(&"sentarse_en")` en vez de un `is`.
 
 **`ocupantes()` filtra referencias muertas.** `estado_runtime` es el único lugar del juego que guarda referencias a nodos vivos, y un NPC liberado —o una sala descargada— deja una entrada que apunta a nada. Sin ese filtro una silla queda ocupada para siempre por un fantasma, y `is_instance_valid()` es la única forma de notarlo.
 
-**El ocupante se anota después de que el actor confirmó.** Si se anotara antes y sentarse fallara, la silla quedaría ocupada por alguien que sigue parado al lado. Y `levantarse()` lo desanota aunque el actor devuelva `false`, porque dejarlo en la lista mantiene la silla ocupada por nadie.
+**El ocupante se anota después de que el actor confirmó.** Si se anotara antes y sentarse fallara, la silla quedaría ocupada por alguien que sigue parado al lado. Y `salir()` lo desanota aunque el actor devuelva `false`, porque dejarlo en la lista mantiene la silla ocupada por nadie.
 
 #### Comportamientos concretos
 
 ```gdscript
-class_name SentarseBehavior extends InteractionBehavior   # IMPLEMENTADO (paso 6)
-@export var etiqueta_levantarse: String = "Levantarse"
-@export_range(-180, 180, 90) var giro_asiento: float = 180.0
-const CLAVE_OCUPANTES := &"sentarse_ocupantes"
+class_name PoseBehavior extends InteractionBehavior   # IMPLEMENTADO — ver §3.4c
+const CLAVE_OCUPANTES := &"pose_ocupantes"      # una sola para las tres poses
 @export var capacidad: int = 1                  # 1 silla, 3 banco
 @export var offset_visual: Vector2              # metros, para asientos descentrados
-@export var animacion: StringName = &"sentado"
-func ocupantes(objeto: WorldObject) -> Array    # lee estado_runtime, filtra muertos
-func levantarse(actor: Node, objeto: WorldObject) -> bool
+@export var giro_salida: float = 180.0
+@export var animacion_entrada: StringName       # sentarse | sentarse_piso | acostarse
+@export var animacion_bucle: StringName
+@export var animacion_salida: StringName
+@export var etiqueta_salir: String = "Levantarse"
+func ocupantes(objeto: WorldObject) -> Array    # ids de actor, no nodos
+func salir(actor: Node, objeto: WorldObject) -> bool
 
 class_name ContenedorBehavior extends InteractionBehavior
 @export var tipo_aceptado: String               # "liquido" | "solido"
@@ -1086,6 +1088,37 @@ func texto_de(objeto: WorldObject) -> String
 
 **Va último en el menú**, no primero: lo que el jugador suele querer es la acción del mueble.
 
+### 3.4c `PoseBehavior extends InteractionBehavior` — sentarse, en el piso, acostado
+
+```gdscript
+class_name PoseBehavior extends InteractionBehavior
+
+const CLAVE_OCUPANTES := &"pose_ocupantes"
+
+@export var capacidad: int = 1
+@export var offset_visual: Vector2
+@export var giro_salida: float = 180.0
+@export var animacion_entrada: StringName   # se reproduce una vez
+@export var animacion_bucle: StringName     # tiene que estar en AvatarComposer.en_bucle
+@export var animacion_salida: StringName
+@export var etiqueta_salir: String
+
+func ocupantes(objeto: WorldObject) -> Array          # ids, no nodos
+func tiene_a(actor: Node, objeto: WorldObject) -> bool
+func datos_de_pose() -> Dictionary
+func salir(actor: Node, objeto: WorldObject) -> bool
+```
+
+**Tres `.tres` del mismo script**, no tres scripts: `sentarse`, `sentarse_piso` y `acostarse` son el mismo gesto —entrar en una pose, mantenerla, salir— con animaciones y números distintos. El pack de KayKit trae las tres secuencias completas, que es lo que lo hace posible.
+
+**Los ocupantes se guardan por id de actor y no por nodo, y ésa es la quinta costura del multijugador.** Un nodo del cliente A no existe en el B; lo que se replica es el hecho —«el actor 7 está en pose sobre el mueble de la celda 3,4»— y cada cliente resuelve su propio nodo con `GameManager.actor_por_id()`. Hacerlo ahora salió gratis porque este script se reescribía igual; hacerlo después, con quince comportamientos encima, es tocarlos todos.
+
+**Una sola clave de ocupantes para todas las poses**, no una por verbo: lo que está ocupado es el mueble, no el verbo. Nadie puede estar sentado y acostado en la misma cama a la vez, y con una clave por verbo eso sería posible.
+
+**`datos_de_pose()` devuelve un diccionario** en vez de pasarle seis parámetros al personaje. Así agregar un dato a la pose no cambia la firma de `adoptar_pose()`, y sobre todo el personaje no tiene que conocer esta clase: lo único que sabe es que le llegan un offset, un giro y tres nombres de animación.
+
+**Un solo verbo que alterna**, no dos comportamientos: entrar y salir son el mismo gesto sobre el mismo mueble, y separarlos obligaría a que el menú mostrara siempre uno de los dos en gris.
+
 ### 3.4b `SuperficieBehavior extends InteractionBehavior` — **fase 4 (D25)**
 
 El verbo de apoyar cosas encima. Es lo que le da espacio a la decoración personal, que en un sandbox es el producto y no un extra.
@@ -1320,7 +1353,7 @@ classDiagram
   ItemInstance ..> ItemDefinition : resuelve por id
   InventorySlot "1" o-- "0..1" ItemInstance
   WorldObject "1" *-- "1" ItemInstance
-  InteractionBehavior <|-- SentarseBehavior
+  InteractionBehavior <|-- PoseBehavior
   InteractionBehavior <|-- ContenedorBehavior
   InteractionBehavior <|-- EquiparBehavior
   InteractionBehavior <|-- AbrirCrafteoBehavior
@@ -1369,7 +1402,7 @@ stateDiagram-v2
 | 4 | `RoomController` | Mundo | `Node3D` | 1 |
 | 5 | `WorldObject` | Mundo | `Area3D` | 1 |
 | 6 | `InteractionBehavior` | Datos | `Resource` | 1 |
-| 7 | `SentarseBehavior` | Datos | `InteractionBehavior` | 1 |
+| 7 | **`PoseBehavior`** (ex `SentarseBehavior`) | Datos | `InteractionBehavior` | 4 |
 | 7b | **`MirarBehavior`** NUEVA | Datos | `InteractionBehavior` | 3 |
 | 8 | `ContextMenuUI` | UI | `PopupMenu` | 1 |
 | 9 | `HUD` | UI | `CanvasLayer` | 1 |

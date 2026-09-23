@@ -150,7 +150,7 @@ Para cada sistema: de qué es **dueño** (el dato que solo él puede mutar), qu�
 ### 3.6 Interacción — `InteractionBehavior` + `WorldObject` + `ContextMenuUI`
 
 - **Dueño de:** el conjunto de verbos que un objeto ofrece, y el punto único de mutación (`WorldObject.ejecutar()`).
-- **La regla dura del GDD §6.1 vale la pena repetirla:** el `Resource` de comportamiento es **compartido y sin estado**. Si `SentarseBehavior.tres` guardara "quién está sentado", las cincuenta sillas de la ciudad que apuntan a ese mismo archivo compartirían ocupante. El estado va en la instancia, siempre.
+- **La regla dura del GDD §6.1 vale la pena repetirla:** el `Resource` de comportamiento es **compartido y sin estado**. Si `sentarse.tres` guardara "quién está sentado", las cincuenta sillas de la ciudad que apuntan a ese mismo archivo compartirían ocupante. El estado va en la instancia, siempre.
 - **Ese es el sistema que sostiene el pilar 6 del GDD** (el rol emerge de la interactividad, no de minijuegos): cada verbo nuevo que se agrega multiplica lo que la gente puede hacer sin que nadie escriba una escena.
 
 ### 3.7 Valor — `EconomyManager`
@@ -263,7 +263,7 @@ sequenceDiagram
   participant Ro as RoomController
   participant W as WorldObject
   participant CM as ContextMenuUI
-  participant Be as SentarseBehavior
+  participant Be as PoseBehavior
   participant P as PersonajeControlador
 
   J->>BU: arrastra Silla desde el inventario
@@ -281,7 +281,7 @@ sequenceDiagram
   Be-->>W: true (nadie sentado)
   CM-->>J: menú ["Sentarse"]
   J->>CM: elige Sentarse
-  CM->>W: ejecutar(SentarseBehavior, jugador)
+  CM->>W: ejecutar(PoseBehavior, jugador)
   W->>Be: interactuar(jugador, self)
   Be->>W: estado_runtime.ocupante = jugador
   Be->>P: sentarse_en(self)

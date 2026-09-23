@@ -41,6 +41,14 @@ enum Modo { JUGANDO, EDITANDO }
 ## impide que algun dia haya dos.
 var _menus_abiertos : int = 0
 
+## Quien es quien: id de actor -> nodo vivo.
+##
+## Existe para que el estado de sesion se pueda guardar por identidad y no por
+## nodo. Es la quinta costura del multijugador: un nodo del cliente A no existe
+## en el B, asi que lo que se replica es el hecho —"el actor 7 esta sentado en el
+## mueble de la celda 3,4"— y cada cliente resuelve su propio nodo.
+var _actores : Dictionary = {}
+
 var _jugador : PersonajeControlador = null
 var _contenedor : Node = null
 var _sala_actual : RoomController = null
@@ -54,7 +62,43 @@ var _modo : Modo = Modo.JUGANDO
 ## la forma del arbol, que cambia cada vez que se reorganiza una escena.
 func registrar_jugador(jugador : PersonajeControlador) -> void:
 	_jugador = jugador
+	registrar_actor(jugador, &"jugador")
 	jugador_registrado.emit(jugador)
+
+
+## Anota un actor bajo un id, para poder resolverlo despues sin guardar el nodo.
+##
+## Devuelve el id con el que quedo. Hoy el jugador es siempre "jugador" y los
+## NPCs se anotarian con el suyo; el dia del servidor, el id es el del par y no
+## cambia nada de lo que lo usa.
+func registrar_actor(actor : Node, id : StringName) -> StringName:
+	if actor == null or id == &"":
+		return &""
+	_actores[id] = actor
+	return id
+
+
+## Devuelve el actor de un id, o null si no hay ninguno vivo con ese id.
+func actor_por_id(id : StringName) -> Node:
+	var actor = _actores.get(id)
+	if actor == null or not is_instance_valid(actor):
+		_actores.erase(id)
+		return null
+	return actor
+
+
+## Devuelve el id de un actor, o vacio si no esta anotado.
+##
+## Recorre en vez de guardar el id en el nodo para no obligar a que todo actor
+## tenga un campo: lo que define la identidad es estar en este registro. Con un
+## punado de actores por sala, recorrerlo no es un costo.
+func id_de_actor(actor : Node) -> StringName:
+	if actor == null:
+		return &""
+	for id in _actores:
+		if _actores[id] == actor:
+			return id
+	return &""
 
 
 ## Declara de que nodo cuelgan las salas. Lo llama el mundo al arrancar.

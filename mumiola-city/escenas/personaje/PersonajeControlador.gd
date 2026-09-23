@@ -24,7 +24,10 @@ var _ruta : Array[Vector2i] = []
 ## En que esta sentado, si lo esta. Es una referencia a un nodo vivo, asi que
 ## vive aca y nunca en la instancia: no tiene sentido que siga siendo cierta
 ## manana (D3).
-var _sentado_en : WorldObject = null
+var _en_pose_sobre : WorldObject = null
+## Con que animacion salir de la pose actual. La elige el mueble al entrar, asi
+## que hay que recordarla: levantarse de una silla y de una cama no son lo mismo.
+var _animacion_salida : StringName = &"levantarse"
 
 ## Por que celda bajarse al levantarse: la que queda al frente del asiento.
 var _celda_salida : Vector2i = IsoGrid.SIN_CELDA
@@ -100,11 +103,11 @@ func _physics_process(delta : float) -> void:
 ##
 ## Devuelve false si la celda no existe, esta bloqueada o no hay camino.
 func ir_a_celda(destino : Vector2i) -> bool:
-	# Levantarse primero y no despues: sentado, el personaje esta parado sobre la
-	# celda del mueble, que es solida, y el A* no traza rutas desde ahi. Calcular
-	# el camino antes de bajarse devolveria siempre vacio.
-	if esta_sentado():
-		levantarse()
+	# Salir de la pose primero y no despues: sentado, el personaje esta parado
+	# sobre la celda del mueble, que es solida, y el A* no traza rutas desde ahi.
+	# Calcular el camino antes de bajarse devolveria siempre vacio.
+	if esta_en_pose():
+		dejar_pose()
 
 	var camino := grid.ruta(grid.mundo_a_celda(global_position), destino)
 	if camino.is_empty():
@@ -130,10 +133,10 @@ func detener() -> void:
 ## nueva y sigue caminando hacia una celda que era de la anterior, en una grilla
 ## donde esa celda significa otra cosa o directamente no existe.
 func entrar_en(sala : RoomController) -> void:
-	# Sin esto, cambiar de sala sentado deja _sentado_en apuntando a un mueble de
+	# Sin esto, cambiar de sala sentado deja _en_pose_sobre apuntando a un mueble de
 	# la sala anterior, que es una referencia viva a otro mundo.
-	if esta_sentado():
-		levantarse()
+	if esta_en_pose():
+		dejar_pose()
 	detener()
 	grid = sala.grid
 	camara = sala.camara
@@ -141,20 +144,30 @@ func entrar_en(sala : RoomController) -> void:
 	avatar.reproducir(&"idle")
 
 
-## Devuelve si el personaje esta sentado en algo.
-func esta_sentado() -> bool:
-	return _sentado_en != null
+## Devuelve si el personaje esta en alguna pose sobre un mueble.
+func esta_en_pose() -> bool:
+	return _en_pose_sobre != null
 
 
-## Sienta al personaje en un objeto. Devuelve si pudo.
+## Pone al personaje en una pose sobre un objeto. Devuelve si pudo.
 ##
 ## Lo para sobre la celda del objeto y lo orienta como el objeto, que es lo que
 ## hace que se vea sentado *en* la silla y no al lado. El offset es para ajustar
 ## a ojo modelos cuyo asiento no esta en el centro de su celda.
-func sentarse_en(objeto : WorldObject, offset : Vector2 = Vector2.ZERO,
-		animacion : StringName = &"sentado", giro_grados : float = 180.0) -> bool:
-	if objeto == null or grid == null or esta_sentado():
+##
+## Recibe un diccionario y no seis parametros para que agregar un dato a la pose
+## no cambie esta firma, y sobre todo para no tener que conocer PoseBehavior: lo
+## unico que este metodo sabe es que le llegan un offset, un giro y tres nombres
+## de animacion.
+func adoptar_pose(objeto : WorldObject, pose : Dictionary) -> bool:
+	if objeto == null or grid == null or esta_en_pose():
 		return false
+
+	var offset : Vector2 = pose.get("offset", Vector2.ZERO)
+	var giro_grados : float = pose.get("giro", 180.0)
+	var entrada : StringName = pose.get("entrada", &"sentarse")
+	var bucle : StringName = pose.get("bucle", &"sentado")
+	_animacion_salida = pose.get("salida", &"levantarse")
 
 	detener()
 
@@ -176,27 +189,27 @@ func sentarse_en(objeto : WorldObject, offset : Vector2 = Vector2.ZERO,
 	var frente := Vector3(-sin(giro), 0.0, -cos(giro))
 	_celda_salida = objeto.celda_origen + Vector2i(roundi(frente.x), roundi(frente.z))
 
-	_sentado_en = objeto
-	estado = &"sentado"
-	avatar.reproducir_encadenado(&"sentarse", animacion)
+	_en_pose_sobre = objeto
+	estado = &"en_pose"
+	avatar.reproducir_encadenado(entrada, bucle)
 	return true
 
 
-## Levanta al personaje y lo deja en una celda vecina libre. Devuelve si pudo.
+## Saca al personaje de la pose y lo deja en una celda vecina libre.
 ##
-## El paso al costado no es cosmetico: sentado queda parado sobre la celda del
+## El paso al costado no es cosmetico: en pose queda parado sobre la celda del
 ## objeto, que esta ocupada, y desde una celda solida el A* no puede trazar
 ## ninguna ruta. Sin esto, levantarse dejaria al personaje clavado.
-func levantarse() -> bool:
-	if not esta_sentado():
+func dejar_pose() -> bool:
+	if not esta_en_pose():
 		return false
 
-	var objeto := _sentado_en
+	var objeto := _en_pose_sobre
 
 	# Soltar el asiento antes de avisarle al mueble corta la recursion:
-	# SentarseBehavior.levantarse() vuelve a llamar aca, y la guarda de arriba lo
-	# detiene porque para entonces el personaje ya no esta sentado.
-	_sentado_en = null
+	# PoseBehavior.salir() vuelve a llamar aca, y la guarda de arriba lo detiene
+	# porque para entonces el personaje ya no esta en pose.
+	_en_pose_sobre = null
 
 	# Por delante del asiento si se puede; si esa celda no sirve, cualquier
 	# vecina libre, que sigue siendo mejor que quedarse clavado.
@@ -210,7 +223,7 @@ func levantarse() -> bool:
 
 	_celda_salida = IsoGrid.SIN_CELDA
 	estado = &"idle"
-	avatar.reproducir_encadenado(&"levantarse", &"idle")
+	avatar.reproducir_encadenado(_animacion_salida, &"idle")
 	_desanotar_de(objeto)
 	return true
 
@@ -223,7 +236,7 @@ func levantarse() -> bool:
 ## por que el aviso vive en levantarse() y no en cada uno de los que lo llaman.
 ##
 ## Los comportamientos se buscan por metodo y no por tipo, igual que ellos hacen
-## con el actor: el personaje no tiene por que conocer SentarseBehavior.
+## con el actor: el personaje no tiene por que conocer PoseBehavior.
 func _desanotar_de(objeto : WorldObject) -> void:
 	if objeto == null or not is_instance_valid(objeto):
 		return
@@ -231,8 +244,8 @@ func _desanotar_de(objeto : WorldObject) -> void:
 	if def == null:
 		return
 	for verbo in def.interacciones:
-		if verbo != null and verbo.has_method(&"levantarse"):
-			verbo.levantarse(self, objeto)
+		if verbo != null and verbo.has_method(&"salir"):
+			verbo.salir(self, objeto)
 
 
 ## Para al personaje en una celda concreta, sin caminar.
@@ -245,8 +258,8 @@ func ubicar_en_celda(celda : Vector2i) -> void:
 		return
 
 	detener()
-	if esta_sentado():
-		levantarse()
+	if esta_en_pose():
+		dejar_pose()
 
 	var destino := celda
 	if not grid.se_puede_caminar(destino):

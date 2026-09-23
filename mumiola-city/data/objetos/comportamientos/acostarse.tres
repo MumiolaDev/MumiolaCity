@@ -4,13 +4,13 @@
 
 [resource]
 script = ExtResource("1_pose")
-verbo = &"sentarse"
-etiqueta = "Sentarse"
+verbo = &"acostarse"
+etiqueta = "Acostarse"
 requiere_adyacencia = true
 capacidad = 1
 offset_visual = Vector2(0, 0)
 giro_salida = 180.0
-animacion_entrada = &"sentarse"
-animacion_bucle = &"sentado"
-animacion_salida = &"levantarse"
+animacion_entrada = &"acostarse"
+animacion_bucle = &"acostado"
+animacion_salida = &"levantarse_cama"
 etiqueta_salir = "Levantarse"

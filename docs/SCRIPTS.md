@@ -39,7 +39,7 @@ Antes de escribir un sistema, hay que revisar si el motor ya lo resuelve — y s
 | 3b | `IndicadorCelda` | Nodo | Componente | `MeshInstance3D` | 1 como ayuda, 3 como vista previa |
 | 4 | `RoomController` | Nodo/Escena | Escena | `Node3D` | 1 |
 | 5 | `WorldObject` | Nodo/Escena | Escena | `Area3D` | 1 |
-| 6 | `InteractionBehavior` (+ `SentarseBehavior`) | Resource | Recurso | `Resource` | 1 |
+| 6 | `InteractionBehavior` (+ `PoseBehavior`) | Resource | Recurso | `Resource` | 1 y 4 |
 | 6b | `MirarBehavior` | Resource | Recurso | `InteractionBehavior` | 3 (verbo universal) |
 | 7 | `ContextMenuUI` | UI | Escena | `PopupMenu` | 1 |
 | 8 | `HUD` | UI | Escena | `CanvasLayer` | 1 |
@@ -93,7 +93,7 @@ La tabla de arriba cuenta **39 scripts**; [`CLASES.md`](CLASES.md) especifica **
 | **`GatherTable`** | Datos | `Resource` | 2 | **D6** — la tabla que consulta `GatherableNode`. Es donde vive el "en baja proporción" de la Semilla de manzana, que hoy no tiene dónde ir sin hardcodearlo |
 | `AbrirCrafteoBehavior` | Datos | `InteractionBehavior` | 3 | El verbo que abre `CraftingUI` desde una `CraftingStation` |
 
-La undécima no es una clase nueva sino un desdoblamiento: la fila 6 de la tabla de arriba agrupa `InteractionBehavior` **y** `SentarseBehavior`, que en `CLASES.md` se cuentan por separado.
+La undécima no es una clase nueva sino un desdoblamiento: la fila 6 de la tabla de arriba agrupa `InteractionBehavior` **y** `PoseBehavior`, que en `CLASES.md` se cuentan por separado.
 
 ### Scripts eliminados en la revisión "no reimplementar lo que Godot ya trae"
 
@@ -143,7 +143,7 @@ IsoGrid (Node3D)        ← el script
 ### 2. `PersonajeControlador` — Nodo/Escena · Escena propia · `extends CharacterBody3D`
 **Función:** movimiento del avatar sobre la grilla, estado de personaje (sentado, energía) y los métodos que invocan los `InteractionBehavior` (ej. `sentarse_en`, `reproducir_animacion`).
 **Godot nativo:** `CharacterBody3D` con `move_and_slide()` para el desplazamiento; el singleton **`Input`** + Input Map para el control (sin script intermedio, ver tabla de eliminados); y **`AStarGrid2D`** para el pathfinding click-to-walk estilo Habbo. **`AStarGrid2D` sigue sirviendo aunque el mundo sea 3D**: opera sobre una grilla de enteros y no le importa la dimensión del render — se le pasan las celdas bloqueadas de `IsoGrid` y el resultado se mapea al plano XZ. **Código propio:** la lógica de estado del personaje y las respuestas a los comportamientos de interacción.
-**Interactúa con:** se mueve dentro de la `IsoGrid` de la `RoomController` activa; `GameManager` lo referencia como "el jugador actual"; `SentarseBehavior` y futuros comportamientos llaman a sus métodos para producir el efecto visible.
+**Interactúa con:** se mueve dentro de la `IsoGrid` de la `RoomController` activa; `GameManager` lo referencia como "el jugador actual"; `PoseBehavior` y futuros comportamientos llaman a sus métodos para producir el efecto visible.
 **Funciones clave:** `_physics_process(delta: float) -> void`, `ir_a_celda(celda: Vector2i) -> void` (calcula ruta con `AStarGrid2D`), `sentarse_en(objeto: WorldObject) -> void`, `reproducir_animacion(nombre: String) -> void`.
 
 ### 3. `AvatarComposer` — Nodo · Componente · `extends Node3D`
@@ -166,7 +166,7 @@ IsoGrid (Node3D)        ← el script
 **Interactúa con:** vive dentro de un `RoomController`; su lista `interacciones` son recursos `InteractionBehavior`; `ContextMenuUI` lo consulta para mostrar verbos; `PersonajeControlador` es el actor que ejecuta comportamientos sobre él.
 **Funciones clave:** `verbos_disponibles(actor: Node) -> Array[InteractionBehavior]`, `ejecutar(behavior: InteractionBehavior, actor: Node) -> bool` (**D8**), `_on_input_event(...)` (señal nativa de `Area3D`).
 
-### 6. `InteractionBehavior` (clase base) + `SentarseBehavior` — Resource · Recurso, sin escena · `extends Resource` (`SentarseBehavior extends InteractionBehavior`)
+### 6. `InteractionBehavior` (clase base) + `PoseBehavior` — Resource · Recurso, sin escena · `extends Resource` (`PoseBehavior extends InteractionBehavior`)
 **Función:** define qué puede hacer un jugador con un `WorldObject` (GDD §6.1), reutilizable y **sin estado propio** — el estado de una instancia concreta vive en `WorldObject.estado_instancia`, nunca en el `Resource`.
 **Godot nativo:** `Resource` es exactamente el mecanismo del motor para esto: da serialización a `.tres`, edición desde el inspector, `@export` de parámetros y compartir la misma instancia entre muchos objetos. No hay nada que reimplementar acá — el patrón ya era el nativo.
 **Interactúa con:** referenciado desde `ItemDefinition.interacciones`; lee/escribe `WorldObject.estado_instancia`; llama métodos de `PersonajeControlador`.
@@ -338,9 +338,9 @@ Desplazamiento y zoom para trabajar en salas grandes, en `RoomController`, que y
 
 Que agregar una interacción sea **datos, no código**. **Listo cuando** recorrés una sala amueblada y casi todo lo que clickeás hace algo.
 
-### 34. `PoseBehavior` — Resource · Recurso, sin escena · `extends InteractionBehavior`
-**Función:** generaliza `SentarseBehavior`. `sentarse`, `sentarse_piso` y `acostarse` pasan a ser tres `.tres` del mismo script.
-**Godot nativo:** `Resource` con `@export` para `animacion_entrada`/`bucle`/`salida`, `capacidad`, `offset_visual`, `giro_asiento`, `etiqueta` y `etiqueta_salir`. El pack trae las tres secuencias completas y toda la lógica difícil ya está escrita en `SentarseBehavior`: sólo hay que parametrizarla.
+### 34. `PoseBehavior` — Resource · Recurso, sin escena · `extends InteractionBehavior` · **hecho**
+**Función:** generaliza `PoseBehavior`. `sentarse`, `sentarse_piso` y `acostarse` pasan a ser tres `.tres` del mismo script.
+**Godot nativo:** `Resource` con `@export` para `animacion_entrada`/`bucle`/`salida`, `capacidad`, `offset_visual`, `giro_asiento`, `etiqueta` y `etiqueta_salir`. El pack trae las tres secuencias completas y toda la lógica difícil ya está escrita en `PoseBehavior`: sólo hay que parametrizarla.
 **Y de paso, la costura 5:** los ocupantes pasan a guardarse **por id de actor y no por nodo**. Un nodo del cliente A no existe en el B. Como igual hay que reescribir el script, el cambio es gratis ahora y carísimo después.
 
 ### 35. `LevantarBehavior` — Resource · Recurso, sin escena · `extends InteractionBehavior`

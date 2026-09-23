@@ -1639,7 +1639,9 @@
 			"colocable": true,
 			"bloquea_paso": false,
 			"modelo": "muebles/rug_rectangle_A",
-			"interacciones": [],
+			"interacciones": [
+				"sentarse_piso"
+			],
 			"receta": null
 		},
 		{

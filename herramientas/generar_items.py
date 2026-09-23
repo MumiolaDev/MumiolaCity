@@ -174,7 +174,7 @@ item("martillo","Martillo","utensilio",40,None,"Requerido en el taller.",
 
 # ---------------------------------------------------------------- decorativos comprados
 for did, nom, val, mod, size, inter in [
-	("alfombra","Alfombra",48,M+"rug_rectangle_A",(2,1),[]),
+	("alfombra","Alfombra",48,M+"rug_rectangle_A",(2,1),["sentarse_piso"]),
 	("lampara_mesa","Lampara de mesa",62,M+"lamp_table",(1,1),["encender"]),
 	("cuadro","Cuadro",50,M+"pictureframe_medium",(1,1),[]),
 	("maceta","Maceta con cactus",34,M+"cactus_small_A",(1,1),[]),
