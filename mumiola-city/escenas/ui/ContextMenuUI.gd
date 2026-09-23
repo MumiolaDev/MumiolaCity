@@ -16,6 +16,12 @@ extends PopupMenu
 ## Se emite al elegir una opcion del menu.
 signal verbo_elegido(verbo : InteractionBehavior, objeto : WorldObject, actor : Node)
 
+## Cuanto se corre el menu respecto del objeto, en pixeles.
+##
+## Arriba y a la derecha: abajo taparia el mueble que estas mirando, y con el
+## cursor justo encima de la primera opcion es facil elegirla sin querer.
+@export var desplazamiento : Vector2i = Vector2i(14, -12)
+
 var _objeto : WorldObject = null
 var _actor : Node = null
 var _verbos : Array[InteractionBehavior] = []
@@ -55,11 +61,73 @@ func mostrar_para(objeto : WorldObject, actor : Node) -> bool:
 		else:
 			add_item(texto, i)
 
-	# En coordenadas de pantalla y no del viewport: un PopupMenu es una Window
-	# aparte, asi que se posiciona contra el escritorio. PopupMenu se encarga solo
-	# de no quedar cortado contra el borde.
-	popup(Rect2i(DisplayServer.mouse_get_position(), Vector2i.ZERO))
+	_abrir_junto_a(objeto)
 	return true
+
+
+## Abre el menu pegado al objeto y sin que se corte contra el borde.
+##
+## reset_size() primero, y no es opcional: hasta que se llama, size sigue siendo
+## el del menu anterior, y recortar contra el borde con el tamanio viejo dejaria
+## cortado justo al menu con mas opciones, que es el unico caso en que importa.
+## Despues de reset_size() el tamanio ya es el bueno, asi que alcanza con abrirlo
+## una sola vez en el lugar correcto; corregir la posicion despues de popup() no
+## funciona, porque el segundo seteo se pisa con el primero.
+func _abrir_junto_a(objeto : WorldObject) -> void:
+	reset_size()
+	popup(Rect2i(_a_coordenadas_de_popup(_posicion_para(objeto, size)), Vector2i.ZERO))
+
+
+## Traduce coordenadas del viewport a las que espera popup().
+##
+## Con las subventanas embebidas —lo que hace Godot por defecto— un PopupMenu se
+## dibuja dentro del viewport y se posiciona en sus coordenadas. Sin embeber es
+## una ventana del escritorio y hay que sumarle donde esta la ventana del juego.
+##
+## Este era el bug: el menu se abria con DisplayServer.mouse_get_position(), que
+## devuelve la posicion contra el escritorio, y embebido eso cae en cualquier
+## lado menos donde esta el mouse.
+func _a_coordenadas_de_popup(punto : Vector2i) -> Vector2i:
+	var raiz := get_tree().root
+	return punto if raiz.gui_embed_subwindows else punto + raiz.position
+
+
+## Donde abrir el menu: al lado del objeto, dentro de la pantalla.
+##
+## Junto al objeto y no bajo el cursor porque el menu actua sobre el mueble, y
+## que aparezca pegado a el lo dice sin explicarlo. Ademas queda en el mismo
+## lugar sin importar si clickeaste el borde o el medio de una mesa de dos por
+## dos, y sirve igual el dia que el menu se abra sin un clic —desde el teclado o
+## desde una seleccion—, que con la posicion del mouse no funcionaria.
+##
+## Devuelve coordenadas del viewport; traducirlas a las de popup() es trabajo de
+## _a_coordenadas_de_popup().
+func _posicion_para(objeto : WorldObject, tamano : Vector2i) -> Vector2i:
+	# El viewport del juego y no get_viewport(), que aca devuelve otra cosa: un
+	# PopupMenu es una Window, y una Window es un Viewport, asi que get_viewport()
+	# devuelve el del propio menu. Con eso el limite de pantalla era el tamanio
+	# del menu —cuarenta por ocho pixeles— y el recorte aplastaba cualquier
+	# posicion contra el origen. De ahi que apareciera siempre en la esquina.
+	var padre := get_parent()
+	var vista : Viewport = padre.get_viewport() if padre != null else null
+	if vista == null:
+		vista = get_tree().root
+	var limite := Vector2i(vista.get_visible_rect().size)
+
+	# Respaldo: si no hay camara a mano, al menos cerca del cursor.
+	var punto := Vector2i(vista.get_mouse_position())
+
+	var sala := objeto.sala()
+	if sala != null and sala.camara != null and sala.camara.is_inside_tree():
+		var mundo := objeto.global_position
+		# Un objeto detras de la camara proyecta a coordenadas sin sentido.
+		if not sala.camara.is_position_behind(mundo):
+			punto = Vector2i(sala.camara.unproject_position(mundo))
+
+	punto += desplazamiento
+	punto.x = clampi(punto.x, 0, maxi(0, limite.x - tamano.x))
+	punto.y = clampi(punto.y, 0, maxi(0, limite.y - tamano.y))
+	return punto
 
 
 ## Traduce el indice elegido de vuelta al comportamiento y avisa.
