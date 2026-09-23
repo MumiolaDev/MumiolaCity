@@ -43,6 +43,14 @@ const SIN_CELDA := Vector2i.MAX
 ## como se comporta.
 @export var piezas_transitables : Array[StringName] = []
 
+## Cuanto tiene que cubrir una pieza de una celda para que cuente como ocupada.
+##
+## Mas de la mitad. Es una regla que se puede enunciar en una frase, y eso
+## importa mas de lo que parece: las piezas del pack no estan ancladas todas
+## igual —unas al centro de la celda, otras al borde— asi que cualquier criterio
+## basado en margenes fijos da resultados distintos segun la pieza.
+const CUBRE_MINIMO := 0.5
+
 ## Se emite cada vez que cambia la ocupacion, con todas las celdas afectadas de
 ## una sola vez. Quien mantenga un AStarGrid2D debe suscribirse: esa copia de
 ## celdas solidas es independiente de esta y hay que invalidarla.
@@ -56,6 +64,8 @@ var _ocupadas : Dictionary = {} # Vector2i -> WorldObject
 
 # Planta de las paredes: Vector2i -> true. Se calcula una sola vez, la primera
 # vez que alguien pregunta, para no depender del orden de _ready() entre nodos.
+## Celdas que un suelo multicelda cubre sin estar pintadas en ellas.
+var _suelo_extra : Dictionary = {}
 var _paredes_planta : Dictionary = {}
 var _paredes_listas : bool = false
 
@@ -84,9 +94,65 @@ func mundo_a_celda(pos: Vector3) -> Vector2i:
 
 
 ## Sirve para saber si hay suelo existente en tal celda.
+## Devuelve que celdas cubre de verdad la pieza pintada en una celda.
+##
+## No lo declara una tabla a mano sino que sale de la malla: se toma su AABB, se
+## le aplica la transformada que la MeshLibrary guarda para esa pieza y la
+## orientacion con que quedo pintada, y se mira sobre que celdas cae. Asi cambiar
+## la biblioteca no deja una huella declarada mintiendo, que es justo el tipo de
+## dato que nadie se acuerda de actualizar.
+##
+## El ancla es el centro de la celda, y una celda va de -0.5 a +0.5 alrededor
+## suyo. La tolerancia evita contar una celda entera por un milimetro de malla
+## asomando: pared_base mide 0.27 de fondo y se sale un pelo de la celda.
+func _celdas_que_cubre(grid_map : GridMap, celda : Vector3i) -> Array[Vector2i]:
+	var propia : Array[Vector2i] = [Vector2i(celda.x, celda.z)]
+
+	var biblioteca := grid_map.mesh_library
+	if biblioteca == null:
+		return propia
+
+	var id := grid_map.get_cell_item(celda)
+	var malla := biblioteca.get_item_mesh(id)
+	if malla == null:
+		return propia
+
+	var giro := grid_map.get_basis_with_orthogonal_index(
+		grid_map.get_cell_item_orientation(celda))
+	var caja : AABB = (Transform3D(giro, Vector3.ZERO)
+		* biblioteca.get_item_mesh_transform(id)) * malla.get_aabb()
+
+	var salida : Array[Vector2i] = []
+	for dx in _celdas_en_eje(caja.position.x, caja.end.x):
+		for dz in _celdas_en_eje(caja.position.z, caja.end.z):
+			salida.append(Vector2i(celda.x + dx, celda.z + dz))
+	return propia if salida.is_empty() else salida
+
+
+## Sobre que celdas de un eje cae un intervalo, relativo a la celda pintada.
+##
+## Una celda entra si el intervalo cubre mas de la mitad de ella. Si ninguna
+## llega, vale la celda donde se pinto: una pared mide 0.27 de espesor y nunca va
+## a cubrir media celda de fondo, pero pertenece a la linea en la que la pusiste.
+static func _celdas_en_eje(desde : float, hasta : float) -> Array[int]:
+	var salida : Array[int] = []
+	for d in range(floori(desde + 0.5), floori(hasta + 0.5) + 1):
+		var cubierto := minf(hasta, d + 0.5) - maxf(desde, d - 0.5)
+		if cubierto > CUBRE_MINIMO:
+			salida.append(d)
+	return [0] if salida.is_empty() else salida
+
+
 func celda_valida(celda : Vector2i) -> bool:
-	var item_en_celda = suelo.get_cell_item(Vector3i(celda.x,0,celda.y))
-	return item_en_celda != GridMap.INVALID_CELL_ITEM
+	if suelo.get_cell_item(Vector3i(celda.x, 0, celda.y)) != GridMap.INVALID_CELL_ITEM:
+		return true
+
+	# Y las que cubre una pieza de suelo mas grande que su celda sin estar
+	# pintadas en ellas. El diccionario esta vacio mientras todas midan una celda,
+	# asi que el caso normal sigue siendo una sola consulta al GridMap.
+	if not _paredes_listas:
+		recalcular_paredes()
+	return _suelo_extra.has(celda)
 
 
 ## Dado un origen y un size, se calculan las celdas que pertenecen al objeto en
@@ -159,10 +225,21 @@ func hay_pared(celda : Vector2i) -> bool:
 ## pintan o borran paredes mientras el juego corre.
 func recalcular_paredes() -> void:
 	_paredes_planta.clear()
+	_suelo_extra.clear()
+
 	for c in paredes.get_used_cells():
 		if _es_transitable(paredes.get_cell_item(c)):
 			continue
-		_paredes_planta[Vector2i(c.x, c.z)] = true
+		for celda in _celdas_que_cubre(paredes, c):
+			_paredes_planta[celda] = true
+
+	# El suelo tambien: una pieza de dos por dos deja tres celdas que se ven
+	# solidas y que el juego consideraria vacias, que es el mismo bug al reves.
+	for c in suelo.get_used_cells():
+		for celda in _celdas_que_cubre(suelo, c):
+			if celda != Vector2i(c.x, c.z):
+				_suelo_extra[celda] = true
+
 	_paredes_listas = true
 	_validar_piezas(paredes, CatalogoPiezas.PAREDES)
 	_validar_piezas(suelo, CatalogoPiezas.SUELO)
@@ -537,11 +614,11 @@ func _validar_piezas(grid_map : GridMap, capa : StringName) -> void:
 		if caja.size.x > celda_xz.x * 1.05 or caja.size.z > celda_xz.y * 1.05:
 			avisados[id] = true
 			push_warning(
-				"IsoGrid: la pieza '%s' mide %.2f x %.2f y la celda es %.2f x %.2f. " % [
+				"IsoGrid: la pieza '%s' mide %.2f x %.2f y la celda es %.2f x %.2f, " % [
 					nombre, caja.size.x, caja.size.z, celda_xz.x, celda_xz.y
 				]
-				+ "Solo bloquea la celda donde se pinto, no las que invade. "
-				+ "Escalala a una celda y pintala varias veces."
+				+ "asi que ocupa varias celdas. Se tienen en cuenta igual, pero conviene "
+				+ "saberlo: una pieza asi no se puede pintar pegada a cualquier cosa."
 			)
 
 

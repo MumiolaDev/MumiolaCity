@@ -139,6 +139,7 @@ func _armar_escena(d : Dictionary, malla : PackedScene) -> PackedScene:
 	# que instancie la escena.
 	if visual is Node3D:
 		(visual as Node3D).position.y = Volumen.apoyo_de(visual)
+		_comprobar_huella(d, visual as Node3D)
 
 	raiz.add_child(visual)
 	visual.owner = raiz
@@ -217,6 +218,38 @@ func _armar_definicion(d : Dictionary, escenas : Dictionary) -> ItemDefinition:
 	def.interacciones = _resolver_interacciones(d)
 	def.receta = _armar_receta(d)
 	return def
+
+
+## Cuanto puede asomarse una malla fuera de su celda sin pedir otra.
+const TOLERANCIA_HUELLA := 0.15
+
+
+## Avisa si el tamano_grilla declarado no coincide con lo que mide el modelo.
+##
+## items.json declara la huella a mano porque el generador es Python y no puede
+## medir una malla. Ese es justo el dato que envejece sin que nadie lo note: se
+## cambia un modelo por uno mas grande y la grilla sigue reservando las celdas
+## viejas, con lo que todo lo demas le pasa por encima.
+##
+## Avisa en vez de corregir a proposito. La huella es contenido —hay motivos para
+## querer que una alfombra ocupe menos de lo que mide— y una herramienta que
+## pisa el contenido en silencio es peor que una que se queja.
+func _comprobar_huella(d : Dictionary, visual : Node3D) -> void:
+	var caja := Volumen.caja_de(visual)
+	if caja.size == Vector3.ZERO:
+		return
+
+	var medida := Vector2i(
+		maxi(1, int(ceil(caja.size.x - TOLERANCIA_HUELLA))),
+		maxi(1, int(ceil(caja.size.z - TOLERANCIA_HUELLA))))
+
+	var huella : Array = d.get("tamano_grilla", [1, 1])
+	var declarada := Vector2i(int(huella[0]), int(huella[1]))
+	if medida == declarada:
+		return
+
+	_avisos.append("%s: declara una huella de %s y el modelo mide %.2f x %.2f, o sea %s"
+		% [d["id"], declarada, caja.size.x, caja.size.z, medida])
 
 
 ## Busca el icono ya generado de un item, o null si todavia no existe.

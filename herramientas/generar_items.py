@@ -184,6 +184,37 @@ for did, nom, val, mod, size, inter in [
 I_by = {x["id"]: x for x in I}
 I_by["alfombra"]["descripcion"] = "Decoracion. Se pisa: ocupa la celda pero no la bloquea."
 
+# ---------------------------------------------------------------- huellas medidas
+#
+# Lo que ocupa de verdad cada modelo, medido sobre su malla y no estimado. Diez
+# de los cuarenta y cinco colocables ocupaban mas de una celda declarando una, y
+# el resultado era que los demas objetos y el jugador les pasaban por encima: la
+# grilla solo reservaba la celda de origen.
+#
+# Es dato derivado de los modelos, no una decision de diseno: si cambia un
+# modelo, cambia el numero. ImportarItems.gd compara lo declarado contra la malla
+# al importar y avisa si se desfasan, que es lo unico que impide que esta tabla
+# envejezca en silencio.
+#
+# Algunos sorprenden y estan bien igual: el jamon de KayKit mide 1.39 m de largo
+# y la olla 1.40, asi que ocupan dos celdas de verdad. Si molesta, lo que hay que
+# cambiar es la escala del modelo, no este numero.
+HUELLAS = {
+	"alfombra": (3, 2),
+	"cajon_verduras": (2, 2),
+	"cama": (2, 3),
+	"jamon": (2, 1),
+	"jamon_cocido": (2, 1),
+	"lechuga_picada": (2, 2),
+	"olla": (2, 1),
+	"sarten": (1, 2),
+	"tabla_cortar": (2, 1),
+	"tabla_madera": (4, 1),
+}
+for _id, _huella in HUELLAS.items():
+	assert _id in I_by, "huella declarada para un item que no existe: " + _id
+	I_by[_id]["tamano_grilla"] = list(_huella)
+
 
 # ================================================================ validacion
 RAIZ = "/home/mumiola/Programacion/Godot/MumiolaCity/mumiola-city"
