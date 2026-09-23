@@ -29,6 +29,7 @@ var _verbos : Array[InteractionBehavior] = []
 
 func _ready() -> void:
 	id_pressed.connect(_al_elegir)
+	popup_hide.connect(_al_cerrarse)
 	hide()
 
 
@@ -128,6 +129,16 @@ func _posicion_para(objeto : WorldObject, tamano : Vector2i) -> Vector2i:
 	punto.x = clampi(punto.x, 0, maxi(0, limite.x - tamano.x))
 	punto.y = clampi(punto.y, 0, maxi(0, limite.y - tamano.y))
 	return punto
+
+
+## Al cerrarse, pide que el clic que lo cerro no llegue al mundo.
+##
+## Sin esto, cancelar el menu manda al personaje a caminar hasta donde
+## clickeaste: el clic cierra el popup y despues sigue viaje hasta
+## _unhandled_input. Cerrar un menu y ordenar un movimiento son dos intenciones
+## distintas, y el mismo clic no puede ser las dos.
+func _al_cerrarse() -> void:
+	GameManager.descartar_clic()
 
 
 ## Traduce el indice elegido de vuelta al comportamiento y avisa.

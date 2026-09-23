@@ -37,6 +37,9 @@ signal modo_cambiado(modo : Modo)
 ## todas ellas tendrian que conocer al editor.
 enum Modo { JUGANDO, EDITANDO }
 
+## En que cuadro se pidio ignorar el clic. -1 es "ninguno".
+var _cuadro_descartado : int = -1
+
 var _jugador : PersonajeControlador = null
 var _contenedor : Node = null
 var _sala_actual : RoomController = null
@@ -172,6 +175,32 @@ func ayuda() -> String:
 
 
 ## Devuelve en que modo esta el juego.
+## Pide que el clic que se esta procesando ahora no llegue al mundo.
+##
+## Lo usa el menu contextual al cerrarse: el clic que lo cierra no deberia
+## ademas mandar al personaje a caminar. Cancelar un menu y ordenar un
+## movimiento son dos intenciones distintas y el mismo clic no puede ser las
+## dos.
+##
+## Pasa por aca y no del menu al personaje directamente por la regla de
+## direccion: la UI conoce a los managers, el mundo lee un dato, y ninguno de
+## los dos sabe que existe el otro.
+func descartar_clic() -> void:
+	_cuadro_descartado = Engine.get_process_frames()
+
+
+## Devuelve si hay que ignorar el clic de este cuadro, y lo consume.
+##
+## Vale solo en el cuadro en que se pidio, a proposito. Una bandera que espera
+## indefinidamente al proximo clic se traga uno legitimo si el menu se cerro por
+## cualquier otro motivo; atada al cuadro, si nadie la consume se vence sola.
+func clic_descartado() -> bool:
+	if _cuadro_descartado != Engine.get_process_frames():
+		return false
+	_cuadro_descartado = -1
+	return true
+
+
 func modo() -> Modo:
 	return _modo
 
