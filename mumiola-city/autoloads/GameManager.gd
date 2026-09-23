@@ -37,8 +37,9 @@ signal modo_cambiado(modo : Modo)
 ## todas ellas tendrian que conocer al editor.
 enum Modo { JUGANDO, EDITANDO }
 
-## En que cuadro se pidio ignorar el clic. -1 es "ninguno".
-var _cuadro_descartado : int = -1
+## Cuantos menus hay abiertos ahora mismo. Un contador y no un bool porque nada
+## impide que algun dia haya dos.
+var _menus_abiertos : int = 0
 
 var _jugador : PersonajeControlador = null
 var _contenedor : Node = null
@@ -175,30 +176,27 @@ func ayuda() -> String:
 
 
 ## Devuelve en que modo esta el juego.
-## Pide que el clic que se esta procesando ahora no llegue al mundo.
-##
-## Lo usa el menu contextual al cerrarse: el clic que lo cierra no deberia
-## ademas mandar al personaje a caminar. Cancelar un menu y ordenar un
-## movimiento son dos intenciones distintas y el mismo clic no puede ser las
-## dos.
+## Avisa que un menu se abrio o se cerro.
 ##
 ## Pasa por aca y no del menu al personaje directamente por la regla de
 ## direccion: la UI conoce a los managers, el mundo lee un dato, y ninguno de
 ## los dos sabe que existe el otro.
-func descartar_clic() -> void:
-	_cuadro_descartado = Engine.get_process_frames()
+func avisar_menu(abierto : bool) -> void:
+	_menus_abiertos = maxi(0, _menus_abiertos + (1 if abierto else -1))
 
 
-## Devuelve si hay que ignorar el clic de este cuadro, y lo consume.
+## Devuelve si hay algun menu abierto ahora mismo.
 ##
-## Vale solo en el cuadro en que se pidio, a proposito. Una bandera que espera
-## indefinidamente al proximo clic se traga uno legitimo si el menu se cerro por
-## cualquier otro motivo; atada al cuadro, si nadie la consume se vence sola.
-func clic_descartado() -> bool:
-	if _cuadro_descartado != Engine.get_process_frames():
-		return false
-	_cuadro_descartado = -1
-	return true
+## Sirve para que el clic que cancela un menu no cuente ademas como una orden al
+## mundo: cerrar un menu y mandar al personaje a caminar son dos intenciones
+## distintas, y el mismo clic no puede ser las dos.
+##
+## Se pregunta por el estado y no por un aviso al cerrarse, que fue el primer
+## intento y estaba tarde: el orden real es que _unhandled_input ve el clic
+## **antes** de que el popup emita popup_hide. Cuando el mundo mira, el menu
+## todavia esta abierto — y eso es justamente lo que hay que mirar.
+func hay_menu_abierto() -> bool:
+	return _menus_abiertos > 0
 
 
 func modo() -> Modo:

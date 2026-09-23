@@ -57,8 +57,10 @@ func _unhandled_input(evento : InputEvent) -> void:
 		return
 
 	if evento is InputEventMouseButton and evento.pressed and evento.button_index == MOUSE_BUTTON_LEFT:
-		# El clic que cierra un menu contextual no es una orden de caminar.
-		if GameManager.clic_descartado():
+		# Con un menu abierto, el clic es para cerrarlo y no para caminar. Cuando
+		# el mundo ve el evento el menu todavia esta abierto: popup_hide llega
+		# despues de _unhandled_input, no antes.
+		if GameManager.hay_menu_abierto():
 			return
 		var celda := grid.celda_bajo_puntero(camara, evento.position)
 		if celda != IsoGrid.SIN_CELDA:
