@@ -4,14 +4,14 @@
 [ext_resource type="PackedScene" uid="uid://dlhf5cgqmm6xs" path="res://arte/modelos_3d/muebles/bed_single_A.gltf" id="2_6bfe2"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_kttsv"]
-size = Vector3(0.9, 1, 1.9)
+size = Vector3(1.9, 1, 2.9)
 
-[node name="Cama" type="Area3D" unique_id=1019780042]
+[node name="Cama" type="Area3D" unique_id=2024272433]
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("1_kttsv")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=2139495893]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1373807247]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("BoxShape3D_kttsv")
 

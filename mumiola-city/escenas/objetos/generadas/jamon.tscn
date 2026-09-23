@@ -4,14 +4,14 @@
 [ext_resource type="PackedScene" uid="uid://dlccsnw6lmtep" path="res://arte/modelos_3d/restoran/food_ingredient_ham.gltf" id="2_6mrtk"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_gpw5x"]
-size = Vector3(0.9, 1, 0.9)
+size = Vector3(1.9, 1, 0.9)
 
-[node name="Jamon" type="Area3D" unique_id=1082217426]
+[node name="Jamon" type="Area3D" unique_id=1731983276]
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("1_gpw5x")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=735154969]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1589977428]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("BoxShape3D_gpw5x")
 

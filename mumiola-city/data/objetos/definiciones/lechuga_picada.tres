@@ -37,6 +37,7 @@ peso = 0.2
 valor_base = 11
 comprable = false
 receta = SubResource("Resource_o4dmt")
+tamano_grilla = Vector2i(2, 2)
 rotable = true
 icono = ExtResource("2_eq8r4")
 escena_mundo = ExtResource("1_enkg5")

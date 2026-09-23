@@ -6,12 +6,12 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_jclwe"]
 size = Vector3(0.9, 1, 0.9)
 
-[node name="PlatoDelDia" type="Area3D" unique_id=1320038878]
+[node name="PlatoDelDia" type="Area3D" unique_id=1133839725]
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("1_jclwe")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1773140489]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=963198572]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("BoxShape3D_jclwe")
 

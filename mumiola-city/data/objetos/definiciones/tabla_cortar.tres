@@ -15,6 +15,7 @@ peso = 1.0
 apilable = false
 stack_maximo = 1
 valor_base = 25
+tamano_grilla = Vector2i(2, 1)
 rotable = true
 icono = ExtResource("2_l0y8b")
 escena_mundo = ExtResource("1_faq8i")

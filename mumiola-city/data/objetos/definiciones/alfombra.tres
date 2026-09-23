@@ -9,12 +9,13 @@
 script = ExtResource("3_8l6k4")
 id = &"alfombra"
 nombre = "Alfombra"
-descripcion = "Decoracion. Se pisa: ocupa la celda pero no la bloquea."
+descripcion = "Decoracion. Se pisa: ocupa sus celdas pero no bloquea el paso."
 peso = 2.0
 apilable = false
 stack_maximo = 1
 valor_base = 48
-tamano_grilla = Vector2i(2, 1)
+tamano_grilla = Vector2i(3, 2)
+bloquea_paso = false
 rotable = true
 icono = ExtResource("2_8l6k4")
 escena_mundo = ExtResource("1_8w3v4")
