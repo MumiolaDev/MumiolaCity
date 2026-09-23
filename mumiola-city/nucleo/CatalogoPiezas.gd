@@ -43,6 +43,32 @@ const PIEZAS := {
 }
 
 
+## Que celdas de una pieza se pueden atravesar, relativas a la que se pinto.
+##
+## Es lo que permite que un vano sea un vano. espacio_puerta mide tres celdas de
+## ancho con el agujero justo en el medio: los dos costados son muro y la del
+## medio se cruza. Sin esto habria que elegir entre que la puerta no se pueda
+## cruzar o que se pueda atravesar la pared entera.
+##
+## Los offsets se giran con la pieza, asi que una puerta rotada sigue teniendo el
+## hueco donde corresponde.
+##
+## No se detecta de la malla a proposito: un AABB no ve agujeros, habria que
+## muestrear la geometria, y declarar un offset para una pieza es mas barato y
+## mas facil de leer que adivinarlo.
+##
+## Ocupar no es lo mismo que bloquear: una celda de hueco sigue ocupada —no se le
+## puede poner un mueble encima, porque ahi va a ir una puerta— pero se camina.
+const HUECOS := {
+	&"espacio_puerta": [Vector2i(0, 0)],
+}
+
+
+## Devuelve los offsets atravesables de una pieza, o vacio si no tiene.
+static func huecos_de(pieza : StringName) -> Array:
+	return HUECOS.get(pieza, [])
+
+
 ## Los cuatro giros de un cuarto de vuelta, como indices de orientacion de GridMap.
 ##
 ## Un GridMap no guarda grados sino un indice ortogonal de 0 a 23, que cubre las

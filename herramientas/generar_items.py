@@ -9,7 +9,8 @@ I = []  # items
 
 def item(id, nombre, categoria, valor, modelo=None, desc="", peso=0.2,
          apilable=True, stack=99, comprable=False, vendible=True, familia="",
-         size=(1, 1), rotable=None, colocable=None, interacciones=None, receta=None):
+         size=(1, 1), rotable=None, colocable=None, bloquea_paso=True,
+         interacciones=None, receta=None):
 	# Por defecto, todo lo que se puede colocar se puede girar.
 	#
 	# Antes el defecto era False y solo doce de los cuarenta y cinco colocables
@@ -24,7 +25,7 @@ def item(id, nombre, categoria, valor, modelo=None, desc="", peso=0.2,
 		"valor_base": valor, "comprable": comprable, "vendible": vendible,
 		"familia": familia,
 		"tamano_grilla": list(size), "rotable": se_coloca if rotable is None else rotable,
-		"colocable": se_coloca,
+		"colocable": se_coloca, "bloquea_paso": bloquea_paso,
 		"modelo": modelo,
 		"interacciones": interacciones or [],
 		"receta": receta,
@@ -182,7 +183,10 @@ for did, nom, val, mod, size, inter in [
 	     peso=2.0, apilable=False, stack=1, comprable=True, rotable=True, size=size,
 	     interacciones=inter)
 I_by = {x["id"]: x for x in I}
-I_by["alfombra"]["descripcion"] = "Decoracion. Se pisa: ocupa la celda pero no la bloquea."
+# La alfombra es el caso que separa ocupar de bloquear: reserva sus celdas para
+# que no le pongas una mesa encima, pero se camina por arriba.
+I_by["alfombra"]["descripcion"] = "Decoracion. Se pisa: ocupa sus celdas pero no bloquea el paso."
+I_by["alfombra"]["bloquea_paso"] = False
 
 # ---------------------------------------------------------------- huellas medidas
 #

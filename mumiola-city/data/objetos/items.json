@@ -75,6 +75,7 @@
 			],
 			"rotable": false,
 			"colocable": false,
+			"bloquea_paso": true,
 			"modelo": null,
 			"interacciones": [],
 			"receta": null
@@ -97,6 +98,7 @@
 			],
 			"rotable": false,
 			"colocable": false,
+			"bloquea_paso": true,
 			"modelo": null,
 			"interacciones": [],
 			"receta": null
@@ -119,6 +121,7 @@
 			],
 			"rotable": false,
 			"colocable": false,
+			"bloquea_paso": true,
 			"modelo": null,
 			"interacciones": [],
 			"receta": null
@@ -141,6 +144,7 @@
 			],
 			"rotable": false,
 			"colocable": false,
+			"bloquea_paso": true,
 			"modelo": null,
 			"interacciones": [],
 			"receta": null
@@ -163,6 +167,7 @@
 			],
 			"rotable": false,
 			"colocable": false,
+			"bloquea_paso": true,
 			"modelo": null,
 			"interacciones": [],
 			"receta": null
@@ -185,6 +190,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/food_ingredient_tomato",
 			"interacciones": [],
 			"receta": {
@@ -221,6 +227,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/food_ingredient_lettuce",
 			"interacciones": [],
 			"receta": {
@@ -257,6 +264,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/food_ingredient_potato",
 			"interacciones": [],
 			"receta": {
@@ -293,6 +301,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/food_ingredient_onion",
 			"interacciones": [],
 			"receta": {
@@ -329,6 +338,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/food_ingredient_carrot",
 			"interacciones": [],
 			"receta": {
@@ -365,6 +375,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/crate_tomatoes",
 			"interacciones": [
 				"abrir"
@@ -389,6 +400,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/food_ingredient_bun",
 			"interacciones": [],
 			"receta": null
@@ -411,6 +423,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/food_ingredient_cheese",
 			"interacciones": [],
 			"receta": null
@@ -433,6 +446,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/food_ingredient_burger_uncooked",
 			"interacciones": [],
 			"receta": null
@@ -455,6 +469,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/food_ingredient_ham",
 			"interacciones": [],
 			"receta": null
@@ -477,6 +492,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/food_ingredient_tomato_slices",
 			"interacciones": [],
 			"receta": {
@@ -516,6 +532,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/food_ingredient_lettuce_chopped",
 			"interacciones": [],
 			"receta": {
@@ -555,6 +572,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/food_ingredient_cheese_slice",
 			"interacciones": [],
 			"receta": {
@@ -594,6 +612,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/food_ingredient_onion_rings",
 			"interacciones": [],
 			"receta": {
@@ -633,6 +652,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/food_ingredient_carrot_pieces",
 			"interacciones": [],
 			"receta": {
@@ -672,6 +692,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/food_ingredient_potato_mashed",
 			"interacciones": [],
 			"receta": {
@@ -710,6 +731,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/food_ingredient_burger_cooked",
 			"interacciones": [],
 			"receta": {
@@ -748,6 +770,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/food_ingredient_ham_cooked",
 			"interacciones": [],
 			"receta": {
@@ -786,6 +809,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/food_ingredient_burger_trash",
 			"interacciones": [],
 			"receta": null
@@ -808,6 +832,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/food_burger",
 			"interacciones": [],
 			"receta": {
@@ -858,6 +883,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/food_vegetableburger",
 			"interacciones": [],
 			"receta": {
@@ -912,6 +938,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/food_stew",
 			"interacciones": [],
 			"receta": {
@@ -963,6 +990,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/food_dinner",
 			"interacciones": [],
 			"receta": {
@@ -1005,6 +1033,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/knife",
 			"interacciones": [],
 			"receta": null
@@ -1027,6 +1056,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/cuttingboard",
 			"interacciones": [],
 			"receta": null
@@ -1049,6 +1079,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/pan_A",
 			"interacciones": [],
 			"receta": null
@@ -1071,6 +1102,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/pot_A",
 			"interacciones": [],
 			"receta": null
@@ -1093,6 +1125,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/plate",
 			"interacciones": [
 				"servir",
@@ -1132,6 +1165,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/bowl",
 			"interacciones": [
 				"servir",
@@ -1171,6 +1205,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/plate_dirty",
 			"interacciones": [],
 			"receta": null
@@ -1193,6 +1228,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/bowl_dirty",
 			"interacciones": [],
 			"receta": null
@@ -1215,6 +1251,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "restoran/jar_A_medium",
 			"interacciones": [],
 			"receta": null
@@ -1237,6 +1274,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "prototipo/Primitive_Beam",
 			"interacciones": [],
 			"receta": null
@@ -1259,6 +1297,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "muebles/chair_stool_wood",
 			"interacciones": [
 				"sentarse"
@@ -1300,6 +1339,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "muebles/chair_A_wood",
 			"interacciones": [
 				"sentarse"
@@ -1341,6 +1381,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "muebles/table_small",
 			"interacciones": [
 				"apoyar"
@@ -1382,6 +1423,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "muebles/shelf_A_small",
 			"interacciones": [
 				"abrir"
@@ -1423,6 +1465,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "muebles/table_medium",
 			"interacciones": [
 				"apoyar"
@@ -1464,6 +1507,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "muebles/cabinet_small",
 			"interacciones": [
 				"abrir"
@@ -1505,6 +1549,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "muebles/bed_single_A",
 			"interacciones": [
 				"acostarse"
@@ -1546,6 +1591,7 @@
 			],
 			"rotable": false,
 			"colocable": false,
+			"bloquea_paso": true,
 			"modelo": null,
 			"interacciones": [],
 			"receta": null
@@ -1568,6 +1614,7 @@
 			],
 			"rotable": false,
 			"colocable": false,
+			"bloquea_paso": true,
 			"modelo": null,
 			"interacciones": [],
 			"receta": null
@@ -1575,7 +1622,7 @@
 		{
 			"id": "alfombra",
 			"nombre": "Alfombra",
-			"descripcion": "Decoracion. Se pisa: ocupa la celda pero no la bloquea.",
+			"descripcion": "Decoracion. Se pisa: ocupa sus celdas pero no bloquea el paso.",
 			"categoria": "decorativo",
 			"peso": 2.0,
 			"apilable": false,
@@ -1590,6 +1637,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": false,
 			"modelo": "muebles/rug_rectangle_A",
 			"interacciones": [],
 			"receta": null
@@ -1612,6 +1660,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "muebles/lamp_table",
 			"interacciones": [
 				"encender"
@@ -1636,6 +1685,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "muebles/pictureframe_medium",
 			"interacciones": [],
 			"receta": null
@@ -1658,6 +1708,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "muebles/cactus_small_A",
 			"interacciones": [],
 			"receta": null
@@ -1680,6 +1731,7 @@
 			],
 			"rotable": true,
 			"colocable": true,
+			"bloquea_paso": true,
 			"modelo": "muebles/book_single",
 			"interacciones": [],
 			"receta": null

@@ -202,6 +202,7 @@ func _armar_definicion(d : Dictionary, escenas : Dictionary) -> ItemDefinition:
 	def.familia = _texto(d, "familia")
 	def.colocable = bool(d.get("colocable", true))
 	def.rotable = bool(d.get("rotable", false))
+	def.bloquea_paso = bool(d.get("bloquea_paso", true))
 
 	var huella : Array = d.get("tamano_grilla", [1, 1])
 	def.tamano_grilla = Vector2i(int(huella[0]), int(huella[1]))

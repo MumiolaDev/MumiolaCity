@@ -545,7 +545,7 @@ Lo que sí se mantiene del razonamiento original: el dato es **del emplazamiento
 
 ---
 
-### D15 — Toda pieza de `GridMap` mide una celda · **decidida**
+### D15 — Cada pieza declara cuánto ocupa, y ocupar no es bloquear · **revisada**
 
 **El problema, encontrado en la práctica.** `GridMap.get_used_cells()` devuelve las celdas donde se *colocó* una pieza, no las que su malla **invade**. Una pared de dos metros de ancho pintada en una celda bloquea esa sola y el personaje la atraviesa por la otra mitad, sin que nada dé error. Con una puerta de tres celdas el efecto fue peor y exactamente inverso: bloqueaba el hueco y dejaba libres los dos muros.
 
@@ -558,6 +558,26 @@ Lo que sí se mantiene del razonamiento original: el dato es **del emplazamiento
 **Qué la protege.** `IsoGrid._validar_piezas()` compara la caja envolvente de cada pieza contra el tamaño de celda y avisa por consola al arrancar. Convierte un bug silencioso —el personaje atraviesa medio muro— en un mensaje que nombra la pieza culpable.
 
 **Esto limita al `GridMap`, no al juego.** Los objetos del jugador sí son multicelda y siempre lo fueron: `celdas_de()` expande la huella, `esta_libre()` valida el conjunto y `ocupar()` registra todas las celdas apuntando a la misma instancia. El editor de salas del juego va a instanciar `WorldObject`, no a pintar celdas de `GridMap`, así que la regla se queda del lado del diseñador y no se le contagia al jugador.
+
+**Revisada el 23-09.** La regla original —toda pieza mide una celda— resultó imposible de cumplir con el pack: cinco de las once se pasan, y la que más, el vano de puerta, mide tres celdas *a propósito*, porque el agujero está en el medio. Forzarlas a una celda significaba tirar el vano y las ventanas.
+
+Ahora **`IsoGrid` calcula la huella de cada pieza a partir de su malla**: AABB, más la transformada que la `MeshLibrary` guarda, más la orientación con que quedó pintada. Una celda cuenta si la pieza cubre más de la mitad; si ninguna llega —una pared mide 0.27 de espesor y nunca cubrirá media celda de fondo— vale la celda donde se pintó. No hay tabla que mantener: cambiar la biblioteca cambia la huella.
+
+**Y ocupar dejó de ser lo mismo que bloquear el paso.** Eran el mismo bit y hacían falta dos:
+
+| | ocupa | bloquea |
+|---|---|---|
+| suelo | no | no |
+| pared | sí | sí |
+| mueble | sí | sí |
+| alfombra | **sí** | **no** |
+| hueco de un vano | **sí** | **no** |
+
+La alfombra reserva sus celdas —no se le pone una mesa encima— y se pisa. El hueco de un vano está ocupado, porque ahí va a ir una puerta, y se cruza caminando. Con un solo dato había que elegir entre que la decoración fuera un muro o que flotaran muebles sobre ella.
+
+Se responde con dos preguntas distintas: `hay_estructura()` / `esta_libre()` para colocar, y `se_puede_caminar()` para el A\* y el personaje. Los items lo declaran con `ItemDefinition.bloquea_paso`; las piezas, con `CatalogoPiezas.HUECOS`, que lista los offsets atravesables y los gira con la pieza.
+
+**Los huecos se declaran y no se detectan.** Un AABB no ve agujeros: habría que muestrear la geometría. Declarar un offset para una pieza es más barato y más fácil de leer que adivinarlo.
 
 ---
 

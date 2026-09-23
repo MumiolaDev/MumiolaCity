@@ -196,7 +196,7 @@ func levantarse() -> bool:
 	# Por delante del asiento si se puede; si esa celda no sirve, cualquier
 	# vecina libre, que sigue siendo mejor que quedarse clavado.
 	var destino := _celda_salida
-	if destino == IsoGrid.SIN_CELDA or not grid.esta_libre(destino):
+	if destino == IsoGrid.SIN_CELDA or not grid.se_puede_caminar(destino):
 		destino = grid.celda_libre_vecina(objeto.celda_origen)
 
 	if destino != IsoGrid.SIN_CELDA:
@@ -244,7 +244,7 @@ func ubicar_en_celda(celda : Vector2i) -> void:
 		levantarse()
 
 	var destino := celda
-	if not grid.esta_libre(destino):
+	if not grid.se_puede_caminar(destino):
 		var alternativa := grid.celda_libre_vecina(celda)
 		if alternativa != IsoGrid.SIN_CELDA:
 			destino = alternativa

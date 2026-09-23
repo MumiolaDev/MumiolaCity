@@ -82,6 +82,13 @@ const NODO_VISUAL := ^"Visual"
 @export var colocable : bool = true
 ## Huella en celdas. Una mesa de 2x2 ocupa cuatro y las libera todas juntas.
 @export var tamano_grilla : Vector2i = Vector2i.ONE
+## Si ademas de ocupar sus celdas impide caminar por ellas.
+##
+## Ocupar y bloquear el paso son dos cosas distintas, y confundirlas deja sin
+## expresar el caso mas comun de la decoracion: una alfombra reserva su espacio
+## —no le ponés una mesa encima— pero se pisa. Con un solo dato habria que elegir
+## entre que floten muebles sobre ella o que sea un muro de tres por dos.
+@export var bloquea_paso : bool = true
 @export var rotable : bool = false
 
 @export_group("Arte")

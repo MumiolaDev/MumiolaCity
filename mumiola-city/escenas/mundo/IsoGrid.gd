@@ -105,8 +105,8 @@ func mundo_a_celda(pos: Vector3) -> Vector2i:
 ## El ancla es el centro de la celda, y una celda va de -0.5 a +0.5 alrededor
 ## suyo. La tolerancia evita contar una celda entera por un milimetro de malla
 ## asomando: pared_base mide 0.27 de fondo y se sale un pelo de la celda.
-func _celdas_que_cubre(grid_map : GridMap, celda : Vector3i) -> Array[Vector2i]:
-	var propia : Array[Vector2i] = [Vector2i(celda.x, celda.z)]
+func _celdas_que_cubre(grid_map : GridMap, celda : Vector3i) -> Dictionary:
+	var propia := {Vector2i(celda.x, celda.z): true}
 
 	var biblioteca := grid_map.mesh_library
 	if biblioteca == null:
@@ -122,10 +122,21 @@ func _celdas_que_cubre(grid_map : GridMap, celda : Vector3i) -> Array[Vector2i]:
 	var caja : AABB = (Transform3D(giro, Vector3.ZERO)
 		* biblioteca.get_item_mesh_transform(id)) * malla.get_aabb()
 
-	var salida : Array[Vector2i] = []
+	# Los huecos giran con la pieza: una puerta rotada tiene el agujero donde
+	# corresponde y no donde estaba antes de girarla.
+	var nombre := CatalogoPiezas.nombre_de(biblioteca, id)
+	var entera_transitable : bool = nombre in piezas_transitables
+	var huecos := {}
+	for h in CatalogoPiezas.huecos_de(nombre):
+		var v : Vector3 = giro * Vector3(h.x, 0.0, h.y)
+		huecos[Vector2i(roundi(v.x), roundi(v.z))] = true
+
+	var salida := {}
 	for dx in _celdas_en_eje(caja.position.x, caja.end.x):
 		for dz in _celdas_en_eje(caja.position.z, caja.end.z):
-			salida.append(Vector2i(celda.x + dx, celda.z + dz))
+			var offset := Vector2i(dx, dz)
+			salida[Vector2i(celda.x + dx, celda.z + dz)] = not (
+				entera_transitable or huecos.has(offset))
 	return propia if salida.is_empty() else salida
 
 
@@ -202,7 +213,7 @@ func motivo_bloqueo(origen : Vector2i, size := Vector2i.ONE, rotacion := 0) -> E
 	for c in celdas_de(origen, size, rotacion):
 		if not celda_valida(c):
 			return Errores.Codigo.CELDA_INEXISTENTE
-		if hay_pared(c):
+		if hay_estructura(c):
 			return Errores.Codigo.HAY_PARED
 		if _ocupadas.has(c):
 			return Errores.Codigo.CELDA_OCUPADA
@@ -218,7 +229,35 @@ func motivo_bloqueo(origen : Vector2i, size := Vector2i.ONE, rotacion := 0) -> E
 func hay_pared(celda : Vector2i) -> bool:
 	if not _paredes_listas:
 		recalcular_paredes()
+	return _paredes_planta.get(celda, false)
+
+
+## Devuelve si alguna pieza de escenario cubre esta celda, bloquee o no.
+##
+## Es la otra mitad de hay_pared(), y la diferencia es todo el punto: el hueco de
+## un vano esta cubierto —no se le puede poner un mueble, porque ahi va a ir una
+## puerta— pero se cruza caminando.
+func hay_estructura(celda : Vector2i) -> bool:
+	if not _paredes_listas:
+		recalcular_paredes()
 	return _paredes_planta.has(celda)
+
+
+## Devuelve si el personaje puede pararse en esta celda.
+##
+## No es lo mismo que esta_libre(), que responde "se puede colocar algo aca".
+## Una alfombra ocupa sus celdas y se pisa; el hueco de un vano esta ocupado y se
+## cruza. Tenerlas separadas es lo que permite que la decoracion no sea un muro.
+func se_puede_caminar(celda : Vector2i) -> bool:
+	if not celda_valida(celda) or hay_pared(celda):
+		return false
+
+	var obj : WorldObject = _ocupadas.get(celda)
+	if obj == null or not is_instance_valid(obj):
+		return true
+
+	var def := obj.definicion()
+	return def != null and not def.bloquea_paso
 
 
 ## Reconstruye la planta de las paredes desde el GridMap. Hay que llamarla si se
@@ -228,10 +267,12 @@ func recalcular_paredes() -> void:
 	_suelo_extra.clear()
 
 	for c in paredes.get_used_cells():
-		if _es_transitable(paredes.get_cell_item(c)):
-			continue
-		for celda in _celdas_que_cubre(paredes, c):
-			_paredes_planta[celda] = true
+		var cubiertas := _celdas_que_cubre(paredes, c)
+		for celda in cubiertas:
+			# Si dos piezas se pisan, gana la que bloquea: es mas facil notar que
+			# no podes pasar por donde deberias que descubrir que se atraviesa un
+			# muro solo desde un lado.
+			_paredes_planta[celda] = _paredes_planta.get(celda, false) or cubiertas[celda]
 
 	# El suelo tambien: una pieza de dos por dos deja tres celdas que se ven
 	# solidas y que el juego consideraria vacias, que es el mismo bug al reves.
@@ -278,7 +319,7 @@ func liberar_objeto(obj : WorldObject) -> bool:
 	if celdas.is_empty():
 		return false
 
-	# Borrar antes de tocar el A*: _marcar_en_astar() recalcula esta_libre() por
+	# Borrar antes de tocar el A*: _marcar_en_astar() recalcula la transitabilidad por
 	# celda, asi que si todavia estuvieran en _ocupadas las volveria a marcar
 	# solidas y liberar no serviria de nada.
 	for c in celdas:
@@ -443,7 +484,9 @@ func celda_libre_vecina(celda : Vector2i) -> Vector2i:
 	]
 	for paso in VECINDAD:
 		var vecina : Vector2i = celda + paso
-		if esta_libre(vecina):
+		# Se puede caminar, no esta libre: quien baja de una silla necesita un
+		# lugar donde pararse, y pararse sobre una alfombra se puede.
+		if se_puede_caminar(vecina):
 			return vecina
 	return SIN_CELDA
 
@@ -525,7 +568,7 @@ func _asegurar_astar() -> void:
 	for x in region.size.x:
 		for z in region.size.y:
 			var celda := region.position + Vector2i(x, z)
-			astar.set_point_solid(celda, not esta_libre(celda))
+			astar.set_point_solid(celda, not se_puede_caminar(celda))
 
 	_astar = astar
 
@@ -540,7 +583,7 @@ func _marcar_en_astar(celdas : Array[Vector2i]) -> void:
 		return
 	for c in celdas:
 		if _astar.region.has_point(c):
-			_astar.set_point_solid(c, not esta_libre(c))
+			_astar.set_point_solid(c, not se_puede_caminar(c))
 
 
 ## Devuelve la celda del piso a la que apunta una posicion de pantalla.
@@ -621,9 +664,3 @@ func _validar_piezas(grid_map : GridMap, capa : StringName) -> void:
 				+ "saberlo: una pieza asi no se puede pintar pegada a cualquier cosa."
 			)
 
-
-## Devuelve si una pieza de la capa de paredes esta declarada como atravesable.
-func _es_transitable(id : int) -> bool:
-	if piezas_transitables.is_empty() or paredes.mesh_library == null:
-		return false
-	return StringName(paredes.mesh_library.get_item_name(id)) in piezas_transitables
