@@ -6,8 +6,9 @@ extends Node3D
 ## El maniquin de KayKit trae seis mallas separadas pesadas al mismo esqueleto
 ## (ArmLeft, ArmRight, Body, Head, LegLeft, LegRight), asi que la estructura
 ## para intercambiar partes ya existe. Lo que falta es contenido: el pack no
-## trae prendas alternativas que ponerle. El esqueleto ademas tiene huesos de
-## enganche tipo handslot.l, que son donde van a colgar las herramientas.
+## trae prendas alternativas que ponerle. El esqueleto tiene veintiun huesos y
+## los dos que importan para equipar son hand.l y hand.r: de ahi van a colgar
+## las herramientas con un BoneAttachment3D.
 const SLOTS := [&"cuerpo", &"piernas", &"torso", &"cabeza", &"tocado"]
 
 ## Se emite cuando una animacion de transicion termino y arranca la que encadena.
@@ -26,6 +27,10 @@ signal transicion_terminada(destino : StringName)
 @export var animaciones : Dictionary = {
 	&"idle": "Rig_Medium_General/Idle_A",
 	&"caminar": "Rig_Medium_MovementBasic/Walking_A",
+	# Gestos de una pasada: se reproducen y vuelven solos a idle. PickUp esta en
+	# la libreria General, que ya estaba cargada, asi que levantar no necesito
+	# sumar ninguna.
+	&"levantar": "Rig_Medium_General/PickUp",
 	# Las tres poses vienen completas del pack: entrar, mantenerse y salir. Es
 	# lo que permite que PoseBehavior sea un solo script con tres .tres.
 	&"sentarse": "Rig_Medium_Simulation/Sit_Chair_Down",

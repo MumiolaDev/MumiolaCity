@@ -87,6 +87,26 @@ func peso_total() -> float:
 	return total
 
 
+## Devuelve si entraria una instancia mas de ese item, sin agregarla.
+##
+## Existe porque hay acciones que tienen que preguntar **antes** de mutar otra
+## cosa. Levantar un mueble lo saca de la sala y lo mete en la mochila, y si se
+## descubre que no entra cuando el mueble ya no esta, el objeto se perdio. La
+## alternativa —agregarlo primero y devolverlo si falla— deja el objeto en dos
+## lugares durante un instante, que es justo lo que D3 prohibe.
+##
+## Una instancia siempre pide una casilla propia: lo que tiene estado no se
+## apila (D1).
+func hay_lugar_para(def : ItemDefinition) -> Errores.Codigo:
+	if def == null:
+		return Errores.Codigo.NO_TIENE_ITEM
+	if _casillas_libres() < 1:
+		return Errores.Codigo.INVENTARIO_LLENO
+	if peso_total() + def.peso > PESO_MAXIMO:
+		return Errores.Codigo.INVENTARIO_LLENO
+	return Errores.Codigo.OK
+
+
 ## Agrega unidades de un item. Devuelve OK o el motivo del rechazo.
 ##
 ## Si el item tiene estado propio crea una instancia por unidad en vez de
@@ -147,10 +167,10 @@ func agregar_instancia(inst : ItemInstance) -> Errores.Codigo:
 	if def == null:
 		push_error("InventoryManager: la instancia apunta a '%s', que no existe." % inst.definicion_id)
 		return Errores.Codigo.NO_TIENE_ITEM
-	if _casillas_libres() < 1:
-		return Errores.Codigo.INVENTARIO_LLENO
-	if peso_total() + def.peso > PESO_MAXIMO:
-		return Errores.Codigo.INVENTARIO_LLENO
+
+	var lugar := hay_lugar_para(def)
+	if not Errores.ok(lugar):
+		return lugar
 
 	var slot := InventorySlot.new()
 	slot.definicion_id = inst.definicion_id

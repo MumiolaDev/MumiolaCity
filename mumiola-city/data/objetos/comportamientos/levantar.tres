@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="LevantarBehavior" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://escenas/objetos/interacciones/LevantarBehavior.gd" id="1_levantar"]
+
+[resource]
+script = ExtResource("1_levantar")
+verbo = &"levantar"
+etiqueta = "Levantar"
+requiere_adyacencia = true
+animacion = &"levantar"

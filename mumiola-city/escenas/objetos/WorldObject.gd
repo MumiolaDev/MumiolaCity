@@ -21,6 +21,17 @@ extends Area3D
 ## puesta a mano en una sala.
 const MIRAR : InteractionBehavior = preload("res://data/objetos/comportamientos/mirar.tres")
 
+## El otro verbo universal: sacar el objeto de la sala y guardarlo.
+##
+## Vive aca por lo mismo que mirar. Todo lo que se pudo colocar se puede volver
+## a levantar, asi que si estuviera en la lista de interacciones de cada item
+## seria una lista que hay que acordarse de completar, y olvidarse no daria
+## error: ese mueble quedaria clavado en el piso y nadie se enteraria hasta
+## intentar sacarlo.
+##
+## A diferencia de mirar, este si puede negarse — ver LevantarBehavior.
+const LEVANTAR : InteractionBehavior = preload("res://data/objetos/comportamientos/levantar.tres")
+
 ## Se emite despues de que un verbo se ejecuto de verdad.
 signal interactuado(behavior : InteractionBehavior, actor : Node)
 
@@ -113,9 +124,14 @@ func verbos_disponibles(actor : Node) -> Array[InteractionBehavior]:
 			if comportamiento != null and comportamiento.puede_interactuar(actor, self):
 				salida.append(comportamiento)
 
-	# Ultimo y no primero: lo que el jugador suele querer es la accion del
-	# mueble, y mirar es lo que queda cuando no hay otra cosa. Va incluso sin
-	# definicion, que es el unico caso en que la lista podria salir vacia.
+	# Los dos universales van al final y en este orden. Lo que el jugador suele
+	# querer es la accion del mueble, asi que esas van primero; levantar es
+	# destructivo y no tiene que quedar bajo el cursor al abrirse el menu; y
+	# mirar es lo que queda cuando no hay otra cosa, asi que cierra la lista. Va
+	# incluso sin definicion, que es el unico caso en que la lista podria salir
+	# vacia.
+	if LEVANTAR.puede_interactuar(actor, self):
+		salida.append(LEVANTAR)
 	if MIRAR.puede_interactuar(actor, self):
 		salida.append(MIRAR)
 	return salida

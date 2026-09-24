@@ -43,11 +43,21 @@ func _ready() -> void:
 		if ocupadas != esperadas.size() or not libres_fuera:
 			fallos += 1
 
-		# El A* tampoco entra en ninguna.
+		# El A* respeta la huella, pero segun bloquea_paso y no segun ocupacion:
+		# son dos bits distintos. La alfombra ocupa tres por dos y se camina
+		# encima igual que el suelo, y el dia que haya puertas van a ocupar sin
+		# bloquear tambien. Afirmar "ocupada, entonces intransitable" era lo que
+		# esta prueba daba por sentado y dejo de ser cierto.
+		var alcanzables := 0
 		for c in esperadas:
 			if not grid.ruta(Vector2i(30, 30), c).is_empty():
-				print("  FALLO: el A* llega a %s, ocupada por %s" % [c, id]); fallos += 1
-				break
+				alcanzables += 1
+		if def.bloquea_paso and alcanzables > 0:
+			print("  FALLO: el A* entra en %d celdas de %s, que bloquea el paso"
+				% [alcanzables, id]); fallos += 1
+		elif not def.bloquea_paso and alcanzables != esperadas.size():
+			print("  FALLO: %s no bloquea el paso y el A* solo llega a %d de %d celdas"
+				% [id, alcanzables, esperadas.size()]); fallos += 1
 
 		# Y al retirarlo se liberan todas.
 		var obj := grid.objeto_en(ancla)

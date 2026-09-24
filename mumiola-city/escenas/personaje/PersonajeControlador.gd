@@ -348,6 +348,28 @@ func ubicar_en_celda(celda : Vector2i) -> void:
 	global_position = pos
 
 
+## Reproduce una animacion de una pasada y vuelve a idle al terminar.
+##
+## Es lo que le da cuerpo a los verbos que no son poses: levantar algo, usarlo,
+## saludar. No cambia el estado del personaje a proposito — un gesto no es un
+## modo, y tratarlo como uno obligaria a cada verbo a acordarse de salir de el.
+## Si el jugador clickea a mitad del gesto, camina, y eso esta bien: caminar
+## pisa la animacion en el fotograma siguiente porque _physics_process la vuelve
+## a pedir.
+##
+## Se niega en pose o levantandose: ahi la animacion la manda el mueble, y
+## meterle un gesto en el medio deja al personaje de pie dentro de la cama.
+##
+## Devuelve si el gesto se reproduce.
+func hacer_gesto(animacion : StringName, mirar_a : Vector3 = Vector3.ZERO) -> bool:
+	if esta_en_pose() or estado == &"saliendo_pose":
+		return false
+
+	if mirar_a != Vector3.ZERO:
+		_mirar_hacia(mirar_a - global_position)
+	return avatar.reproducir_encadenado(animacion, &"idle")
+
+
 ## Ejecuta un verbo sobre un objeto, caminando hasta el primero si hace falta.
 ##
 ## Es lo que evita que interactuar con algo lejano teletransporte al personaje.
