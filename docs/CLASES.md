@@ -1,6 +1,6 @@
 # MumiolaCity — Referencia de clases y objetos
 
-**Versión:** 0.6 · **Fecha:** 2026-09-21 (fase 1 y fase 2a implementadas; costuras del editor puestas; D23, D24 y D25 agregadas; catálogo v0.5 con 52 ítems)
+**Versión:** 0.7 · **Fecha:** 2026-09-25 (fases 1, 2a y 3 implementadas; fase 4 en curso: `PoseBehavior` y `LevantarBehavior` hechos; **las cinco costuras de red puestas**; D23, D24 y D25 cerradas; catálogo v0.5 con 52 ítems)
 **Complementa:** [`SCRIPTS.md`](SCRIPTS.md) (qué scripts existen y en qué orden) y [`SISTEMAS.md`](SISTEMAS.md) (cómo se comunican y qué decisiones faltan).
 **Este documento es la firma de cada clase:** de qué hereda, qué campos expone, qué estado guarda, qué señales emite, qué métodos ofrece y qué invariantes tiene que respetar. Es lo que se lee con el editor abierto, justo antes de escribir el archivo.
 
@@ -604,6 +604,7 @@ func tiene(id: StringName, cantidad := 1) -> bool
 func cantidad_de_familia(familia: StringName) -> int
 func buscar_familia(familia: StringName) -> InventorySlot
 func peso_total() -> float
+func hay_lugar_para(def: ItemDefinition) -> Errores.Codigo   # pregunta sin agregar
 
 # Escritura — todas devuelven Errores.Codigo (D16)
 func agregar(id: StringName, cantidad := 1) -> Errores.Codigo
@@ -622,6 +623,8 @@ func from_dict(d: Dictionary) -> void
 **`agregar()` decide la forma, no quien llama.** Si el ítem tiene estado propio crea una instancia por unidad en vez de apilarlas, así nadie tiene que acordarse de cuál de los dos métodos corresponde para cada ítem.
 
 **Nada se escribe a medias.** `agregar()` comprueba peso y casillas *antes* de tocar nada, y `quitar()` no saca nada si no hay suficiente: consumir la mitad de una receta y fallar después deja al jugador peor que si no hubiera intentado.
+
+**`hay_lugar_para()` existe porque hay acciones que tienen que preguntar *antes* de mutar otra cosa.** Levantar un mueble lo saca de la sala y lo mete en la mochila; si se descubre que no entra cuando el mueble ya no está, el objeto se perdió. La alternativa —agregarlo primero y devolverlo si falla— lo deja en dos lugares durante un instante, que es justo lo que **D3** prohíbe. `agregar_instancia()` lo usa en vez de repetir la regla, así que no hay dos definiciones de «entra».
 
 **`slots()` devuelve una copia.** Si la interfaz recibiera la lista viva, cualquier widget podría modificar el inventario sin pasar por acá ni emitir la señal — y el bug aparecería como «la UI muestra algo distinto a lo que hay».
 
@@ -850,33 +853,40 @@ func ruta(origen: Vector2i, destino: Vector2i) -> Array[Vector2i]
 class_name PersonajeControlador extends CharacterBody3D
 
 signal llego_a_celda(celda: Vector2i)
-signal estado_cambiado(estado: StringName)
 
-@export var velocidad: float = 120.0
-@export var energia_maxima: float = 100.0        # existe, pero nada la gasta todavia (D7)
+@export var grid: IsoGrid                        # la reapunta entrar_en() al cambiar de sala
+@export var camara: Camera3D
+@export var velocidad: float = 3.0               # m/s; con celdas de 1 m, tambien celdas/s
 
-var energia: float
-var celda_actual: Vector2i
-var estado: StringName = &"idle"                 # idle | caminando | sentado | actuando
+var estado: StringName = &"idle"                 # idle | caminando | en_pose | saliendo_pose
 var _ruta: Array[Vector2i]                       # celdas pendientes del recorrido
+var _en_pose_sobre: WorldObject                  # referencia viva: solo de sesion (D3)
+var _saliendo_de: WorldObject                    # mientras dura la animacion de levantarse
 
-func ir_a_celda(celda: Vector2i) -> void
+func ir_a_celda(destino: Vector2i) -> bool
 func detener() -> void
-func sentarse_en(objeto: WorldObject, offset: Vector3) -> bool
-func levantarse() -> void
-func gastar_energia(n: float) -> bool            # (D7)
-func restaurar_energia(n: float) -> void
-func esta_adyacente_a(objeto: WorldObject) -> bool
-func reproducir_animacion(nombre: StringName) -> void
+func entrar_en(sala: RoomController) -> void
+func esta_en_pose() -> bool
+func adoptar_pose(objeto: WorldObject, pose: Dictionary) -> bool
+func dejar_pose() -> bool
+func ubicar_en_celda(celda: Vector2i) -> void
+func hacer_gesto(animacion: StringName, mirar_a: Vector3 = Vector3.ZERO) -> bool
+func interactuar_con(objeto: WorldObject, verbo: InteractionBehavior) -> bool
 ```
+
+**`adoptar_pose()` recibe un diccionario** y no seis parametros, para que agregar un dato a la pose no cambie esta firma y sobre todo para que el personaje no tenga que conocer `PoseBehavior`: lo unico que sabe es que le llegan un offset, un giro, una altura y tres nombres de animacion.
+
+**`dejar_pose()` no mueve al personaje: reproduce la animacion de salida y difiere el paso al costado** a `_terminar_salida()`, enganchado a `AvatarComposer.transicion_terminada`. Moverlo antes lo dejaba de pie junto al mueble mientras todavia se estaba incorporando. El paso no es cosmetico: en pose esta parado sobre una celda solida, y desde ahi el A* no traza ninguna ruta.
+
+**`hacer_gesto()` es lo que le da cuerpo a los verbos que no son poses** —levantar algo, usarlo, saludar—: reproduce una animacion de una pasada y vuelve a idle. **No cambia `estado` a proposito**, porque un gesto no es un modo, y tratarlo como uno obligaria a cada verbo a acordarse de salir de el. Si el jugador clickea a mitad del gesto, camina, y eso esta bien.
 
 **`estado` como máquina explícita.** Sin ella, "estoy sentado" y "estoy caminando" terminan siendo dos booleanos que en algún momento son ambos `true`. Un `StringName` con transiciones claras es suficiente para el MVP; un `StateChart` es sobre-ingeniería a esta altura.
 
-**`esta_adyacente_a`** es lo que consultan los `InteractionBehavior` con `requiere_adyacencia == true`: sentarse en una silla al otro lado de la sala no debería funcionar.
+**La adyacencia la resuelve `interactuar_con()`**, no cada comportamiento. Si el verbo pide adyacencia y no la hay, el personaje camina hasta una celda vecina del objeto y ejecuta el verbo al llegar; sentarse en una silla al otro lado de la sala no teletransporta a nadie. Lo que queda pendiente se olvida si el jugador cambia de rumbo.
 
 **El pathfinding no vive acá.** `ir_a_celda()` delega en `IsoGrid.ruta()`, que mantiene un único `AStarGrid2D` por sala. El personaje solo guarda la lista de celdas que le queda por recorrer. `AStarGrid2D` sigue sirviendo aunque el mundo sea 3D: opera sobre una grilla de enteros y no le importa la dimensión del render, y cada celda del resultado se convierte con `celda_a_mundo()`.
 
-**`gastar_energia` devuelve `bool` pero no bloquea (D7):** devuelve `false` cuando la energía está por debajo del umbral, y quien llama decide penalizar la velocidad, no cancelar la acción. **En el MVP nadie lo llama todavía** — D7 quedó postergada a la fase 2 a propósito, así que el método se escribe pero la barra solo sube. Mientras tanto, los cuatro consumibles que restauran energía no cambian nada al comerlos.
+**La energía no llegó a existir (D7):** quedó disuelta antes de escribirse, así que no hay `gastar_energia()` ni barra que subir. Los consumibles que la restauraban no restauran nada; el día que haga falta un sumidero de tiempo, se diseña entero en vez de dejar medio sistema puesto.
 
 ### 3.3 `AvatarComposer extends Node3D`
 
@@ -885,23 +895,31 @@ class_name AvatarComposer extends Node3D
 
 const SLOTS := [&"cuerpo", &"piernas", &"torso", &"cabeza", &"tocado"]
 
-@export var esqueleto: Skeleton3D
+signal transicion_terminada(destino: StringName)
+
+@export var animaciones: Dictionary              # nombre logico -> "Libreria/Clip" de KayKit
 @export var animador: AnimationPlayer
+@export var esqueleto: Skeleton3D
+@export var en_bucle: Array[StringName]          # las que hay que marcar ciclicas a mano
 
-var _partes: Dictionary = {}                     # StringName -> MeshInstance3D bajo su BoneAttachment3D
-
-func actualizar_parte(slot: StringName, malla: Mesh) -> void
-func aplicar_equipo(item: ItemDefinition) -> void
-func quitar_equipo(slot: StringName) -> void
 func reproducir(animacion: StringName) -> void
-func to_dict() -> Dictionary                     # apariencia serializable
+func reproducir_encadenado(transicion: StringName, destino: StringName) -> bool
+func animacion_actual() -> StringName
+func actualizar_parte(slot: StringName, malla: Mesh) -> void     # pendiente de contenido
+func aplicar_equipo(item: ItemDefinition) -> void                # pendiente de contenido
 ```
+
+**`reproducir_encadenado()` es lo que separa sentarse de estar sentado:** `Sit_Chair_Down` se reproduce una vez y deja al avatar en la pose que `Sit_Chair_Idle` continúa en bucle. Sin el encadenado habría que elegir entre no tener transición o quedarse congelado en el último cuadro. Devuelve `false` cuando no hay transición que esperar, para que quien llamó sepa que el estado final ya está puesto.
+
+**`transicion_terminada` existe para poder esperar una transición.** Levantarse de una cama tiene que mover al personaje recién cuando la animación terminó; moverlo antes lo hace aparecer de pie al costado del mueble mientras todavía se está incorporando.
+
+**`animaciones` es el único sitio del proyecto donde se escribe un nombre de KayKit.** Cambiar de pack de animaciones es reescribir ese diccionario y nada más. De las ocho librerías del pack hay tres cargadas en la escena (`General`, `MovementBasic`, `Simulation`); sumar una animación nueva es agregar la librería al `.tscn` y una entrada acá.
 
 **Un esqueleto, un `BoneAttachment3D` por slot.** Cambiar de camiseta es cambiar la malla que cuelga del attachment del torso; el `AnimationPlayer` del rig mueve todo junto. Desapareció `mirar_hacia(direccion)`: la orientación es la rotación del nodo, no un índice de ángulo pre-renderizado — y con ella se fue la regla dura de que cada capa tuviera el mismo número de cuadros en cada uno de los 8 ángulos.
 
 **Sigue siendo un requisito, no un lujo:** la ropa de Costura es mercancía comerciable y tiene que verse puesta. Es la habilidad que le da contenido económico al avatar.
 
-**Pendiente de contenido, no de estructura.** El maniquí de KayKit son seis mallas separadas pesadas al mismo esqueleto (`ArmLeft`, `ArmRight`, `Body`, `Head`, `LegLeft`, `LegRight`), y el esqueleto expone huesos de enganche tipo `handslot.l` para las herramientas. Intercambiar una parte es asignarle otro `Mesh` a su `MeshInstance3D`. Lo que falta son prendas que ponerle: hasta que existan, `actualizar_parte()` queda sin implementar porque no habría con qué probarla.
+**Pendiente de contenido, no de estructura.** El maniquí de KayKit son seis mallas separadas pesadas al mismo esqueleto (`ArmLeft`, `ArmRight`, `Body`, `Head`, `LegLeft`, `LegRight`), y el esqueleto tiene veintiún huesos, de los que `hand.l` y `hand.r` son los que sirven para colgar herramientas con un `BoneAttachment3D`. Intercambiar una parte es asignarle otro `Mesh` a su `MeshInstance3D`. Lo que falta son prendas que ponerle: hasta que existan, `actualizar_parte()` queda sin implementar porque no habría con qué probarla.
 
 **`animaciones` traduce nombres lógicos a nombres del pack.** El juego pide `&"caminar"` y el diccionario decide que eso es `"Rig_Medium_MovementBasic/Walking_A"`. Sin esa capa, el nombre de un archivo de KayKit se filtraría hasta `PersonajeControlador`.
 
@@ -1097,7 +1115,9 @@ const CLAVE_OCUPANTES := &"pose_ocupantes"
 
 @export var capacidad: int = 1
 @export var offset_visual: Vector2
-@export var giro_salida: float = 180.0
+@export var giro_cuerpo: float = 180.0      # desfase de modelado, no ajuste fino
+@export var altura: float = 0.0             # a que altura del piso queda el cuerpo
+@export var angulo_salida: float = NAN      # NAN = se sale por donde se mira
 @export var animacion_entrada: StringName   # se reproduce una vez
 @export var animacion_bucle: StringName     # tiene que estar en AvatarComposer.en_bucle
 @export var animacion_salida: StringName
@@ -1118,6 +1138,35 @@ func salir(actor: Node, objeto: WorldObject) -> bool
 **`datos_de_pose()` devuelve un diccionario** en vez de pasarle seis parámetros al personaje. Así agregar un dato a la pose no cambia la firma de `adoptar_pose()`, y sobre todo el personaje no tiene que conocer esta clase: lo único que sabe es que le llegan un offset, un giro y tres nombres de animación.
 
 **Un solo verbo que alterna**, no dos comportamientos: entrar y salir son el mismo gesto sobre el mismo mueble, y separarlos obligaría a que el menú mostrara siempre uno de los dos en gris.
+
+**`altura` y `angulo_salida` son la respuesta a «¿esto se va a romper con los modelos finales?».** Las animaciones del pack están hechas al ras del suelo —`Lie_Down` es acostarse *en el piso*—, así que sobre una cama hay que subir el cuerpo hasta el colchón o el avatar queda enterrado en el mueble. Es un número por pose y no una cuenta sobre la malla, porque el AABB de una cama incluye la cabecera, que es mucho más alta que el colchón. `acostarse` vale `0.55`, elegido mirando renders a 0.45 / 0.55 / 0.65.
+
+**Por dónde se sale es otra cosa que hacia dónde se mira**, y por eso son dos números: de una silla se sale por delante, pero de una cama se sale por el costado y no por la cabecera. Con `NAN` se usa el giro del cuerpo, que es lo correcto para sentarse.
+
+**Los cuatro números de ajuste son `@export` por `.tres`**, así que cuando lleguen animaciones y modelos definitivos se reajustan en el inspector y no en el código. Ése es todo el motivo de haberlos sacado de ahí.
+
+### 3.4d `LevantarBehavior extends InteractionBehavior` — el otro verbo universal
+
+```gdscript
+class_name LevantarBehavior extends InteractionBehavior
+
+@export var animacion: StringName = &"levantar"
+
+func puede_interactuar(actor: Node, objeto: WorldObject) -> bool
+func interactuar(actor: Node, objeto: WorldObject) -> bool
+```
+
+**Cuelga de `WorldObject.LEVANTAR`, no de `items.json`**, por lo mismo que mirar: todo lo que se pudo colocar se puede volver a levantar, así que una lista por ítem sería una lista que hay que acordarse de completar, y olvidarse no daría error — ese mueble quedaría clavado en el piso y nadie se enteraría hasta intentar sacarlo.
+
+**La exclusión sale gratis.** Un objeto sin definición en el catálogo —una mesada puesta a mano en una sala— no tiene id que meter en la mochila, así que no ofrece el verbo. Es escenario, y queda fijo sin necesidad de mantener una lista de excepciones.
+
+**Es el primer verbo que muta la sala**, y por eso es el primero que pasa por `RoomController.aplicar()` en vez de llamar a `retirar_objeto()` por atrás: ahí **D23** deja de ser sólo cosa del editor. Pasa con `registrar = false`, porque deshacer es del editor; si levantar jugando entrara al historial, un `Ctrl+Z` posterior devolvería el mueble a la sala **y** lo dejaría en la mochila.
+
+**El orden es lo único delicado: preguntar si entra → retirar → guardar.** Retirar primero y descubrir después que no entraba destruye el objeto; guardarlo antes de retirarlo lo deja existiendo en dos lugares a la vez, que es lo que **D3** prohíbe. Para poder preguntar antes, `InventoryManager` ganó `hay_lugar_para()`.
+
+**La división entre `puede_interactuar()` e `interactuar()` no es casual.** El primero decide si el verbo **aparece** en el menú, y eso depende del objeto y no de cuánto te queda libre: un mueble que desaparece del menú cuando tenés la mochila llena se lee como que el juego se rompió. Que no entre se dice al intentarlo, con el motivo escrito.
+
+**Un mueble ocupado no se levanta**, o quien estuviera en pose quedaría apuntando a un nodo liberado. Se pregunta por método (`has_method(&"ocupantes")`) y no por tipo, igual que hace el personaje al desanotarse: este verbo no conoce `PoseBehavior`.
 
 ### 3.4b `SuperficieBehavior extends InteractionBehavior` — **fase 4 (D25)**
 
@@ -1150,7 +1199,11 @@ func ranura_libre(objeto: WorldObject) -> int        # -1 si no hay
 ```gdscript
 class_name WorldObject extends Area3D
 
+const MIRAR: InteractionBehavior     = preload(".../mirar.tres")      # verbo universal
+const LEVANTAR: InteractionBehavior  = preload(".../levantar.tres")   # verbo universal
+
 signal interactuado(behavior: InteractionBehavior, actor: Node)
+signal clickeado(objeto: WorldObject)
 
 @export var instancia: ItemInstance              # estado persistente; NUNCA null (D3)
 @export var celda_origen: Vector2i
@@ -1167,6 +1220,8 @@ func _on_input_event(viewport, evento, idx) -> void
 ```
 
 **`ejecutar()` es el único punto que muta estado.** Comprueba `puede_interactuar`, llama a `interactuar`, emite la señal. Ese embudo es lo que permite validarlo server-side el día de la fase 6 sin rediseñar nada **(D8)**.
+
+**Los dos verbos universales viven acá y no en el catálogo.** Mirar y levantar son propiedades de *ser un objeto del mundo*, no contenido de un ítem concreto; si estuvieran en `items.json` habría que acordarse de agregarlos a cada ítem nuevo, y olvidarse no daría error. `verbos_disponibles()` los pone al final —levantar penúltimo, mirar último— porque lo que el jugador suele querer es la acción del mueble, levantar es destructivo y no tiene que quedar bajo el cursor al abrirse el menú, y mirar es lo que queda cuando no hay otra cosa. Mirar va **incluso sin definición**, que es el único caso en que la lista podría salir vacía; levantar no, y eso es lo que deja fijo al escenario puesto a mano.
 
 **Las dos bolsas de estado son deliberadamente distintas (D3).** `instancia` es lo que sobrevive a cerrar el juego; `estado_runtime` es lo de la sesión, y es el **único** lugar del juego donde se permite guardar una referencia a un nodo vivo. El criterio para elegir es una pregunta: *¿tiene sentido que esto siga siendo cierto mañana?* Quién está sentado, no. Qué contiene la taza, sí.
 
@@ -1386,7 +1441,7 @@ stateDiagram-v2
 
 ## 7. Índice de clases
 
-55 clases, contra los 39 scripts que detalla `SCRIPTS.md`. Las marcadas **NUEVA** son las que aparecieron al revisar el diseño; `SCRIPTS.md` las nombra en una tabla aparte, pero no las desarrolla.
+56 clases, contra los 39 scripts que detalla `SCRIPTS.md`. Las marcadas **NUEVA** son las que aparecieron al revisar el diseño; `SCRIPTS.md` las nombra en una tabla aparte, pero no las desarrolla.
 
 | # | Clase | Capa | Extends | Fase |
 |---|---|---|---|---|
@@ -1404,6 +1459,7 @@ stateDiagram-v2
 | 6 | `InteractionBehavior` | Datos | `Resource` | 1 |
 | 7 | **`PoseBehavior`** (ex `SentarseBehavior`) | Datos | `InteractionBehavior` | 4 |
 | 7b | **`MirarBehavior`** NUEVA | Datos | `InteractionBehavior` | 3 |
+| 7c | **`LevantarBehavior`** | Datos | `InteractionBehavior` | 4 |
 | 8 | `ContextMenuUI` | UI | `PopupMenu` | 1 |
 | 9 | `HUD` | UI | `CanvasLayer` | 1 |
 | 10 | `GameManager` | Manager | `Node` | 1 |

@@ -339,13 +339,27 @@ Desplazamiento y zoom para trabajar en salas grandes, en `RoomController`, que y
 Que agregar una interacción sea **datos, no código**. **Listo cuando** recorrés una sala amueblada y casi todo lo que clickeás hace algo.
 
 ### 34. `PoseBehavior` — Resource · Recurso, sin escena · `extends InteractionBehavior` · **hecho**
-**Función:** generaliza `PoseBehavior`. `sentarse`, `sentarse_piso` y `acostarse` pasan a ser tres `.tres` del mismo script.
-**Godot nativo:** `Resource` con `@export` para `animacion_entrada`/`bucle`/`salida`, `capacidad`, `offset_visual`, `giro_asiento`, `etiqueta` y `etiqueta_salir`. El pack trae las tres secuencias completas y toda la lógica difícil ya está escrita en `PoseBehavior`: sólo hay que parametrizarla.
-**Y de paso, la costura 5:** los ocupantes pasan a guardarse **por id de actor y no por nodo**. Un nodo del cliente A no existe en el B. Como igual hay que reescribir el script, el cambio es gratis ahora y carísimo después.
+**Función:** generaliza el viejo `SentarseBehavior`. `sentarse`, `sentarse_piso` y `acostarse` son tres `.tres` del mismo script.
+**Godot nativo:** `Resource` con `@export` para `animacion_entrada`/`bucle`/`salida`, `capacidad`, `offset_visual`, `giro_cuerpo`, `etiqueta` y `etiqueta_salir`. El pack trae las tres secuencias completas.
+**La costura 5, puesta:** los ocupantes se guardan **por id de actor y no por nodo**. Un nodo del cliente A no existe en el B, así que lo que se replica es el hecho —«el actor 7 está en pose sobre el mueble de la celda 3,4»— y cada cliente resuelve su propio nodo con `GameManager.actor_por_id()`.
 
-### 35. `LevantarBehavior` — Resource · Recurso, sin escena · `extends InteractionBehavior`
-**Función:** el verbo por defecto. La mayoría de los colocables no tiene ningún verbo; un `levantar` universal los vuelve interactivos a todos de una, con la animación `PickUp`.
-**Interactúa con:** `RoomController.retirar_objeto()` e `InventoryManager`. `generar_items.py` se lo agrega a todo colocable salvo exclusión explícita.
+**Dos `@export` más que aparecieron al probarlo sobre una cama**, y que son la respuesta a «¿esto va a ser un problema con los modelos finales?»:
+
+- `altura` — las animaciones del pack están hechas al ras del suelo (`Lie_Down` es acostarse *en el piso*), así que sobre una cama hay que subir el cuerpo hasta el colchón o el avatar queda enterrado. Es un número por pose y no una cuenta sobre la malla, porque el AABB de una cama incluye la cabecera. `acostarse` vale 0.55, elegido mirando renders a 0.45 / 0.55 / 0.65.
+- `angulo_salida` — por dónde se sale, separado de hacia dónde se mira: de una silla se sale por delante, de una cama por el costado y no por la cabecera. Con `NAN` se usa el giro del cuerpo, que es lo correcto para sentarse.
+
+**Levantarse es una animación, no un salto.** `dejar_pose()` reproduce la animación de salida y **difiere** el movimiento a `_terminar_salida()`, enganchado a la señal `transicion_terminada` de `AvatarComposer`. Moverlo antes dejaba al personaje de pie junto al mueble mientras todavía se estaba incorporando. `adoptar_pose()` resuelve la salida pendiente antes de empezar: sin eso, volver a un mueble mientras te levantabas de otro disparaba la salida vieja al terminar la entrada nueva.
+
+**Cuando lleguen animaciones y modelos definitivos**, lo único que hay que reajustar son esos cuatro números, y son `@export` por `.tres`: se hace mirando en el inspector, no recompilando.
+
+### 35. `LevantarBehavior` — Resource · Recurso, sin escena · `extends InteractionBehavior` · **hecho**
+**Función:** el segundo verbo universal. Saca el mueble de la sala y lo guarda en el inventario, con la animación `PickUp`.
+**Dónde vive:** en `WorldObject.LEVANTAR` y **no** en `items.json`, igual que mirar. Todo lo que se pudo colocar se puede volver a levantar, así que una lista por ítem sería una lista que hay que acordarse de completar, y olvidarse no daría error: ese mueble quedaría clavado en el piso. La exclusión sale gratis — un objeto sin definición en el catálogo (una mesada puesta a mano en una sala) no tiene id que meter en la mochila, así que es escenario y queda fijo sin lista de excepciones.
+**Es el primer verbo que muta la sala**, así que es el primero que pasa por `RoomController.aplicar()` en vez de llamar a `retirar_objeto()` por atrás: ahí la costura de **D23** deja de ser sólo cosa del editor. Pasa con `registrar = false`, porque deshacer es del editor; si levantar jugando entrara al historial, un `Ctrl+Z` posterior devolvería el mueble a la sala **y** lo dejaría en la mochila.
+**El orden es lo único delicado:** preguntar si entra → retirar → guardar. Retirar primero y descubrir después que no entraba destruye el objeto; guardar antes de retirar lo deja existiendo en dos lugares, que es lo que **D3** prohíbe. Para poder preguntar antes, `InventoryManager` ganó `hay_lugar_para(def) -> Errores.Codigo`, que `agregar_instancia()` usa en vez de repetir la regla.
+**Lo que vuelve es *la misma* instancia**, no una copia: la olla vuelve con sus tomates.
+**Un mueble ocupado no se levanta.** Se pregunta por método (`has_method(&"ocupantes")`) y no por tipo, así que este verbo no conoce `PoseBehavior` y cualquier comportamiento futuro con ocupantes queda cubierto solo.
+**En el menú va penúltimo**, con mirar cerrando: es destructivo y no tiene que quedar bajo el cursor al abrirse el popup.
 
 ### 36. `SuperficieBehavior` — Resource · Recurso, sin escena · `extends InteractionBehavior`
 **Función:** apoyar cosas encima de una mesa, un estante o un mostrador. **Es un objetivo de primer orden**, no un extra: el MVP es un sandbox de decoración y la expresividad de lo que un jugador arma es el producto.

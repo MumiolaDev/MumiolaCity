@@ -295,10 +295,10 @@ El editor además **le sirve al desarrollador**: armar una sala pintando celdas 
 
 ### La restricción que ordena las fases 3 a 5: esto tiene que sobrevivir al multijugador
 
-La visión final es un juego en línea con servidor autoritativo, y el editor es lo que más riesgo corre, porque convierte la sala en **contenido creado por el jugador** que tiene que viajar entre clientes. La regla es **construir las costuras, no el puente**: nada de red ahora, pero cada decisión deja puesto el lugar por donde la red entra. Son cinco, y ninguna cuesta trabajo extra hoy:
+La visión final es un juego en línea con servidor autoritativo, y el editor es lo que más riesgo corre, porque convierte la sala en **contenido creado por el jugador** que tiene que viajar entre clientes. La regla es **construir las costuras, no el puente**: nada de red ahora, pero cada decisión deja puesto el lugar por donde la red entra. Son cinco, y **las cinco están puestas** — las cuatro primeras en la fase 3, la quinta con `PoseBehavior` en la 4.1:
 
 1. **El editor habla en operaciones, no muta el mundo** (**D23**). Una operación serializable por gesto, y `RoomController.aplicar()` como único punto que cambia una sala. Se paga hoy: da deshacer y rehacer casi gratis.
 2. **La forma canónica de una sala es un documento de datos, no una escena** (**D24**).
 3. **Todo viaja por nombre, nunca por id** (**D18**), porque dos clientes tienen que coincidir en qué es `suelo_base` sin compartir la misma `MeshLibrary` en memoria.
 4. **La autoridad tiene su lugar desde ahora**: `puede_editar(actor)` devuelve siempre `true` y lo importante es que exista el punto donde va.
-5. **El estado de sesión se indexa por identidad, no por nodo**: un nodo del cliente A no existe en el B. Lo que se replica es el hecho —«el jugador 7 está sentado en el objeto de la celda 3,4»— y cada cliente resuelve su propio nodo.
+5. **El estado de sesión se indexa por identidad, no por nodo**: un nodo del cliente A no existe en el B. Lo que se replica es el hecho —«el jugador 7 está sentado en el objeto de la celda 3,4»— y cada cliente resuelve su propio nodo. `PoseBehavior` guarda ids de actor y `GameManager` lleva el registro (`registrar_actor()`, `actor_por_id()`, `id_de_actor()`). Salió gratis porque ese script se reescribía igual; con quince comportamientos encima habría sido tocarlos todos.

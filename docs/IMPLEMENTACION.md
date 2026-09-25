@@ -4,7 +4,39 @@
 >
 > **Formato por script:** **Definir** (decisiones de diseño a cerrar antes de escribir código — cambiarlas después de implementado sale caro) → **Implementar** (qué construir) → **Verificar** (cómo comprobar, con tus propios ojos o con un print, que quedó bien antes de pasar al siguiente). "Listo para el siguiente script" es el criterio de salida de cada bloque.
 >
-> Por ahora se detalla en profundidad **solo el primer script** (`IsoGrid`), que es el que estás por empezar. El resto de fase 1 se deja como un adelanto liviano de qué se viene, y se detalla igual de a fondo cuando llegue su turno — hacerlo ahora para los 32 sería trabajo especulativo: varias de esas decisiones (ej. cómo exactamente `PersonajeControlador` habla con `IsoGrid`) se van a terminar de cerrar recién al implementar lo anterior, no antes.
+> **La sección 1 (`IsoGrid`) es el registro del primer script y se conserva tal cual**, incluida la parte que ya no se cumple: sirve para ver qué se decidió antes de escribir y qué cambió al escribirlo. Lo que está vigente es lo de acá abajo. El resto de los scripts no se detalló por adelantado a propósito — habría sido trabajo especulativo, porque varias de esas decisiones se terminaron de cerrar recién al implementar lo anterior.
+
+---
+
+## Dónde estamos (25 de septiembre de 2026)
+
+| Fase | Estado |
+|---|---|
+| 0 — Diseño | cerrada |
+| 1 — Sistema base en 3D | terminada y probada |
+| 2a — Economía sin interfaz | terminada, 114 comprobaciones |
+| 3 — El editor de sala · **el MVP** | **terminada**, criterio cumplido |
+| 4 — Las interacciones | **en curso**: 4.1 `PoseBehavior` y 4.2 `LevantarBehavior` hechos |
+| 5 — La economía como contenido | pendiente |
+| 6 — Red | fuera del MVP, con las cinco costuras ya puestas |
+
+**Lo que sigue en la fase 4**, en orden: `SuperficieBehavior` (desbloqueado desde que D25 quedó cerrada, y el que más abre), `ContenedorBehavior`, `AlternarBehavior`, `AbrirCrafteoBehavior`, `InventoryUI`, `CraftingUI` y los emotes.
+
+---
+
+## Cómo se verifica
+
+**Los tests sí se versionan, y viven en `mumiola-city/escenas/test/`.** La convención de la sección 1 —escenas de verificación local fuera del repo— valía cuando el único test dependía de cómo estuviera pintada la sala de prueba de cada máquina. Dejó de valer en cuanto hubo reglas que comprobar y no solo conversiones que mirar.
+
+Cada test es un `Node` con un script que se cuelga de `Mundo` y reporta por consola, terminando en una línea `NOMBRE: todo ok` o `NOMBRE: N fallos`. Son dieciséis: `test_camara`, `test_clic_menu`, `test_documento`, `test_economia`, `test_editor`, `test_fantasma_pieza`, `test_huella_objeto`, `test_huellas`, `test_levantar`, `test_menu_posicion`, `test_mirar`, `test_ocupar_bloquear`, `test_poses`, `test_rotacion`, `test_salas_archivo` y `test_salida_pose`.
+
+**Tres cosas que se aprendieron escribiéndolos**, y que se pagan caro si se olvidan:
+
+1. **Una prueba que pasa no siempre prueba lo que decís.** El primer arreglo de «cancelar el menú no debe mandar a caminar» pasó su test y seguía roto en el juego: el test cerraba el menú a mano antes de clickear, y en el juego `_unhandled_input` llega **antes** que `popup_hide`. Verificaba una secuencia que no ocurre nunca.
+2. **Esperar por reloj y no por cuadros.** `Lie_Down` dura 3.00 s justos y la ventana corría a ~100 fps, así que contar 300 cuadros se quedaba corto por milésimas y medía al personaje a mitad de la transición. Todas las esperas de animación usan `Time.get_ticks_msec()`.
+3. **Un clic perdido sobre la ventana saca al personaje de la pose.** Los tests que miden poses llaman a `set_process_unhandled_input(false)` sobre el jugador.
+
+**Para verificar sin tocar el proyecto abierto:** se copia `mumiola-city/` a un directorio aparte y se corre Godot en headless ahí. Editar `project.godot` desde afuera mientras el editor está abierto es una carrera (**D9**). Para lo que hay que ver —encuadres, poses, alturas— se corre una ventana real fuera de pantalla (`--position 6000,6000`) y se miran los PNG.
 
 ---
 
@@ -55,7 +87,7 @@ Con el mundo en 3D, **la proyección isométrica dejó de ser un problema de est
 5. **Test de objeto multi-celda:** `ocupar(Vector2i(3,3), Vector2i(2,1), dummy)` → `esta_libre` da `false` tanto en `(3,3)` como en `(4,3)`; un solo `liberar_objeto(dummy)` libera las dos.
 6. **Test de límites:** `celda_valida()` da `false` en una celda donde no pintaste suelo.
 
-Los tests 3 a 6 viven en **`escenas/mundo/test/test_isogrid.gd`**: un `Node3D` con ese script, una instancia de `IsoGrid.tscn` como hija con suelo pintado, y el export `grid` apuntando a ella. Se corre con **F6** y reporta por consola. **El script y su escena no se versionan** (`.gitignore`): dependen de cómo esté pintada la sala de prueba de cada máquina y no corren en ningún CI — lo que se versiona es este procedimiento. Usá `WorldObject.new()` como objeto de mentira y no un `Node3D`: `ocupar()` tipa el parámetro como `WorldObject`, y el stub ya existe aunque esté vacío.
+Los tests 3 a 6 vivieron en **`escenas/mundo/test/test_isogrid.gd`**, fuera del repo, porque dependían de cómo estuviera pintada la sala de prueba de cada máquina. **Esa convención ya no es la vigente** — ver «Cómo se verifica» más arriba: los tests posteriores sí se versionan, en `escenas/test/`. Usá `WorldObject.new()` como objeto de mentira y no un `Node3D`: `ocupar()` tipa el parámetro como `WorldObject`, y el stub ya existe aunque esté vacío.
 
 El script no usa `assert()` a propósito — corta en el primer fallo y desaparece en las builds de release — y busca las celdas libres en vez de tenerlas escritas, para que repintar la sala no haga fallar un test sin que nada esté roto.
 

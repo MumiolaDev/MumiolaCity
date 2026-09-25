@@ -152,6 +152,8 @@ Para cada sistema: de qué es **dueño** (el dato que solo él puede mutar), qu�
 - **Dueño de:** el conjunto de verbos que un objeto ofrece, y el punto único de mutación (`WorldObject.ejecutar()`).
 - **La regla dura del GDD §6.1 vale la pena repetirla:** el `Resource` de comportamiento es **compartido y sin estado**. Si `sentarse.tres` guardara "quién está sentado", las cincuenta sillas de la ciudad que apuntan a ese mismo archivo compartirían ocupante. El estado va en la instancia, siempre.
 - **Ese es el sistema que sostiene el pilar 6 del GDD** (el rol emerge de la interactividad, no de minijuegos): cada verbo nuevo que se agrega multiplica lo que la gente puede hacer sin que nadie escriba una escena.
+- **Hay dos verbos que no vienen del catálogo**, `mirar` y `levantar`, y cuelgan de `WorldObject.MIRAR` y `WorldObject.LEVANTAR`. Son propiedades de *ser un objeto del mundo*, no contenido de un ítem concreto: si estuvieran en `items.json` habría que acordarse de agregarlos a cada ítem nuevo, y olvidarse no daría error — ese mueble simplemente no se podría mirar ni levantar, que es la clase de hueco que se descubre tarde. Van al final de la lista, levantar penúltimo y mirar último.
+- **`levantar` es el primer verbo que muta la sala**, y por eso es el primero que pasa por `RoomController.aplicar()` en vez de llamar a `retirar_objeto()`: ahí **D23** deja de ser sólo cosa del editor. Pasa con `registrar = false`, porque deshacer pertenece al editor y no al juego.
 
 ### 3.7 Valor — `EconomyManager`
 
@@ -349,9 +351,13 @@ La tabla más importante del documento. La mayoría de los bugs de un juego de e
 
 ---
 
-## 6. Decisiones de arquitectura: veintidós cerradas y dos suspendidas
+## 6. Decisiones de arquitectura: veintitrés cerradas y dos suspendidas
 
-Once decisiones que hay que cerrar antes de escribir el sistema correspondiente, ordenadas por lo caro que sale cambiarlas después. **Cinco ya están cerradas** — D1, D2 y D11 aplicadas en `items.json`, D3 resuelta acá abajo, y D7 postergada a la fase 2 a propósito — y **D5 tiene el lado de los datos hecho y el del código pendiente**. Las demás siguen abiertas.
+Veinticinco decisiones que hay que cerrar antes de escribir el sistema correspondiente, ordenadas por lo caro que sale cambiarlas después. La lista creció con el proyecto: las once primeras salieron de revisar el diseño, y D12 en adelante fueron apareciendo al escribir el editor de sala y las interacciones.
+
+**Veintitrés están cerradas** —decididas, resueltas o disueltas— y **dos quedaron suspendidas por el replan**: D12 (paredes estructurales contra las del jugador) y D14 (que un tabique no parta la sala). Las dos vuelven a hacer falta el día que alguien visite la sala de otro; mientras el sandbox no tenga límites, no hay nada que decidir.
+
+**Dos cerradas tienen todavía un lado sin escribir:** D4 y D5 tienen los datos corregidos y el código pendiente. La decisión está tomada, así que no bloquean nada — es trabajo, no una puerta.
 
 ### D1 — ¿Un `ItemInstance` por unidad, o slots apilados? · **decidida**
 
