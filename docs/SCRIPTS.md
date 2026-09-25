@@ -39,12 +39,12 @@ Antes de escribir un sistema, hay que revisar si el motor ya lo resuelve — y s
 | 3b | `IndicadorCelda` | Nodo | Componente | `MeshInstance3D` | 1 como ayuda, 3 como vista previa |
 | 4 | `RoomController` | Nodo/Escena | Escena | `Node3D` | 1 |
 | 5 | `WorldObject` | Nodo/Escena | Escena | `Area3D` | 1 |
-| 6 | `InteractionBehavior` (+ `PoseBehavior`) | Resource | Recurso | `Resource` | 1 y 4 |
+| 6 | `InteractionBehavior` (+ `PoseBehavior`) | Resource | Recurso | `Resource` | 1 y 5 |
 | 6b | `MirarBehavior` | Resource | Recurso | `InteractionBehavior` | 3 (verbo universal) |
 | 7 | `ContextMenuUI` | UI | Escena | `PopupMenu` | 1 |
 | 8 | `HUD` | UI | Escena | `CanvasLayer` | 1 |
 | 9 | `GameManager` | Autoload | Autoload | `Node` | 1 |
-| 10 | `SaveManager` (mínimo) | Autoload | Autoload | `Node` | 1 |
+| 10 | `SaveManager` | Autoload | Autoload | `Node` | 1 |
 | 11 | `ItemDefinition` | Resource | Recurso | `Resource` | 2 |
 | 12 | `RecipeDefinition` | Resource | Recurso | `Resource` | 2 |
 | 13 | `SkillDefinition` | Resource | Recurso | `Resource` | 2 |
@@ -52,29 +52,42 @@ Antes de escribir un sistema, hay que revisar si el motor ya lo resuelve — y s
 | 15 | `SkillManager` | Autoload | Autoload | `Node` | 2 |
 | 16 | `InventoryManager` | Autoload | Autoload | `Node` | 2 |
 | 17 | `RecipeManager` | Autoload | Autoload | `Node` | 2 |
-| 18 | `TimeManager` | Autoload | Autoload | `Node` | 5 |
-| 19 | `GatherableNode` | Nodo/Escena | Escena | `Area3D` | 5 |
-| 20 | `CropPlot` | Nodo/Escena | Escena | `GatherableNode` | 5 |
-| 21 | `ContenedorBehavior` | Resource | Recurso | `InteractionBehavior` | 4 |
+| 18 | `TimeManager` | Autoload | Autoload | `Node` | archivada |
+| 19 | `GatherableNode` | Nodo/Escena | Escena | `Area3D` | archivada |
+| 20 | `CropPlot` | Nodo/Escena | Escena | `GatherableNode` | archivada |
+| 21 | `ContenedorBehavior` | Resource | Recurso | `InteractionBehavior` | 5 |
 | 22 | `ModifierStack` | Nodo | Componente | `Node` | — (sin buffs ni energia en el MVP) |
-| 23 | `EconomyManager` (básico) | Autoload | Autoload | `Node` | 5 |
-| 24 | `InventoryUI` | UI | Escena | `Control` | 4 |
-| 25 | `SkillsPanelUI` (sin ranking) | UI | Escena | `Control` | 4 |
-| 26 | `CraftingUI` | UI | Escena | `Control` | 4 |
-| 27 | `CraftingStation` | Nodo/Escena | Escena | `WorldObject` | 4 |
+| 23 | `EconomyManager` (básico) | Autoload | Autoload | `Node` | archivada |
+| 24 | `InventoryUI` | UI | Escena | `Control` | 5 |
+| 25 | `SkillsPanelUI` (sin ranking) | UI | Escena | `Control` | archivada |
+| 26 | `CraftingUI` | UI | Escena | `Control` | archivada |
+| 27 | `CraftingStation` | Nodo/Escena | Escena | `WorldObject` | archivada |
 | 28 | `RoomBuilderUI` | UI | Escena | `Control` | 3 (paleta del editor) |
 | 28b | `EditorSala` | Nodo | Componente | `Node3D` | 3 |
-| 29 | `EquiparBehavior` | Resource | Recurso | `InteractionBehavior` | 4 |
-| 30 | `MarketStall` | Nodo/Escena | Escena | `WorldObject` | 5 |
-| 31 | `NPCTrader` | Nodo | Componente | `Node` | 5 |
-| 32 | `MarketUI` | UI | Escena | `Control` | 5 |
+| 29 | `EquiparBehavior` | Resource | Recurso | `InteractionBehavior` | 5 |
+| 30 | `MarketStall` | Nodo/Escena | Escena | `WorldObject` | archivada |
+| 31 | `NPCTrader` | Nodo | Componente | `Node` | archivada |
+| 32 | `MarketUI` | UI | Escena | `Control` | archivada |
 | 33 | `GenerarIconos` | Herramienta | `EditorScript` | `EditorScript` | 3 |
-| 34 | `PoseBehavior` | Resource | Recurso | `InteractionBehavior` | 4 |
-| 35 | `LevantarBehavior` | Resource | Recurso | `InteractionBehavior` | 4 |
-| 36 | `SuperficieBehavior` | Resource | Recurso | `InteractionBehavior` | 4 |
-| 37 | `AlternarBehavior` | Resource | Recurso | `InteractionBehavior` | 4 |
-| 38 | `AbrirCrafteoBehavior` | Resource | Recurso | `InteractionBehavior` | 4 |
-| — | Ranking/leaderboard, resto de §3.4, capa de red | — | — | — | 6 (fuera del MVP) |
+| 34 | `PoseBehavior` | Resource | Recurso | `InteractionBehavior` | 5 |
+| 35 | `LevantarBehavior` | Resource | Recurso | `InteractionBehavior` | 5 |
+| 36 | `SuperficieBehavior` | Resource | Recurso | `InteractionBehavior` | 5 |
+| 37 | `AlternarBehavior` | Resource | Recurso | `InteractionBehavior` | 5 |
+| 38 | `AbrirCrafteoBehavior` | Resource | Recurso | `InteractionBehavior` | archivada |
+| 39 | `Consola` | Autoload | Autoload | `Node` | 4 |
+| 40 | `Comandos` | Definición | Global (`class_name`) | `RefCounted` | 4 |
+| 41 | `Servidor` (+ `ServidorLocal`) | Autoload | Autoload | `Node` / `RefCounted` | 4 (costura de red) |
+| 42 | `Transicion` | UI | Autoload de escena | `CanvasLayer` | 4 |
+| 43 | `Ventana` (+ `Dialogo`) | UI | Componente | `PanelContainer` | 4 |
+| 44 | `ConsolaUI` | UI | Escena | `PanelContainer` | 4 |
+| 45 | `AyudaUI` | UI | Escena | `Ventana` | 4 |
+| 46 | `NavegadorUI` | UI | Escena | `Ventana` | 4 |
+| 47 | `BarraJuego` | UI | Escena | `PanelContainer` | 4 |
+| 48 | `MenuInicio` | UI | Escena | `Control` | 4 |
+| 49 | `MenuPausa` | UI | Escena | `Control` | 4 |
+| 50 | `OpcionesUI` | UI | Escena | `Ventana` | 4 |
+| 51 | `ConstructorTema` (+ `GenerarTema`) | Herramienta | `EditorScript` | `RefCounted` | 4 |
+| — | Ranking/leaderboard, resto de §3.4, capa de red | — | — | — | 8 (red) |
 
 ### Las clases que esta tabla no detalla
 
@@ -323,10 +336,9 @@ El MVP. Colocar y quitar muebles con vista previa, pintar suelo y paredes, desha
 **Función:** `to_dict()` pasa a incluir la estructura de los dos `GridMap` **por nombre de pieza**, más `version_formato` y la versión del catálogo con que se creó. `from_dict()` la repinta. Sin esto una sala editada no sobrevive, y sin el nombre en vez del id no sobrevive a un re-export de la `MeshLibrary` (**D18**, **D24**).
 **Funciones clave:** hechas. `to_dict()` incluye la estructura por nombre, `version_formato` y la versión del catálogo; `from_dict()` limpia las capas, repinta y recién después repone los muebles, y devuelve `Errores.Codigo`.
 
-### 10b. `SaveManager` (ampliado) — salas como archivos · **hecho**
-**Función:** `guardar_sala()`, `cargar_sala()`, `salas_guardadas()` y `existe_sala()` contra `user://salas/<nombre>.json`. No es un extra: es la persistencia canónica de una sala y lo que un servidor almacenaría. Permite compartir salas y versionar mapas.
-**Godot nativo:** `JSON.stringify()`/`parse()` y `FileAccess`, igual que el guardado de partida; `DirAccess.make_dir_recursive_absolute()` para la carpeta.
-**Código propio:** el saneado del nombre de archivo, que es el borde por donde entra lo que escribe una persona — y algún día la red.
+### 10b. `SaveManager` (ampliado) — salas como archivos · **hecho, y después mudado**
+**Función:** en la fase 3, `guardar_sala()`/`cargar_sala()` contra `user://salas/<nombre>.json`. En la fase 4 las salas pasaron a tener id y a guardarse por `Servidor` (ver abajo, script 41), y `SaveManager` quedó para armar el perfil.
+**Lo que se conservó:** la idea de que ningún texto que venga de afuera arme una ruta sin validarse. Ahora es `ServidorLocal._id_valido()`.
 
 ### Cámara · **hecho**
 Desplazamiento y zoom para trabajar en salas grandes, en `RoomController`, que ya es dueño del pivote y de la cámara. Rueda para el zoom, botón del medio para arrastrar, `Inicio` para volver a encuadrar la sala entera.
@@ -334,9 +346,50 @@ Desplazamiento y zoom para trabajar en salas grandes, en `RoomController`, que y
 
 ---
 
-## Fase 4 — Las interacciones
+## Fase 4 — La interfaz y el flujo · **hecha**
 
-Que agregar una interacción sea **datos, no código**. **Listo cuando** recorrés una sala amueblada y casi todo lo que clickeás hace algo.
+Que el juego se pueda **abrir, entrar y recorrer** sin tocar el editor de Godot ni saber teclas: menú de inicio con perfiles, navegador de salas, crear y guardar salas, transición entre salas y una consola para el chat, los avisos y la depuración. **Lista cuando** abrís el juego, creás un perfil, creás una sala, la amueblás, vas y volvés, cerrás, y al reabrir estás donde estabas.
+
+### 39. `Consola` — Autoload · `extends Node` · **hecho**
+**Función:** el canal de todo lo que se le dice al jugador. Un mensaje es un diccionario con canal (`CHAT`, `SISTEMA`, `ERROR`, `DEBUG`), autor, texto y hora, porque el chat va a viajar por la red. Guarda un historial de 200 para la interfaz que llega tarde. `GameManager.avisar()` pasa por acá.
+**Funciones clave:** `chat()`, `sistema()`, `error()`, `error_codigo()`, `debug()`, `enviar(texto) -> Errores.Codigo` (con barra es comando; sin barra, `GameManager.decir()`).
+
+### 40. `Comandos` — Definición · Global (`class_name`)
+**Función:** el registro estático de los comandos de la consola. Registra quien sabe hacer la cosa: la consola `/ayuda`, `/limpiar`, `/debug`; el mundo `/inv`, `/dar`, `/editar`, `/guardar`, `/ir`, `/salas`. Los de desarrollo quedan marcados, para filtrarlos cuando haya red.
+**Funciones clave:** `registrar(nombre, funcion, ayuda, uso, debug)`, `ejecutar(linea) -> Errores.Codigo`, `lista(incluir_debug)`, `uso_de(nombre)`.
+
+### 41. `Servidor` + `ServidorLocal` — Autoload + `RefCounted` · **hecho**
+**Función:** la sexta costura de red. Todo lo que mañana vive en un servidor —perfiles, salas, chat— se le pide a `Servidor` y nadie más toca un archivo. Hoy lo atiende `ServidorLocal`, que escribe en `user://salas` y `user://perfiles` y aplica las reglas que después aplica el servidor: quién guarda, borra o renombra qué, nombres válidos, ids validados antes de armar una ruta.
+**La regla de uso:** todo se llama con `await`, aunque hoy responda en el acto. Lo que es un evento que llega solo (el chat de otro) se escucha por señal.
+**Funciones clave:** `listar_salas_publicas()`, `listar_salas_de(propietario)`, `obtener_sala(id)`, `plantillas()`, `crear_sala(nombre, plantilla, propietario)`, `guardar_sala(doc, actor)`, `renombrar_sala()`, `borrar_sala()`, `listar_perfiles()`, `crear_perfil(nombre)`, `iniciar_sesion(id)`, `guardar_perfil(doc, actor)`, `borrar_perfil(id)`, `enviar_chat()`. Señal `chat_recibido`.
+
+### 4c. `RoomController` y `GameManager` (ampliados) — salas bajo demanda · **hecho**
+**Función:** una sala es la escena genérica `escenas/mundo/salas/Sala.tscn` más su documento, con `id_sala` propio. Hay una sola cargada a la vez: `GameManager.ir_a(id, celda)` cubre, pide el documento, arma la sala entera, muda al jugador, guarda y libera la anterior, y descubre. Si algo falla, el jugador se queda donde estaba. La sala sabe si cambió (`esta_sucia()`), y se guarda al dejarla, al salir del editor y con Ctrl+S.
+**Los datos:** la plaza es `data/salas/publicas/pub_plaza.json`; las cinco formas para crear salas, `data/salas/plantillas/`, generadas por `herramientas/generar_plantillas.py`.
+
+### 42. `Transicion` — Autoload de escena · `extends CanvasLayer` · **hecho**
+**Función:** el telón entre salas y entre escenas. `await cubrir()`, trabajo, `await descubrir()`. Cubrir lo ya cubierto no espera, que es lo que deja al primer ingreso ocurrir en el mismo cuadro. Mientras cubre se come los clics; mientras descubre ya no.
+
+### 43. `Ventana` + `Dialogo` — Componentes · `extends PanelContainer` · **hecho**
+**Función:** la ventana de Habbo: barra de título arrastrable, cruz, recuerda dónde la dejaste, no se pierde fuera de la pantalla, Esc cierra la de adelante. Se usa poniendo el script en un `PanelContainer` y colgándole el contenido. `Dialogo` es la pregunta modal con `await`: `confirmar()` y `pedir_texto()`.
+
+### 44. `ConsolaUI` · 45. `AyudaUI` — UI · **hecho**
+**Función:** la caja de abajo a la izquierda, con filtros por canal, historial con flechas y el texto de las personas escapado, para que nadie meta BBCode en la pantalla de otro. La ayuda (F1) reemplaza al texto crudo que había en pantalla; su pestaña de comandos se lee del registro.
+
+### 46. `NavegadorUI` · 47. `BarraJuego` — UI · **hecho**
+**Función:** el navegador (N): salas públicas, las tuyas —ir, renombrar, borrar— y crear una desde una forma, con la miniatura dibujada desde la estructura. La barra de abajo: Salas, Editar, Guardar, Mochila, Ayuda, Menú; cada botón hace lo mismo que su tecla. Editar se apaga en una sala ajena.
+
+### 48. `MenuInicio` · 49. `MenuPausa` · 50. `OpcionesUI` — UI · **hecho**
+**Función:** la escena principal: elegir perfil, crear uno —que entra directo y trae su casa—, borrar, opciones, salir. El menú de Esc no pausa nada, porque en línea el tiempo de los demás no se detiene: seguir, opciones, guardar y volver al inicio, guardar y salir. Las opciones —pantalla completa, volumen, depuración— son del equipo y no del perfil, y van a `user://opciones.cfg`.
+
+### 51. `ConstructorTema` + `GenerarTema` — Herramienta · **hecho**
+**Función:** el tema (`ui/tema/tema.tres`) se genera, no se edita, igual que el catálogo. `ConstructorTema` lo arma desde los sprites del pack Flat, que entran escalados x2 con `herramientas/escalar_sprites_ui.py`; `GenerarTema` es el botón para correrlo en el editor. Variaciones de tipo para lo que no es el control por defecto: `PanelAzul`, `Ranura`, `BarraTitulo`, `BotonIcono`, `PanelConsola`, `TextoConsola`, `TextoClaro`, `Titulo`.
+
+---
+
+## Fase 5 — La interacción fina
+
+Que agregar una interacción sea **datos, no código**. **Listo cuando** recorrés una sala amueblada y casi todo lo que clickeás hace algo. Antes de los verbos nuevos, lo que cierra el círculo del que ya existe: **`InventoryUI` y colocar desde la mochila jugando**, porque hoy levantar un mueble lo manda a la mochila y no hay vuelta sin el editor.
 
 ### 34. `PoseBehavior` — Resource · Recurso, sin escena · `extends InteractionBehavior` · **hecho**
 **Función:** generaliza el viejo `SentarseBehavior`. `sentarse`, `sentarse_piso` y `acostarse` son tres `.tres` del mismo script.
@@ -369,7 +422,7 @@ Que agregar una interacción sea **datos, no código**. **Listo cuando** recorr�
 **Función:** abrir y guardar; encender y apagar. Cubren estante, alacena, cajón y lámpara.
 **Godot nativo:** el contenido y el encendido viven en `WorldObject.instancia`, que ya se serializa — una lámpara encendida sigue encendida mañana, sin código de guardado nuevo.
 
-### 38. `AbrirCrafteoBehavior` y las estaciones (antes 27, `CraftingStation`)
+### 38. `AbrirCrafteoBehavior` y las estaciones (antes 27, `CraftingStation`) · **archivado con la economía**
 **Función:** estufa, fregadero, banco y tabla como `WorldObject` con este verbo. Acá se enchufa `RecipeManager`, ya escrito y probado, y desaparece la mentira de la tecla `2` del arnés de `Mundo.gd`, que hoy pasa la estación a mano.
 **Godot nativo:** no hace falta una clase `CraftingStation`: un `WorldObject` con un verbo más en su lista `interacciones` alcanza, y así una estación se define en `items.json` en vez de en una escena.
 
@@ -378,12 +431,12 @@ Que agregar una interacción sea **datos, no código**. **Listo cuando** recorr�
 **Godot nativo:** `GridContainer` para la grilla de slots, y sobre todo la **API nativa de drag & drop de `Control`** (`_get_drag_data()`, `_can_drop_data()`, `_drop_data()`) — no hay que implementar el arrastre a mano.
 **Funciones clave:** `refrescar() -> void`, `_get_drag_data(pos: Vector2) -> Variant`, `_drop_data(pos: Vector2, data: Variant) -> void`.
 
-### 26. `CraftingUI` — UI · Escena propia · `extends Control`
+### 26. `CraftingUI` — UI · Escena propia · `extends Control` · **archivado con la economía**
 **Función:** lista de recetas disponibles según `RecipeDefinition` y nivel del jugador.
 **Godot nativo:** `ItemList` (o `Tree` si se quieren columnas de insumos) + `Button`; la barra de progreso la alimenta el timer de `RecipeManager`.
 **Funciones clave:** `mostrar_recetas(habilidad: StringName) -> void`, `_al_craftear(receta: RecipeDefinition) -> void`.
 
-### 25. `SkillsPanelUI` (sin ranking) — UI · Escena propia · `extends Control`
+### 25. `SkillsPanelUI` (sin ranking) — UI · Escena propia · `extends Control` · **archivado con la economía**
 **Función:** nivel y xp de cada habilidad. El ranking queda fuera del MVP porque necesita otros jugadores.
 **Godot nativo:** `VBoxContainer` + un `ProgressBar` por habilidad; la señal `nivel_subido` de `SkillManager` dispara el refresco.
 
@@ -396,9 +449,9 @@ Que agregar una interacción sea **datos, no código**. **Listo cuando** recorr�
 
 ---
 
-## Fase 5 — La economía como contenido
+## Archivada — La economía
 
-Ya no es el MVP: es contenido que se suma al sandbox, sobre managers que ya existen y están probados.
+Salió del plan el 25 de septiembre, con el giro a sandbox-simulador (GDD, arriba de todo y §9). Se conserva lo escrito porque, si vuelve, vuelve como capa sobre el sandbox y sobre managers que ya existen y están probados.
 
 ### 18. `TimeManager` — Autoload · `extends Node`
 **Función:** el reloj del juego, del que dependen los cultivos y los ticks de mercado.
@@ -427,7 +480,7 @@ Ya no es el MVP: es contenido que se suma al sandbox, sobre managers que ya exis
 
 ---
 
-## Fase 6 — Networking (fuera del MVP)
+## Fase 8 — Red
 
 No se detalla a nivel de script todavía — es la fase donde entra un servidor autoritativo real (GDD §8, §9). Lo que sí queda anotado: `EconomyManager`, `InventoryManager`, `SkillManager` y el resto de los managers de fase 2 están **diseñados desde ya desacoplados del transporte**, específicamente para que esta fase no obligue a rediseñarlos. Sobre esta base se construye:
 

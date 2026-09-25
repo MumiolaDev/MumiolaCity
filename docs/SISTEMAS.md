@@ -702,7 +702,7 @@ Para el desarrollador el catálogo infinito además es el punto: armar un mapa d
 
 **La inversa se calcula antes de aplicar**, mirando la sala como está en ese momento: deshacer un pintado necesita saber qué había, y después de pintar ya no se puede averiguar.
 
-**`puede_editar(actor)` existe desde ahora** aunque hoy devuelva siempre `true`. Lo importante no es la comprobación sino que exista **un** lugar donde va, en vez de tener que buscar después todos los sitios que mutan una sala.
+**`puede_editar(actor)` existe desde la fase 3**, y desde la 4 responde con la regla real: la sala es de su dueño, y una pública se edita solo en desarrollo. Lo importante fue que existiera **un** lugar donde va, en vez de tener que buscar después todos los sitios que mutan una sala; `ServidorLocal` aplica la misma regla al guardar, y con red manda esa.
 
 ---
 
@@ -972,5 +972,7 @@ que los causaba ya no está:
 | **Fase 1** (mundo base) | **D8** (firma de `interactuar`) y **D9** (orden de autoloads) — **D3** ya decidida |
 | **Fase 2** (ciclo económico) | **D4**, solo el lado del código: el `const Habilidades` que impida escribir una cadena suelta. **D1** (stacks) al escribir `InventoryManager`. **D5** queda en suspenso mientras no haya buffs ni bonos. **D6**, **D7** y **D10** ya no aplican |
 | **Fase 2, balance** | Los márgenes los verifica `herramientas/generar_items.py` en cada regeneración del catálogo (§7.1), así que el balance dejó de ser una revisión manual |
-| **Fase 4** (construcción) | **D13** (revestimiento por sala o por celda) y **D14** (una colocación no puede partir la sala, dentro de `colocar_objeto()` y no después). Cerrar el detalle del área editable de **D12**. La sincronización del `AStarGrid2D` (§3.1) ya está resuelta: vive dentro de `IsoGrid.ocupar()` |
-| **Fase 5** (mercado) | Relación `valor_base` ↔ precio piso NPC (§3.7) |
+| **Fase 4** (interfaz y flujo) | Nada abierto: se cerró sin decisiones pendientes. Dejó puesta la sexta costura de red, `Servidor`, por donde pasan perfiles, salas y chat |
+| **Fase 5** (interacción fina) | **D25** ya cerrada (lo apoyado depende del mueble de abajo). Falta decidir la forma del **estado genérico por instancia** en `ItemInstance` antes de escribir `ContenedorBehavior` y `AlternarBehavior` |
+| **Visitas entre jugadores** (con red) | **D12** y **D14**, suspendidas: vuelven a hacer falta el día que alguien visite la sala de otro. **D13** ya está resuelta (por celda) |
+| **Economía** (archivada) | Relación `valor_base` ↔ precio piso NPC (§3.7), si vuelve |

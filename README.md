@@ -1,6 +1,6 @@
 # MumiolaCity
 
-Habbo-like isométrico donde la ciudad entera es una economía dirigida por lo que producen los jugadores: recolectar, transformar, vender y consumir, con una moneda única y ninguna tienda del sistema.
+Sandbox isométrico en línea al estilo Habbo: salas que arma cada jugador y un mundo donde casi todo lo que hay se puede usar, con el grano fino de un simulador. La idea es poner primero las interacciones y los sistemas de un mundo real, y diseñar después las mecánicas de juego sobre ellos. La economía de jugadores del diseño original está archivada; ver `docs/GDD.md` §9.
 
 - [`docs/GDD.md`](docs/GDD.md) — documento de diseño general (pilares, loop, habilidades, economía, arte, arquitectura técnica, roadmap).
 - [`docs/SCRIPTS.md`](docs/SCRIPTS.md) — mapa de todos los scripts principales, su función y cómo interactúan entre sí, ordenados por fase de implementación (también publicado como [artefacto navegable](https://claude.ai/code/artifact/5f914cd8-0d3b-437a-981a-0f18a4bb0a82)).
@@ -12,18 +12,26 @@ Habbo-like isométrico donde la ciudad entera es una economía dirigida por lo q
 
 ## El proyecto
 
-El proyecto de Godot vive en [`mumiola-city/`](mumiola-city/). Se abre con Godot 4.7 y arranca en `escenas/mundo/Mundo.tscn`.
+El proyecto de Godot vive en [`mumiola-city/`](mumiola-city/). Se abre con Godot 4.7 y arranca en el menú de inicio, `escenas/menu/MenuInicio.tscn`. Correr `escenas/mundo/Mundo.tscn` directo (F6) entra a la plaza con un perfil de desarrollo que no se guarda.
 
 ```
 mumiola-city/
-  nucleo/       Definiciones compartidas sin escena ni estado (Errores)
-  autoloads/    Managers globales
-  data/         Items, recetas, habilidades y las MeshLibrary del escenario
+  nucleo/       Definiciones compartidas sin escena ni estado (Errores, Comandos, ServidorLocal)
+  autoloads/    Managers globales (Consola, Servidor, GameManager, SaveManager...)
+  data/         Items, recetas, habilidades, MeshLibrary del escenario, y salas:
+                las publicas y las plantillas de forma, como documentos JSON
   escenas/
-    mundo/      IsoGrid, RoomController, el mundo y las salas
+    menu/       El menu de inicio
+    mundo/      IsoGrid, RoomController, el mundo y la escena generica de sala
     personaje/  Avatar y animaciones
     objetos/    WorldObject y sus recursos
-  arte/         Modelos glTF por familia
+    ui/         La interfaz; componentes/ tiene Ventana y Dialogo
+    test/       Las pruebas, una por script, que se cuelgan de Mundo
+  ui/           El tema (generado) y las fuentes
+  arte/         Modelos glTF por familia y los sprites del pack de UI
+  herramientas/ Generadores que corren en el editor (tema, iconos, catalogo)
+
+herramientas/   Generadores en Python: catalogo, plantillas de sala, sprites de UI
 ```
 
 Repo privado, uso personal de respaldo del diseño.

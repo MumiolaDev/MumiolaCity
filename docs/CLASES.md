@@ -1,6 +1,6 @@
 # MumiolaCity — Referencia de clases y objetos
 
-**Versión:** 0.7 · **Fecha:** 2026-09-25 (fases 1, 2a y 3 implementadas; fase 4 en curso: `PoseBehavior` y `LevantarBehavior` hechos; **las cinco costuras de red puestas**; D23, D24 y D25 cerradas; catálogo v0.5 con 52 ítems)
+**Versión:** 0.8 · **Fecha:** 2026-09-25 (fases 1, 2a, 3 y 4 implementadas —la 4 es ahora la interfaz y el flujo—; `PoseBehavior` y `LevantarBehavior` hechos; **las seis costuras de red puestas**, la sexta es `Servidor`; D23, D24 y D25 cerradas; catálogo v0.5 con 52 ítems; la economía, archivada)
 **Complementa:** [`SCRIPTS.md`](SCRIPTS.md) (qué scripts existen y en qué orden) y [`SISTEMAS.md`](SISTEMAS.md) (cómo se comunican y qué decisiones faltan).
 **Este documento es la firma de cada clase:** de qué hereda, qué campos expone, qué estado guarda, qué señales emite, qué métodos ofrece y qué invariantes tiene que respetar. Es lo que se lee con el editor abierto, justo antes de escribir el archivo.
 
@@ -457,27 +457,32 @@ class_name AbrirCrafteoBehavior extends InteractionBehavior   # NUEVA
 
 `AbrirCrafteoBehavior` es el comportamiento que `SCRIPTS.md` describe en prosa para `CraftingStation` ("el verbo que abre la UI es un `InteractionBehavior` más") sin llegar a nombrarlo. Nombrarlo importa: es lo que hace que una mesada de cocina y un banco de carpintería sean **el mismo objeto con distinto `.tres`**, sin una clase por estación.
 
-### 1.12 `SaveGame extends Resource`
+### 1.12 `SaveGame extends Resource` — el perfil · **IMPLEMENTADO (formato 3)**
 
 ```gdscript
 class_name SaveGame extends Resource
 
-@export var version_formato: int = 1
+@export var version_formato: int = 3
 @export var timestamp_guardado: int
-@export var sala_actual: String                 # ruta al .tscn
+@export var perfil_id: String                   # "p_" + hex; tambien el id de actor y el duenio de sus salas
+@export var nombre: String                      # como lo ven los demas
+@export var creado: int
+@export var sala_actual: String                 # id de sala (hasta el formato 1, ruta al .tscn)
 @export var celda_jugador: Vector2i             # la celda, no la posicion de mundo
-@export var apariencia: Dictionary
-@export var inventario: Array[InventorySlot] = []
-@export var equipo: Dictionary = {}             # slot -> ItemInstance
-@export var xp_habilidades: Dictionary = {}     # StringName -> int
-@export var ducados: int = 0
-@export var temporizadores: Dictionary = {}     # id -> {inicio, duracion}
-@export var objetos_por_sala: Dictionary = {}   # ruta -> Array[{instancia, celda, rotacion}] (D3)
+@export var inventario: Dictionary              # InventoryManager.to_dict()
+@export var habilidades: Dictionary             # SkillManager.to_dict(), archivado pero conservado
+
+func to_dict() -> Dictionary
+func from_dict(d: Dictionary) -> void
 ```
 
-**`version_formato` desde el primer día.** Cuesta una línea ahora y es la diferencia entre poder migrar los guardados y tener que borrarlos cuando cambie el esquema — que va a pasar, porque las decisiones D1–D11 todavía no están cerradas.
+**Desde el formato 3 es un perfil, no «la partida».** Hay tantos como jugadores usen el equipo, y cada uno es el equivalente local de una cuenta. Lo crea `ServidorLocal.crear_perfil()` —con su casa— y lo arma y aplica `SaveManager`.
 
-**Lo que deliberadamente no está:** buffs activos ni ocupantes de sillas. Son estado de sesión — todo lo que vive en `WorldObject.estado_runtime` queda fuera por construcción (**D3**), porque ese diccionario no lleva `@export` y `ResourceSaver` no lo ve.
+**Las salas no están.** Hasta el formato 1 la partida guardaba adentro las salas fijas; desde el 2 cada sala es un documento que se guarda solo, por `Servidor`. La partida es tu estado; una sala es de quien la tenga, y la visitan otros.
+
+**`version_formato` desde el primer día.** Cuesta una línea y es la diferencia entre poder migrar los guardados y tener que borrarlos. `SaveManager._migrar()` ya pasó por dos cambios de esquema.
+
+**Lo que deliberadamente no está:** buffs activos ni ocupantes de sillas. Son estado de sesión — todo lo que vive en `WorldObject.estado_runtime` queda fuera por construcción (**D3**).
 
 ---
 
@@ -516,48 +521,71 @@ func validar_catalogo() -> Array[String]     # ids duplicados, insumos rotos, et
 ### 2.2 `GameManager extends Node`
 
 ```gdscript
-extends Node   # autoload: GameManager   # IMPLEMENTADO (paso 9)
+extends Node   # autoload: GameManager   # IMPLEMENTADO (paso 9; salas bajo demanda en la fase 4)
+
+const ESCENA_SALA := preload("res://escenas/mundo/salas/Sala.tscn")
+const SALA_INICIAL := &"pub_plaza"
+const PERFIL_DEV := &"dev"
 
 signal sala_cambiada(sala: RoomController)
+signal sala_actualizada(sala: RoomController)     # cambio su nombre, no la sala
+signal saliendo_de_sala(sala: RoomController)
 signal jugador_registrado(jugador: PersonajeControlador)
-signal aviso(texto: String)
-signal ayuda_cambiada(texto: String)
 signal modo_cambiado(modo: Modo)
 
 enum Modo { JUGANDO, EDITANDO }
 
+# Sesion
+func iniciar_sesion(perfil: Dictionary) -> void   # antes de cargar el mundo
+func cerrar_sesion() -> void
+func hay_sesion() -> bool
+func perfil() -> Dictionary
+func perfil_id() -> StringName                    # tambien el id de actor del jugador
+func nombre_jugador() -> String
+
+# Actores (costura 5)
 func registrar_jugador(jugador: PersonajeControlador) -> void
-func registrar_contenedor(nodo: Node) -> void      # de donde cuelgan las salas
+func registrar_actor(actor: Node, id: StringName) -> StringName
+func actor_por_id(id: StringName) -> Node
+func id_de_actor(actor: Node) -> StringName
+
+# Salas
+func registrar_contenedor(nodo: Node) -> void      # de donde cuelga la sala
 func jugador_actual() -> PersonajeControlador
 func sala_actual() -> RoomController
-func salas() -> Array[RoomController]
-func ir_a_sala(sala: RoomController) -> bool
-func ir_a_indice(indice: int) -> bool
-func siguiente_sala() -> void
-func cargar_sala(escena: PackedScene) -> RoomController
+func cambiando_de_sala() -> bool
+func ir_a(id: StringName, celda := IsoGrid.SIN_CELDA) -> Errores.Codigo   # corrutina
+func guardar_sala_actual() -> Errores.Codigo
+func recargar_sala_actual() -> Errores.Codigo
+func guardar_si_cambio() -> void
 
-func avisar(texto: String) -> void
+# Hablar y avisar
+func decir(texto: String) -> Errores.Codigo       # por Servidor.enviar_chat
+func avisar(texto: String) -> void                # atajo a Consola.sistema
 func avisar_error(codigo: Errores.Codigo) -> void
-func mostrar_ayuda(texto: String) -> void
-func ayuda() -> String
 
+# Modo
 func modo() -> Modo
 func editando() -> bool
-func cambiar_modo(nuevo: Modo) -> bool
-func alternar_modo() -> void
+func cambiar_modo(nuevo: Modo) -> bool            # no entra al editor en una sala ajena
+func alternar_modo() -> Errores.Codigo
+func avisar_menu(abierto: bool) -> void
+func hay_menu_abierto() -> bool
 ```
 
-**El modo vive acá y no en el editor.** Ya es la autoridad de «dónde estamos», y quienes tienen que cambiar de conducta al editar —`PersonajeControlador`, que deja de caminar al clic, y `WorldObject`, que deja de abrir el menú contextual— no deberían conocer al editor para preguntárselo. Los dos consultan `GameManager.editando()` y salen temprano.
+**Una sola sala cargada a la vez.** Hasta la fase 3 las salas convivían en un contenedor y se encendían de a una; desde la 4 una sala es `Sala.tscn` más su documento, pedido a `Servidor` por id, y al irse se guarda si cambió y se libera. Con muchas salas de jugadores no tiene sentido tenerlas todas vivas, y es lo que va a pasar con red: el cliente tiene la sala donde está y nada más.
 
-**`cambiar_modo(JUGANDO)` olvida el historial de la sala.** Deshacer sirve mientras estás editando; una vez que volviste a jugar, un `Ctrl+Z` que retire un mueble que ya usaste es una fuente de estados imposibles.
+**`ir_a()` no pierde nada si falla.** Cubre, pide el documento; si no llega, descubre y el jugador sigue donde estaba. Si llega, arma la sala entera antes de encenderla, muda al jugador —que se levanta si estaba sentado—, y recién ahí guarda y libera la anterior. Un segundo pedido mientras tanto se rechaza con `CAMBIO_EN_CURSO`.
 
-**El aviso y la ayuda son señales, no llamadas al HUD.** Así el HUD se puede borrar del árbol sin que nada se rompa: nadie lo nombra, solo se suscribe.
+**El modo vive acá y no en el editor.** Quienes tienen que cambiar de conducta al editar —`PersonajeControlador`, que deja de caminar al clic, y `WorldObject`, que deja de abrir el menú contextual— no deberían conocer al editor para preguntárselo.
 
-**No usa `change_scene_to_packed()`, aunque este documento lo proponía.** Esa llamada reemplaza el árbol entero — jugador incluido — y obligaría a reconstruirlo y reubicarlo en cada puerta. Las salas conviven en un contenedor y se encienden de a una con `RoomController.activar()`, lo que además permite volver a la anterior sin recargarla. `cargar_sala()` queda para las que no están puestas de antemano — las viviendas de otros jugadores, que no tiene sentido tener todas cargadas.
+**`cambiar_modo(JUGANDO)` olvida el historial y guarda.** Deshacer sirve mientras estás editando; salir del editor es dar la obra por hecha.
 
-**Un autoload sobrevive a los cambios de escena**, así que todo lo que guarde son referencias que pueden quedar colgando. `registrar_contenedor()` limpia la sala actual y todo acceso pasa por `is_instance_valid()`: una referencia muerta acá no da error, devuelve basura.
+**No usa `change_scene_to_packed()` para cambiar de sala:** reemplazaría el árbol entero, jugador incluido. Sí se usa para ir del menú al mundo y volver, que es justamente cuando se quiere eso.
 
-**Quién registra a quién.** `GameManager` no busca al jugador con `get_node("/root/...")` — el `PersonajeControlador` se registra a sí mismo en su `_ready()`. Así el manager no depende de la forma del árbol de escenas, que cambia cada vez que se reorganiza una sala.
+**Un autoload sobrevive a los cambios de escena**, así que todo lo que guarde son referencias que pueden quedar colgando. `registrar_contenedor()` limpia la sala actual y todo acceso pasa por `is_instance_valid()`.
+
+**Quién registra a quién.** El `PersonajeControlador` se registra a sí mismo en su `_ready()`, con el id del perfil. Por eso la sesión se inicia antes de cargar el mundo.
 
 ### 2.3 `SkillManager extends Node` — **IMPLEMENTADO (fase 2a)**
 
@@ -708,43 +736,29 @@ func from_dict(d: Dictionary) -> void
 
 **`precio_npc` devuelve 0 para todo lo que no sea `materia_prima`:** el GDD §5 es explícito en que el NPC no compra bienes intermedios ni de lujo, y esa red de seguridad no debe competir con vender a otro jugador.
 
-### 2.8 `SaveManager extends Node`
+### 2.8 `SaveManager extends Node` — **IMPLEMENTADO (fase 4)**
 
 ```gdscript
-extends Node   # autoload: SaveManager, ultimo (D9)   # IMPLEMENTADO (paso 10)
+extends Node   # autoload: SaveManager, ultimo (D9)
 
 signal guardado_completado
 signal carga_completada
 
-const RUTA := "user://partida.json"   # D21
-const VERSION_ACTUAL := 1
-const DIR_SALAS := "user://salas"     # una sala por archivo
+const VERSION_ACTUAL := 3
 
-# La partida
-func guardar() -> Error
-func cargar() -> Error
-func existe_partida() -> bool
-func borrar() -> void
-func _migrar(datos: Dictionary) -> Dictionary    # segun version_formato
-func _aplicar(partida: SaveGame) -> void
-
-# Las salas sueltas (D24)
-func guardar_sala(sala: RoomController, nombre := "") -> Errores.Codigo
-func cargar_sala(sala: RoomController, nombre: String) -> Errores.Codigo
-func salas_guardadas() -> Array[String]
-func existe_sala(nombre: String) -> bool
-func _nombre_archivo(nombre: String) -> String   # "Mi Habitación" -> "mi_habitacion"
+func guardar() -> Errores.Codigo            # el perfil de quien juega; sin sesion, PERFIL_NO_EXISTE
+func guardar_todo() -> Errores.Codigo       # la sala si cambio, y el perfil
+func entrar_al_mundo() -> Errores.Codigo    # lo primero que hace el mundo al cargarse
+func _migrar(datos: Dictionary) -> Dictionary
 ```
 
-**Orquesta, no serializa.** Pide `to_dict()` a cada manager y lo mete en el `SaveGame`. Agregar un campo a `InventoryManager` no debería obligar a tocar este archivo.
+**Orquesta, no serializa ni escribe.** Arma el `SaveGame` pidiéndole su estado a cada manager y se lo da a `Servidor.guardar_perfil()`. Hasta la fase 3 escribía `user://partida.json` él mismo; ahora el disco es del servidor, y el día de la red lo que cambia es quién recibe el diccionario, no cómo se arma.
 
-**`ResourceSaver` con `SaveGame` es lo más corto**, y el propio `SCRIPTS.md` ya anota la alternativa: `FileAccess` + `JSON` da un archivo inspeccionable y sin riesgo de ejecutar código al cargar. Para un juego que apunta a ser online, la versión JSON es la que envejece mejor — un `.tres` cargado desde fuera puede contener rutas de script.
+**Cuándo guarda:** al cambiar de sala, con G o `/guardar`, al volver al inicio, al salir y al cerrar la ventana. **Sin sesión no guarda nada:** el perfil de desarrollo con el que corren F6 y los tests no existe en disco.
 
-**Una partida y una sala son cosas distintas.** La partida es *tu* estado —inventario, habilidades, dónde estás— y vive en un archivo. Una sala guardada es un **documento portable que no tiene dueño**: sirve para armar mapas y versionarlos, para compartir una sala, y es lo que un servidor almacenaría (**D24**). De ahí que sean dos APIs y no una con un parámetro.
+**`entrar_al_mundo()` aplica la mochila antes de entrar** a la sala, y le pasa la celda guardada a `GameManager.ir_a()` en vez de mover al jugador después: el fundido de salida ya deja clickear, y un jugador que empezó a caminar no puede ser teletransportado al terminar. Si la sala guardada ya no existe, entra a la plaza.
 
-**`_nombre_archivo()` no es cosmética, es el borde.** Un nombre de sala lo escribe una persona y algún día va a llegar de la red: sin filtrar, un nombre con `../` escribiría fuera de la carpeta de salas. Pasa las tildes a su letra pelada antes de filtrar, para que «Mi Habitación» y «Mi Habitacion» no terminen en dos archivos distintos, y corta a 64 caracteres.
-
-**Comprueba que el archivo haya aparecido** en vez de confiar en que no hubo error. Es la lección que dejó el importador, que reportó 52 guardados y escribió uno.
+**JSON y no `.tres`, desde siempre:** un `.tres` cargado desde afuera puede contener rutas de script, y un perfil algún día va a llegar de la red.
 
 ---
 
@@ -951,7 +965,7 @@ func celda() -> Vector2i
 func huella() -> Vector2i
 ```
 
-**Dos modos, un solo cuerpo.** Con `seguir_puntero` en `true` se maneja solo y lee el mouse cada cuadro: es como funciona hoy en `SalaComun` y `SalaPrivada`. Con `seguir_puntero` en `false` se queda quieto hasta que alguien le dice qué mostrar, que es como lo va a usar el editor, donde quien decide la celda puede estar arrastrando o acabar de hacer scroll en la paleta.
+**Dos modos, un solo cuerpo.** Con `seguir_puntero` en `true` se maneja solo y lee el mouse cada cuadro: es como funciona hoy en `Sala.tscn`. Con `seguir_puntero` en `false` se queda quieto hasta que alguien le dice qué mostrar, que es como lo va a usar el editor, donde quien decide la celda puede estar arrastrando o acabar de hacer scroll en la paleta.
 
 **`elegir()` y `mostrar()` están separadas a propósito.** Cambiar de mueble en la paleta no debería moverlo de lugar, y mover el cursor no debería cambiar de mueble. Son dos ejes independientes y por eso son dos métodos.
 
@@ -1014,7 +1028,7 @@ func to_dict() -> Dictionary
 func from_dict(d: Dictionary) -> Errores.Codigo
 
 # Operaciones (D23)
-func puede_editar(actor: Node) -> bool           # hoy siempre true
+func puede_editar(actor: Node) -> bool           # su duenio; una publica, solo en desarrollo
 func aplicar(op: OperacionSala, registrar := true) -> Errores.Codigo
 func deshacer() -> bool
 func rehacer() -> bool
@@ -1029,7 +1043,7 @@ func olvidar_historial() -> void
 
 **Deshacer y rehacer viven en un array con un cursor**, y aplicar algo nuevo trunca en el cursor: la rama que habías deshecho se pierde, igual que en cualquier editor. `registrar := false` es por donde entran las operaciones que ya son parte del historial —las del propio deshacer— sin volver a anotarse.
 
-**`puede_editar(actor)` devuelve siempre `true` hoy, y está bien.** Lo importante no es la comprobación sino que exista el lugar donde va (la costura 4 del replan). `Errores.Codigo.NO_ES_TUYO` y `SIN_PERMISO` ya están en el enum esperándola, y `propietario_id` ya existe.
+**`puede_editar(actor)` aplica la regla real desde la fase 4:** la sala es de su dueño (`propietario_id` contra el id de actor), y una pública se edita solo en builds de desarrollo, donde el editor sirve para armar mapas. Es la misma regla que `ServidorLocal` aplica al guardar; la del cliente existe para no ofrecer lo que después se rechaza —Editar se apaga, `LevantarBehavior` no se intenta—.
 
 **`indicador` es opcional por contrato**, como la interfaz: sacar el nodo del árbol quita la ayuda visual y no rompe nada.
 
@@ -1330,23 +1344,89 @@ func activos() -> Array[Modificador]
 
 Todas se suscriben a señales y ninguna es consultada por un manager. Todas se pueden borrar del árbol y el juego sigue funcionando — ese es el test de que la capa está bien puesta.
 
-**Todo `Control` de la capa va con `mouse_filter = IGNORE`.** Un `Label` transparente que ocupa el ancho de la pantalla se come los clics del mundo 3D sin dejar rastro: no se ve, no da error, y el síntoma es «el personaje no camina si hago clic abajo».
+**Todo `Control` que flota sobre el mundo sin ser tocado va con `mouse_filter = IGNORE`** —el HUD—; lo que se clickea —ventanas, la consola, la barra— se come los clics de su rectángulo a propósito, para que tocar un botón no mande además a caminar. Un `Label` transparente que ocupa el ancho de la pantalla se come los clics del mundo 3D sin dejar rastro: no se ve, no da error, y el síntoma es «el personaje no camina si hago clic abajo».
 
 | Clase | Extends | Se suscribe a | Nodo nativo que hace el trabajo |
 |---|---|---|---|
-| `HUD` **(implementado, paso 8)** | `CanvasLayer` | `ducados_cambiaron`, energía del jugador | `ProgressBar`, `Label`, `Timer` |
+| `HUD` **(implementado; en la fase 4 quedó en el nombre de la sala)** | `CanvasLayer` | `sala_cambiada`, `sala_actualizada` | `Label` |
+| `ConsolaUI` **(fase 4)** | `PanelContainer` | `Consola.mensaje_publicado` | `RichTextLabel`, `LineEdit` |
+| `NavegadorUI`, `AyudaUI`, `OpcionesUI` **(fase 4)** | `Ventana` | `sala_cambiada` | `TabContainer`, `ItemList` |
+| `BarraJuego` **(fase 4)** | `PanelContainer` | `modo_cambiado`, `sala_cambiada` | `Button` |
+| `MenuInicio`, `MenuPausa` **(fase 4)** | `Control` | — | `ItemList`, `Button` |
 | `InventoryUI` | `Control` | `inventario_cambiado` | `GridContainer` + drag & drop nativo de `Control` |
-| `SkillsPanelUI` | `Control` | `nivel_subido`, `xp_ganada` | `VBoxContainer` + `ProgressBar` |
-| `CraftingUI` | `Control` | `crafteo_progreso`, `inventario_cambiado` | `ItemList` / `Tree`, `ProgressBar` |
+| `SkillsPanelUI` *(archivada)* | `Control` | `nivel_subido`, `xp_ganada` | `VBoxContainer` + `ProgressBar` |
+| `CraftingUI` *(archivada)* | `Control` | `crafteo_progreso`, `inventario_cambiado` | `ItemList` / `Tree`, `ProgressBar` |
 | `ContextMenuUI` **(implementado, paso 7)** | `PopupMenu` | — (se puebla al abrirse) | `PopupMenu` completo |
 | `RoomBuilderUI` | `Control` | `objeto_colocado` | drag & drop nativo; el fantasma lo pone `IndicadorCelda` |
-| `MarketUI` | `Control` | `transaccion` | `Tree` (columnas ordenables) |
+| `MarketUI` *(archivada)* | `Control` | `transaccion` | `Tree` (columnas ordenables) |
 
 **El drag & drop no se implementa a mano.** `_get_drag_data()`, `_can_drop_data()` y `_drop_data()` de `Control` ya resuelven el arrastre, la previsualización y el destino — y son los mismos tres métodos para arrastrar dentro del inventario y para arrastrar del inventario a la sala.
 
 **Un verbo puede llamarse distinto según quién pregunte.** `etiqueta_para(actor, objeto)` existe porque el recurso lo comparten cincuenta muebles y la etiqueta no puede guardarse en `self`: se calcula cada vez. Es lo que deja que la misma silla ofrezca «Sentarse» o «Levantarse» con **un solo comportamiento**. Separarlos en dos obligaría a que el menú mostrara siempre uno de los dos en gris.
 
 **`ContextMenuUI` no conoce ningún verbo.** Se puebla con lo que devuelve `WorldObject.verbos_disponibles(actor)` y mapea el índice elegido de vuelta al `InteractionBehavior`. Agregar un verbo nuevo al juego no toca este archivo — que es la prueba de que el sistema del GDD §6.1 está bien planteado.
+
+---
+
+### 4.1 Los componentes y los servicios de la fase 4
+
+```gdscript
+class_name Ventana extends PanelContainer      # escenas/ui/componentes/
+signal cerrada()
+@export var titulo: String
+@export var cerrable: bool = true
+@export var arrastrable: bool = true
+@export var centrar_al_abrir: bool = true
+func abrir() -> void          # la primera vez, centrada; despues, donde la dejaste
+func ubicar(punto: Vector2) -> void
+func cerrar() -> void
+func alternar() -> void
+func cuerpo() -> VBoxContainer
+# Esc cierra la de adelante. Las subclases que atienden su propio atajo llaman
+# a super._unhandled_key_input() primero.
+
+class_name Dialogo extends Ventana
+signal respondido(respuesta: Dictionary)   # {"aceptado": bool, "texto": String}
+static func confirmar(padre, titulo, texto, aceptar := "Aceptar", cancelar := "Cancelar") -> Dialogo
+static func pedir_texto(padre, titulo, texto, inicial := "", aceptar := "Aceptar") -> Dialogo
+func responder(aceptado: bool) -> void
+
+# autoload Consola
+enum Canal { CHAT, SISTEMA, ERROR, DEBUG }
+signal mensaje_publicado(mensaje: Dictionary)   # {canal, texto, autor_id, autor_nombre, tiempo}
+signal limpiada()
+signal debug_cambiado(visible: bool)
+func chat(autor_id, autor_nombre, texto) / sistema(texto) / error(texto) / debug(texto)
+func error_codigo(codigo: Errores.Codigo) -> void
+func enviar(texto: String) -> Errores.Codigo   # "/..." es comando; lo demas, GameManager.decir()
+func historial() -> Array[Dictionary]          # los ultimos 200
+
+class_name Comandos extends RefCounted          # registro estatico
+static func registrar(nombre, funcion: Callable, ayuda, uso := "", debug := false) -> void
+static func ejecutar(linea: String) -> Errores.Codigo
+static func lista(incluir_debug := true) -> Array[Dictionary]
+
+# autoload Servidor — la sexta costura de red. Todo con await.
+signal chat_recibido(sala_id, autor_id, autor_nombre, texto)
+func listar_salas_publicas() / listar_salas_de(propietario) -> Array[Dictionary]
+func obtener_sala(id) -> Dictionary                 # {codigo, doc}
+func plantillas() -> Array[Dictionary]
+func crear_sala(nombre, plantilla_id, propietario) -> Dictionary   # {codigo, id}
+func guardar_sala(doc, actor_id) / renombrar_sala(id, nombre, actor_id) / borrar_sala(id, actor_id) -> Errores.Codigo
+func listar_perfiles() -> Array[Dictionary]
+func crear_perfil(nombre) -> Dictionary             # {codigo, id}; trae su casa
+func iniciar_sesion(id) -> Dictionary               # {codigo, doc}
+func guardar_perfil(doc, actor_id) / borrar_perfil(id) -> Errores.Codigo
+func enviar_chat(sala_id, autor_id, autor_nombre, texto) -> Errores.Codigo
+
+# autoload Transicion (escena)
+func cubrir(texto := "Cargando...") -> void   # corrutina; cubrir lo cubierto no espera
+func cubrir_ya(texto := "Cargando...") -> void
+func descubrir() -> void                      # corrutina; ya deja pasar los clics
+func esta_cubierto() -> bool
+```
+
+**`ServidorLocal` aplica las reglas que después aplica el servidor**, y por eso viven ahí y no en la interfaz: una sala la guarda, renombra o borra su dueño; una pública se edita solo en desarrollo y no se borra desde el juego; un nombre de sala tiene hasta 40 caracteres y no se repite para el mismo dueño; un nombre de jugador, de 3 a 20, sin símbolos, y no se repite; y ningún id que venga de afuera arma una ruta sin pasar por `_id_valido()`.
 
 ---
 

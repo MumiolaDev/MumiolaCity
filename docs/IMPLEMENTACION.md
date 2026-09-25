@@ -1,6 +1,6 @@
 # MumiolaCity — Checklist de implementación
 
-> Complementa [`SCRIPTS.md`](SCRIPTS.md) (el mapa de los 39 scripts, más las clases de datos que ese documento lista sin detallar), [`SISTEMAS.md`](SISTEMAS.md) (cómo se comunican entre sí y qué decisiones faltan cerrar), [`CLASES.md`](CLASES.md) (la firma de cada clase) y [`GDD.md`](GDD.md). Este documento sí es un plan de trabajo: se va llenando a medida que se implementa cada script, en el mismo orden de `SCRIPTS.md`.
+> Complementa [`SCRIPTS.md`](SCRIPTS.md) (el mapa de los scripts, más las clases de datos que ese documento lista sin detallar), [`SISTEMAS.md`](SISTEMAS.md) (cómo se comunican entre sí y qué decisiones faltan cerrar), [`CLASES.md`](CLASES.md) (la firma de cada clase) y [`GDD.md`](GDD.md). Este documento sí es un plan de trabajo: se va llenando a medida que se implementa cada script, en el mismo orden de `SCRIPTS.md`.
 >
 > **Formato por script:** **Definir** (decisiones de diseño a cerrar antes de escribir código — cambiarlas después de implementado sale caro) → **Implementar** (qué construir) → **Verificar** (cómo comprobar, con tus propios ojos o con un print, que quedó bien antes de pasar al siguiente). "Listo para el siguiente script" es el criterio de salida de cada bloque.
 >
@@ -14,13 +14,27 @@
 |---|---|
 | 0 — Diseño | cerrada |
 | 1 — Sistema base en 3D | terminada y probada |
-| 2a — Economía sin interfaz | terminada, 114 comprobaciones |
-| 3 — El editor de sala · **el MVP** | **terminada**, criterio cumplido |
-| 4 — Las interacciones | **en curso**: 4.1 `PoseBehavior` y 4.2 `LevantarBehavior` hechos |
-| 5 — La economía como contenido | pendiente |
-| 6 — Red | fuera del MVP, con las cinco costuras ya puestas |
+| 2a — Economía sin interfaz | terminada, 114 comprobaciones; **archivada** con el giro a sandbox |
+| 3 — El editor de sala | terminada, criterio cumplido |
+| 4 — La interfaz y el flujo | **terminada**, en cinco etapas (U1–U5), criterio cumplido |
+| 5 — La interacción fina | siguiente. Ya hechos, de la vieja fase 4: `PoseBehavior` y `LevantarBehavior` |
+| 6 — Social y rol · 7 — Estilo visual · 8 — Red | pendientes; la red, con las seis costuras ya puestas |
 
-**Lo que sigue en la fase 4**, en orden: `SuperficieBehavior` (desbloqueado desde que D25 quedó cerrada, y el que más abre), `ContenedorBehavior`, `AlternarBehavior`, `AbrirCrafteoBehavior`, `InventoryUI`, `CraftingUI` y los emotes.
+**Qué trajo la fase 4**, por etapa:
+
+- **U1 — El tema.** `herramientas/ConstructorTema.gd` arma `ui/tema/tema.tres` desde los sprites del pack Flat, que entran escalados x2 con `herramientas/escalar_sprites_ui.py`. Fuentes Pixelify Sans y VT323. Componentes `Ventana` y `Dialogo`.
+- **U2 — La consola.** El autoload `Consola` (chat, sistema, error, debug), el registro `Comandos` y la caja de abajo a la izquierda. Se fueron el texto crudo de atajos y los atajos de economía; la ayuda es una ventana (F1).
+- **U3 — Salas como documentos.** El autoload `Servidor` —la costura de la red— con `ServidorLocal` detrás. Una sala es `Sala.tscn` más su documento, con id propio, y se carga de a una con `GameManager.ir_a()`, entre un fundido del autoload `Transicion`. La plaza y cinco plantillas de forma son JSON en `data/salas/`.
+- **U4 — El navegador.** `NavegadorUI` (públicas, mis salas, crear desde forma) y `BarraJuego`. `puede_editar()` aplica la regla real.
+- **U5 — Perfiles.** `MenuInicio` es la escena principal; cada perfil trae su casa y guarda dónde te quedaste. `MenuPausa` (Esc) y `OpcionesUI`.
+
+**Lo que sigue, en la fase 5**, en orden:
+
+1. **`InventoryUI` y colocar desde la mochila jugando.** Hoy levantar un mueble lo manda a la mochila y no hay forma de volver a ponerlo sin el editor. Es lo que cierra el círculo del verbo que ya existe.
+2. **`SuperficieBehavior`** (D25, decidida): apoyar cosas sobre mesas y estantes. Le da sentido a los 33 ítems chicos que hoy no tienen verbo.
+3. **Un estado genérico por instancia** en `ItemInstance` —abierto, encendido, lleno, sucio— y sobre él `ContenedorBehavior` (`abrir`) y `AlternarBehavior` (`encender`), para que un verbo nuevo sea datos.
+4. **Acciones con duración** (una barra de progreso sobre el avatar) y **objetos en la mano** (enganche al hueso, D20).
+5. Los verbos pendientes del catálogo: `servir` y `vaciar` en el plato y el bol.
 
 ---
 
@@ -28,7 +42,13 @@
 
 **Los tests sí se versionan, y viven en `mumiola-city/escenas/test/`.** La convención de la sección 1 —escenas de verificación local fuera del repo— valía cuando el único test dependía de cómo estuviera pintada la sala de prueba de cada máquina. Dejó de valer en cuanto hubo reglas que comprobar y no solo conversiones que mirar.
 
-Cada test es un `Node` con un script que se cuelga de `Mundo` y reporta por consola, terminando en una línea `NOMBRE: todo ok` o `NOMBRE: N fallos`. Son dieciséis: `test_camara`, `test_clic_menu`, `test_documento`, `test_economia`, `test_editor`, `test_fantasma_pieza`, `test_huella_objeto`, `test_huellas`, `test_levantar`, `test_menu_posicion`, `test_mirar`, `test_ocupar_bloquear`, `test_poses`, `test_rotacion`, `test_salas_archivo` y `test_salida_pose`.
+Cada test es un `Node` con un script que se cuelga de `Mundo` y reporta por consola, terminando en una línea `NOMBRE: todo ok` o `NOMBRE: N fallos`. Son veintiuno: `test_camara`, `test_clic_menu`, `test_consola`, `test_documento`, `test_economia`, `test_editor`, `test_fantasma_pieza`, `test_huella_objeto`, `test_huellas`, `test_ir_a_sala`, `test_levantar`, `test_menu_posicion`, `test_mirar`, `test_navegador`, `test_ocupar_bloquear`, `test_perfiles`, `test_poses`, `test_rotacion`, `test_salida_pose`, `test_servidor` y `test_ventana`. `test_perfiles` recorre dos cambios de escena, así que se muda a la raíz del árbol al empezar.
+
+**`test_huellas` tiene tres fallos que vienen de antes de la fase 4** (ya estaban en `837cbd2`): `espacio_puerta` no bloquea su propia celda y la huella no gira con la pieza. Están sin investigar.
+
+**Los tests escriben en `user://`** (salas y perfiles). En la copia donde se corren, conviene agregar a `project.godot`, bajo `[application]`, `config/use_custom_user_dir=true` y `config/custom_user_dir_name="MumiolaCityTest"`, y borrar esa carpeta antes de cada corrida: así no se mezclan con las salas y perfiles de verdad, y cada test arranca sin restos del anterior.
+
+**Muestrario del tema:** `escenas/test/muestra_tema.tscn` pone un control de cada tipo en pantalla. Con `-- --captura=<ruta.png>` guarda una captura y se cierra, que es como se revisa el tema después de regenerarlo.
 
 **Tres cosas que se aprendieron escribiéndolos**, y que se pagan caro si se olvidan:
 

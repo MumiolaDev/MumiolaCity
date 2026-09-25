@@ -1,9 +1,11 @@
 # MumiolaCity — Documento de Diseño de Juego (GDD)
 
-**Versión:** 0.4 (render 3D en tiempo real en vez de sprites pre-renderizados; idea central explicitada)
-**Fecha:** 2026-09-15
+**Versión:** 0.5 (de MVP económico a sandbox-simulador; la economía queda archivada)
+**Fecha:** 2026-09-25
 **Motor:** Godot 4.7
-**Fase actual:** Fase 1 — sistema base. El diseño de fase 0 está cerrado.
+**Fase actual:** Fase 4 — la interfaz y el flujo, terminada. Sigue la fase 5, la interacción fina.
+
+> **El giro del 25 de septiembre.** El objetivo dejó de ser un bucle económico y pasó a ser **un sandbox lo más interactuable posible**, con el grano fino de Project Zomboid y pensado para el rol como lo era Habbo, donde los jugadores roleaban aun con muy pocas opciones. La idea es implementar primero la mayor cantidad de interacciones y sistemas parecidos a los de un mundo real, y diseñar **después** las mecánicas de juego alrededor de ellos; el simulador tendría que servir además para cosas que no son un juego. Buena parte de este documento describe la economía de jugadores del diseño original (§2 a §5): se conserva como referencia de hacia dónde podría crecer, pero **no guía el trabajo actual**. El pilar que sí guía es el 6, *el rol es del jugador*. Los managers de economía ya escritos (`RecipeManager`, `SkillManager`) quedan en el código, archivados, sin interfaz ni atajos.
 
 ---
 
@@ -252,7 +254,7 @@ res://
   herramientas/         Scripts de editor (EditorScript), no corren en el juego
   escenas/
     mundo/               IsoGrid, RoomController, Mundo y el indicador de celda
-      salas/             Una escena por sala: SalaComun, SalaPrivada…
+      salas/             La escena generica Sala.tscn; cada sala es ella mas su documento
     personaje/           Avatar y animaciones
     ui/                  Inventario, panel de habilidades, mercado, crafteo
     objetos/
@@ -273,9 +275,9 @@ Puntos de diseño de datos clave:
 
 ## 9. Roadmap de fases
 
-**El MVP es un sandbox de sala, no un bucle económico.** El plan original apuntaba a un ciclo vertical —plantar, cocinar, vender— con la decoración relegada al final. Las fases 1 y 2a se hicieron y quedaron verificadas, y ahí se vio el problema: **nada de eso se ve**. La economía sólo existe en la consola, la mayoría de los objetos colocables no tienen ningún verbo y no hay una sola animación de producción conectada.
+**El MVP es un sandbox de sala, no un bucle económico.** El plan original apuntaba a un ciclo vertical —plantar, cocinar, vender— con la decoración relegada al final. Las fases 1 y 2a se hicieron y quedaron verificadas, y ahí se vio el problema: **nada de eso se ve**. La economía sólo existía en la consola, la mayoría de los objetos colocables no tenían ningún verbo y no había una sola animación de producción conectada.
 
-Así que el orden se invirtió. El MVP pasa a ser **un editor de sala más un modo de visita donde explorar lo que armaste**, y la economía pasa a ser contenido que se agrega encima de managers que ya existen y ya están probados.
+Así que el orden se invirtió dos veces. Primero, en la fase 3, el MVP pasó a ser **un editor de sala más un modo de visita**. Después, el 25 de septiembre, la economía salió del plan: el objetivo es un **sandbox-simulador** donde casi todo lo que hay en una sala se pueda usar, a grano fino, y las mecánicas de juego se diseñan encima de eso cuando exista.
 
 El editor además **le sirve al desarrollador**: armar una sala pintando celdas con vista previa es más rápido que hacerlo en el editor de Godot. La herramienta se paga sola y encima es contenido jugable.
 
@@ -283,22 +285,28 @@ El editor además **le sirve al desarrollador**: armar una sala pintando celdas 
 |---|---|---|
 | 0 | Este documento de diseño | hecha |
 | 1 | Sistema base: avatar moviéndose entre el área común y su sala privada, cámara isométrica orbitable | hecha |
-| 2a | Catálogo, inventario, habilidades y crafteo, sin interfaz | hecha |
-| **3** | **El editor de sala**: colocar y quitar muebles con vista previa, pintar suelo y paredes, deshacer, guardar y cargar | en curso |
-| 4 | **Las interacciones**: que casi todo lo que hay en una sala haga algo, y que agregar un verbo sea datos y no código | |
-| 5 | **La economía como contenido**: tiempo, cultivos, mercado y NPCs, sobre lo que ya existe | |
-| 6 | Networking real y persistencia (servidor autoritativo + base de datos) | |
+| 2a | Catálogo, inventario, habilidades y crafteo, sin interfaz | hecha (la economía quedó archivada) |
+| 3 | **El editor de sala**: colocar y quitar muebles con vista previa, pintar suelo y paredes, deshacer, guardar y cargar | hecha |
+| 4 | **La interfaz y el flujo**: menú de inicio con perfiles, navegador de salas, crear y guardar salas, transición entre salas, consola de chat, tema visual sobre el pack Flat | hecha |
+| 5 | **La interacción fina**: la mochila con ventana y colocar desde ella jugando, apoyar cosas sobre otras (D25), abrir y guardar, encender y apagar, un estado genérico por objeto, acciones con duración, objetos en la mano | siguiente |
+| 6 | **Social y rol**: burbujas de chat, nombres sobre la cabeza, emotes, `/me`, poses libres | |
+| 7 | **Estilo visual**: pulido del tema, iluminación, filtro retro/pixel (el mundo en su propio `SubViewport` y la interfaz fuera) | |
+| 8 | **Red**: un servidor autoritativo reemplaza a `ServidorLocal`; se replican las operaciones de sala (D23), el chat y la sesión (costura 5) | |
+| — | Economía: mercado, NPC, precios, crafteo como bucle | archivada; si vuelve, como capa sobre el sandbox |
 
-**La fase 3 está lista cuando** armás una sala entera desde cero, deshacés lo que no te gustó, la guardás, cerrás el juego, la abrís y está igual — y al volver a modo juego el personaje camina por el suelo nuevo y rodea las paredes nuevas.
+**La fase 3 quedó lista cuando** se armó una sala entera desde cero, se deshizo lo que no gustaba, se guardó, se cerró el juego, se abrió y estaba igual.
 
-**La fase 4 está lista cuando** recorrés una sala amueblada y casi todo lo que clickeás hace algo.
+**La fase 4 quedó lista cuando** se pudo abrir el juego, crear un perfil, aparecer en su casa, crear otra sala desde una plantilla, amueblarla, ir a la plaza por el navegador —con fundido— y volver, hablar y usar comandos en la consola, volver al menú desde Esc, cerrar, reabrir, y estar donde se estaba con lo que se llevaba.
 
-### La restricción que ordena las fases 3 a 5: esto tiene que sobrevivir al multijugador
+**La fase 5 está lista cuando** recorrés una sala amueblada y casi todo lo que clickeás hace algo.
 
-La visión final es un juego en línea con servidor autoritativo, y el editor es lo que más riesgo corre, porque convierte la sala en **contenido creado por el jugador** que tiene que viajar entre clientes. La regla es **construir las costuras, no el puente**: nada de red ahora, pero cada decisión deja puesto el lugar por donde la red entra. Son cinco, y **las cinco están puestas** — las cuatro primeras en la fase 3, la quinta con `PoseBehavior` en la 4.1:
+### La restricción que ordena todas las fases: esto tiene que sobrevivir al multijugador
+
+La visión final es un juego en línea con servidor autoritativo, y el editor es lo que más riesgo corre, porque convierte la sala en **contenido creado por el jugador** que tiene que viajar entre clientes. La regla es **construir las costuras, no el puente**: nada de red ahora, pero cada decisión deja puesto el lugar por donde la red entra. Eran cinco y **las cinco están puestas** —las cuatro primeras en la fase 3, la quinta con `PoseBehavior`—, y la fase 4 sumó una sexta, que es la que las agrupa:
 
 1. **El editor habla en operaciones, no muta el mundo** (**D23**). Una operación serializable por gesto, y `RoomController.aplicar()` como único punto que cambia una sala. Se paga hoy: da deshacer y rehacer casi gratis.
 2. **La forma canónica de una sala es un documento de datos, no una escena** (**D24**).
 3. **Todo viaja por nombre, nunca por id** (**D18**), porque dos clientes tienen que coincidir en qué es `suelo_base` sin compartir la misma `MeshLibrary` en memoria.
-4. **La autoridad tiene su lugar desde ahora**: `puede_editar(actor)` devuelve siempre `true` y lo importante es que exista el punto donde va.
-5. **El estado de sesión se indexa por identidad, no por nodo**: un nodo del cliente A no existe en el B. Lo que se replica es el hecho —«el jugador 7 está sentado en el objeto de la celda 3,4»— y cada cliente resuelve su propio nodo. `PoseBehavior` guarda ids de actor y `GameManager` lleva el registro (`registrar_actor()`, `actor_por_id()`, `id_de_actor()`). Salió gratis porque ese script se reescribía igual; con quince comportamientos encima habría sido tocarlos todos.
+4. **La autoridad tiene su lugar desde ahora**: `puede_editar(actor)` responde con la regla real —la sala es de su dueño; una pública se edita solo en desarrollo—, y el servidor local aplica la misma al guardar. Con red manda la del servidor; la del cliente existe para no ofrecer lo que después se rechaza.
+5. **El estado de sesión se indexa por identidad, no por nodo**: un nodo del cliente A no existe en el B. Lo que se replica es el hecho —«el jugador 7 está sentado en el objeto de la celda 3,4»— y cada cliente resuelve su propio nodo. `PoseBehavior` guarda ids de actor y `GameManager` lleva el registro (`registrar_actor()`, `actor_por_id()`, `id_de_actor()`). Salió gratis porque ese script se reescribía igual; con quince comportamientos encima habría sido tocarlos todos. Desde la fase 4, el id del actor jugador es el id de su perfil.
+6. **Todo lo que mañana vive en un servidor pasa por un solo lugar** (fase 4): el autoload `Servidor`. Perfiles, salas y chat se le piden a él y nunca a un archivo; hoy lo atiende `ServidorLocal`, que escribe en `user://`, y todo se llama con `await` aunque hoy responda en el acto. El día de la red cambia quién atiende, no quién pregunta.
