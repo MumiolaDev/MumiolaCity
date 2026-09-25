@@ -1,0 +1,54 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://escenas/ui/BarraJuego.gd" id="1_barra"]
+
+[node name="BarraJuego" type="PanelContainer"]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 484.0
+offset_top = -64.0
+offset_right = 960.0
+offset_bottom = -8.0
+grow_vertical = 0
+script = ExtResource("1_barra")
+
+[node name="Botones" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Salas" type="Button" parent="Botones"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Navegador de salas (N)"
+text = "Salas"
+
+[node name="Editar" type="Button" parent="Botones"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Editar la sala (B)"
+text = "Editar"
+
+[node name="Guardar" type="Button" parent="Botones"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+tooltip_text = "Guardar la sala (Ctrl+S)"
+text = "Guardar"
+
+[node name="Mochila" type="Button" parent="Botones"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Mochila"
+
+[node name="Ayuda" type="Button" parent="Botones"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Ayuda (F1)"
+text = "Ayuda"
+
+[node name="Menu" type="Button" parent="Botones"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Menu (Esc)"
+text = "Menu"

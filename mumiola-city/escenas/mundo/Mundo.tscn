@@ -8,6 +8,8 @@
 [ext_resource type="Script" path="res://escenas/mundo/EditorSala.gd" id="7_editor"]
 [ext_resource type="PackedScene" path="res://escenas/ui/ConsolaUI.tscn" id="8_consola"]
 [ext_resource type="PackedScene" path="res://escenas/ui/AyudaUI.tscn" id="9_ayuda"]
+[ext_resource type="PackedScene" path="res://escenas/ui/NavegadorUI.tscn" id="10_nav"]
+[ext_resource type="PackedScene" path="res://escenas/ui/BarraJuego.tscn" id="11_barra"]
 
 [node name="Mundo" type="Node3D" unique_id=1075680758]
 script = ExtResource("1_mundo")
@@ -25,6 +27,12 @@ script = ExtResource("1_mundo")
 [node name="RoomBuilderUI" parent="UI" instance=ExtResource("6_paleta")]
 
 [node name="ConsolaUI" parent="UI" instance=ExtResource("8_consola")]
+
+[node name="BarraJuego" parent="UI" node_paths=PackedStringArray("navegador", "ayuda") instance=ExtResource("11_barra")]
+navegador = NodePath("../NavegadorUI")
+ayuda = NodePath("../AyudaUI")
+
+[node name="NavegadorUI" parent="UI" instance=ExtResource("10_nav")]
 
 [node name="AyudaUI" parent="UI" instance=ExtResource("9_ayuda")]
 

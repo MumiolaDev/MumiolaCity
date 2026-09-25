@@ -63,6 +63,7 @@ func abrir() -> void:
 
 
 func _unhandled_key_input(evento : InputEvent) -> void:
+	super._unhandled_key_input(evento)
 	if evento is InputEventKey and evento.pressed and not evento.echo and evento.keycode == KEY_F1:
 		alternar()
 		get_viewport().set_input_as_handled()

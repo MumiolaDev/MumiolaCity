@@ -124,9 +124,16 @@ func _probar_ida_y_vuelta(id : StringName) -> void:
 		"la sala toma su identidad del documento")
 	_comprobar(not sala.esta_sucia(), "recien cargada no esta sucia")
 
+	_comprobar(not Errores.ok(sala.aplicar(OperacionSala.colocar(&"mesa", Vector2i(4, 4), 0))),
+		"el jugador no edita la sala de Ana")
+
+	# Lo que se prueba desde aca es el viaje por disco, no los permisos: el
+	# jugador edita como si fuera Ana y la sala vuelve a ser de ella al guardarse.
+	sala.propietario_id = GameManager.perfil_id()
 	sala.aplicar(OperacionSala.pintar(CatalogoPiezas.SUELO, Vector2i(3, 3), &"suelo_tierra"))
 	sala.aplicar(OperacionSala.colocar(&"silla_madera", Vector2i(2, 2), 1))
 	sala.aplicar(OperacionSala.colocar(&"mesa", Vector2i(4, 4), 0))
+	sala.propietario_id = &"ana"
 	_comprobar(sala.esta_sucia(), "editar la ensucia")
 	var antes := sala.to_dict()
 

@@ -26,6 +26,9 @@ const SALA_INICIAL := &"pub_plaza"
 ## Se emite al terminar de cambiar de sala, con la sala ya encendida y el
 ## jugador ya adentro.
 signal sala_cambiada(sala : RoomController)
+## Cambio algo de lo que se muestra de la sala actual —su nombre— sin cambiar
+## de sala.
+signal sala_actualizada(sala : RoomController)
 ## Se emite al empezar a irse de una sala, antes del fundido.
 signal saliendo_de_sala(sala : RoomController)
 ## Se emite cuando un jugador se registra, para lo que necesite engancharse a el.
@@ -350,24 +353,31 @@ func editando() -> bool:
 
 ## Cambia de modo y avisa. Devuelve si hubo cambio.
 ##
+## No deja editar una sala que no es tuya: es la misma regla que el servidor
+## aplica al guardarla, y dejar entrar al editor para rechazar despues cada
+## cambio seria mentirle al jugador.
+##
 ## Al salir del modo editor se olvida el historial de la sala: deshacer despues
 ## de haberse ido a recorrerla desharia cosas que el jugador ya dio por hechas.
 ## Y se guarda lo que haya cambiado: salir del editor es dar la obra por hecha.
 func cambiar_modo(nuevo : Modo) -> bool:
 	if nuevo == _modo:
 		return false
+	var sala := sala_actual()
+	if nuevo == Modo.EDITANDO and sala != null and not sala.puede_editar(jugador_actual()):
+		return false
 
 	_modo = nuevo
-	if _modo == Modo.JUGANDO:
-		var sala := sala_actual()
-		if sala != null:
-			sala.olvidar_historial()
-			guardar_si_cambio()
+	if _modo == Modo.JUGANDO and sala != null:
+		sala.olvidar_historial()
+		guardar_si_cambio()
 
 	modo_cambiado.emit(_modo)
 	return true
 
 
-## Alterna entre recorrer y editar.
-func alternar_modo() -> void:
-	cambiar_modo(Modo.JUGANDO if editando() else Modo.EDITANDO)
+## Alterna entre recorrer y editar. Devuelve OK, o por que no se pudo.
+func alternar_modo() -> Errores.Codigo:
+	if cambiar_modo(Modo.JUGANDO if editando() else Modo.EDITANDO):
+		return Errores.Codigo.OK
+	return Errores.Codigo.NO_ES_TUYO

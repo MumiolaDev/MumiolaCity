@@ -370,14 +370,20 @@ func retirar_objeto(obj : WorldObject) -> ItemInstance:
 	return inst
 
 
-## Devuelve si un actor puede modificar esta sala.
+## Devuelve si un actor puede modificar esta sala: si es suya, o si es publica y
+## esto es una build de desarrollo, donde el editor sirve para armar mapas.
 ##
-## Hoy siempre si, porque el sandbox no tiene limites. Existe igual para que el
-## dia del servidor autoritativo haya **un** lugar donde poner la comprobacion,
-## en vez de tener que buscar todos los sitios que mutan una sala. Los codigos
-## NO_ES_TUYO y SIN_PERMISO ya estan en el enum esperandola.
-func puede_editar(_actor : Node) -> bool:
-	return true
+## Es la misma regla que ServidorLocal._puede_modificar(), del lado del cliente.
+## Con red las dos tienen que dar lo mismo y la que manda es la del servidor;
+## esta existe para no ofrecer lo que despues se va a rechazar: el boton de
+## editar se apaga en la sala de otro, y levantar un mueble ajeno ni se intenta.
+##
+## Un actor sin id —un nodo que nadie anoto— no puede nada, salvo en una sala
+## sin duenio y en desarrollo.
+func puede_editar(actor : Node) -> bool:
+	if propietario_id == &"":
+		return OS.is_debug_build()
+	return actor != null and GameManager.id_de_actor(actor) == propietario_id
 
 
 ## Aplica una operacion. Es el unico punto que modifica una sala.

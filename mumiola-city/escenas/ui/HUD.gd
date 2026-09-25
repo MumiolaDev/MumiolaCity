@@ -16,14 +16,23 @@ extends CanvasLayer
 
 func _ready() -> void:
 	GameManager.sala_cambiada.connect(mostrar_sala)
+	GameManager.sala_actualizada.connect(mostrar_sala)
 	# Ponerse al dia con lo que ya paso: un HUD que entra tarde al arbol tiene
 	# que mostrar la sala vigente, no esperar al proximo cambio.
 	mostrar_sala(GameManager.sala_actual())
 
 
-## Escribe en que sala esta el jugador.
+## Escribe en que sala esta el jugador, y de quien es.
 func mostrar_sala(sala : RoomController) -> void:
 	if sala == null:
 		_sala.text = ""
 		return
-	_sala.text = sala.nombre_sala if sala.nombre_sala != "" else String(sala.name)
+	var nombre := sala.nombre_sala if sala.nombre_sala != "" else String(sala.name)
+	var de_quien := ""
+	if sala.propietario_id == &"":
+		de_quien = "sala publica"
+	elif sala.propietario_id == GameManager.perfil_id():
+		de_quien = "tu sala"
+	else:
+		de_quien = "de %s" % sala.propietario_id
+	_sala.text = "%s\n%s" % [nombre, de_quien]

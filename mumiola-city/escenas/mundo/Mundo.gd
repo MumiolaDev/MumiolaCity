@@ -67,9 +67,7 @@ func _unhandled_input(evento : InputEvent) -> void:
 		return
 
 	if evento.keycode == KEY_B:
-		GameManager.alternar_modo()
-		GameManager.avisar("Modo: %s"
-			% ("editando" if GameManager.editando() else "jugando"))
+		_cmd_editar([])
 		return
 
 	var sala := GameManager.sala_actual()
@@ -155,9 +153,12 @@ func _cmd_dar(args : PackedStringArray) -> Errores.Codigo:
 
 
 func _cmd_editar(_args : PackedStringArray) -> Errores.Codigo:
-	GameManager.alternar_modo()
-	GameManager.avisar("Modo: %s" % ("editando" if GameManager.editando() else "jugando"))
-	return Errores.Codigo.OK
+	var codigo := GameManager.alternar_modo()
+	if Errores.ok(codigo):
+		GameManager.avisar("Modo: %s" % ("editando" if GameManager.editando() else "jugando"))
+	else:
+		GameManager.avisar_error(codigo)
+	return codigo
 
 
 func _cmd_guardar(_args : PackedStringArray) -> Errores.Codigo:

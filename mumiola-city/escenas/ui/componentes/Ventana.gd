@@ -96,6 +96,31 @@ func cuerpo() -> VBoxContainer:
 	return _cuerpo
 
 
+## Esc cierra la ventana de mas adelante, y solo esa.
+##
+## Las subclases que atienden su propio atajo tienen que llamar a
+## super._unhandled_key_input() primero, o pierden esto.
+func _unhandled_key_input(evento : InputEvent) -> void:
+	if not (evento is InputEventKey) or not evento.pressed or evento.echo:
+		return
+	if evento.keycode == KEY_ESCAPE and cerrable and visible and _es_la_de_adelante():
+		cerrar()
+		get_viewport().set_input_as_handled()
+
+
+## Devuelve si esta es la ultima ventana visible entre sus hermanas, que es la
+## que se dibuja encima.
+func _es_la_de_adelante() -> bool:
+	var padre := get_parent()
+	if padre == null:
+		return true
+	for i in range(padre.get_child_count() - 1, -1, -1):
+		var hermana := padre.get_child(i)
+		if hermana is Ventana and hermana.visible:
+			return hermana == self
+	return true
+
+
 ## Un clic en cualquier parte de la ventana la trae al frente.
 func _gui_input(evento : InputEvent) -> void:
 	if evento is InputEventMouseButton and evento.pressed:
