@@ -1,0 +1,41 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://c673jenrdjdpp" path="res://escenas/mundo/RoomController.gd" id="1_room"]
+[ext_resource type="Script" uid="uid://m7eix0mqswd0" path="res://escenas/mundo/IsoGrid.gd" id="2_grid"]
+[ext_resource type="Script" uid="uid://4krb1vk2eun1" path="res://escenas/mundo/IndicadorCelda.gd" id="3_indi"]
+[ext_resource type="MeshLibrary" uid="uid://c8nhht21rwsl3" path="res://data/mesh_librarys/suelos.meshlib" id="4_suelos"]
+[ext_resource type="MeshLibrary" uid="uid://cvl46ng3xkj4l" path="res://data/mesh_librarys/paredes.meshlib" id="5_paredes"]
+
+[node name="Sala" type="Node3D"]
+script = ExtResource("1_room")
+
+[node name="IsoGrid" type="Node3D" parent="." node_paths=PackedStringArray("suelo", "paredes")]
+script = ExtResource("2_grid")
+suelo = NodePath("GridSuelo")
+paredes = NodePath("GridParedes")
+
+[node name="GridSuelo" type="GridMap" parent="IsoGrid"]
+mesh_library = ExtResource("4_suelos")
+cell_size = Vector3(1, 1, 1)
+
+[node name="GridParedes" type="GridMap" parent="IsoGrid"]
+mesh_library = ExtResource("5_paredes")
+cell_size = Vector3(1, 1, 1)
+
+[node name="Objetos" type="Node3D" parent="."]
+
+[node name="Pivote" type="Node3D" parent="."]
+transform = Transform3D(0.7071067, -0.40860704, 0.57709634, 0, 0.8161376, 0.57785755, -0.7071067, -0.40860704, 0.57709634, 0, 0, 0)
+
+[node name="Camera3D" type="Camera3D" parent="Pivote"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 30)
+projection = 1
+size = 20.0
+
+[node name="IndicadorCelda" type="MeshInstance3D" parent="." node_paths=PackedStringArray("grid", "camara")]
+script = ExtResource("3_indi")
+grid = NodePath("../IsoGrid")
+camara = NodePath("../Pivote/Camera3D")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -0.42103577, 0.90704405, 0, -0.90704405, -0.42103577, 8.228088, 4.8168945, 0)

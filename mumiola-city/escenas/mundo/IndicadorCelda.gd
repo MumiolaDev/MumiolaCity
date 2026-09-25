@@ -20,9 +20,7 @@ extends MeshInstance3D
 ## la malla de una escena de objeto sin despertar al WorldObject que la envuelve.
 ##
 ## Ojo con la raiz: es un MeshInstance3D porque asi esta declarado el nodo en
-## SalaComun.tscn y SalaPrivada.tscn, pero su propia malla queda en null y todo
-## lo dibujan sus hijos. Cambiarle el tipo obligaria a tocar las dos escenas a
-## mano.
+## Sala.tscn, pero su propia malla queda en null y todo lo dibujan sus hijos.
 
 ## Se emite cuando cambia el motivo por el que la posicion actual esta o no
 ## bloqueada. Lleva OK cuando se puede colocar.

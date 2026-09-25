@@ -41,10 +41,19 @@ const VERSION_FORMATO := 1
 ## Las capas de escenario que guarda el documento.
 const CAPAS : Array[StringName] = [CatalogoPiezas.SUELO, CatalogoPiezas.PAREDES]
 
+## La identidad de la sala: estable, unica y la misma en todos los clientes.
+##
+## No es el nombre —dos jugadores pueden tener una "Casa"— ni la ruta de una
+## escena, que es como se identificaban antes y deja de servir en cuanto las salas
+## las crea el jugador. Lo asigna quien la crea (Servidor.crear_sala) y viaja en el
+## documento.
+@export var id_sala : StringName = &""
 ## comun | vivienda | produccion | tienda
 @export_enum("comun", "vivienda", "produccion", "tienda") var tipo : String = "comun"
 ## Nombre visible de la sala.
 @export var nombre_sala : String = ""
+## Una linea para el navegador de salas.
+@export var descripcion : String = ""
 ## Duenio de la sala. Vacio significa publica.
 @export var propietario_id : StringName = &""
 
@@ -77,6 +86,13 @@ const CAPAS : Array[StringName] = [CatalogoPiezas.SUELO, CatalogoPiezas.PAREDES]
 
 var _activa : bool = false
 
+## Si cambio algo desde la ultima vez que se guardo o se cargo.
+##
+## Lo marca cualquier operacion aplicada —editar, pero tambien levantar un mueble
+## jugando— y lo limpia quien la guarda. Existe para no escribir el documento
+## entero cada vez que alguien entra y sale de una sala sin tocar nada.
+var _sucia : bool = false
+
 ## Lo hecho y lo deshecho, en un solo array con un cursor.
 ##
 ## Cada entrada guarda la operacion y su inversa, porque la inversa no se puede
@@ -90,6 +106,7 @@ func _ready() -> void:
 	# Toda sala arranca apagada y es el mundo el que enciende una. Asi no hay un
 	# orden de nodos en el que dos camaras se peleen por ser la actual.
 	desactivar()
+	operacion_aplicada.connect(func(_op : OperacionSala) -> void: _sucia = true)
 
 
 ## Atiende los controles de camara: rueda para el zoom, boton del medio para
@@ -237,6 +254,20 @@ func centrar() -> void:
 	# de NxM se ve mas ancha que N: por eso la diagonal y no el lado.
 	var diagonal := sqrt(float(region.size.x * region.size.x + region.size.y * region.size.y))
 	camara.size = clampf(diagonal * 1.1, zoom_minimo, zoom_maximo)
+
+
+## Encuadra la sala para entrar a ella: centrada, pero mas cerca que centrar().
+##
+## centrar() mete la sala entera en pantalla, que es lo que se quiere al apretar
+## Inicio en el editor pero no al entrar: en una sala grande el avatar queda
+## diminuto. Los numeros reproducen el encuadre que tenian a mano las dos salas
+## de la fase 3 (tamanio 20 para la plaza de 26x27), y el piso de 12 evita que
+## un cuarto chico se vea con lupa.
+func encuadrar_entrada() -> void:
+	centrar()
+	var region := grid.region_usada()
+	var diagonal := sqrt(float(region.size.x * region.size.x + region.size.y * region.size.y))
+	camara.size = clampf(diagonal * 0.55, maxf(zoom_minimo, 12.0), 24.0)
 
 
 ## Devuelve los objetos colocados en la sala.
@@ -505,8 +536,10 @@ func to_dict() -> Dictionary:
 
 	return {
 		"version_formato": VERSION_FORMATO,
+		"id": String(id_sala),
 		"catalogo": ItemDatabase.version(),
 		"nombre": nombre_sala,
+		"descripcion": descripcion,
 		"tipo": tipo,
 		"propietario": String(propietario_id),
 		"entrada": [celda_entrada.x, celda_entrada.y],
@@ -569,6 +602,15 @@ func from_dict(d : Dictionary) -> Errores.Codigo:
 	for obj in objetos():
 		retirar_objeto(obj)
 
+	# La identidad viaja en el documento: una sala es la escena generica mas esto.
+	# Un documento sin algun campo conserva el valor que ya tenia la sala, asi un
+	# documento viejo cargado sobre una sala hecha a mano no la deja sin nombre.
+	id_sala = StringName(str(d.get("id", id_sala)))
+	nombre_sala = str(d.get("nombre", nombre_sala))
+	descripcion = str(d.get("descripcion", descripcion))
+	tipo = str(d.get("tipo", tipo))
+	propietario_id = StringName(str(d.get("propietario", propietario_id)))
+
 	# La estructura primero: sin suelo debajo, todo mueble seria rechazado por
 	# CELDA_INEXISTENTE y la sala se cargaria vacia.
 	if d.has("estructura"):
@@ -599,7 +641,18 @@ func from_dict(d : Dictionary) -> Errores.Codigo:
 	# de edicion, y un Ctrl+Z que empiece a desarmar una sala recien abierta no
 	# es lo que nadie espera.
 	olvidar_historial()
+	_sucia = false
 	return Errores.Codigo.OK
+
+
+## Devuelve si la sala cambio desde que se guardo o se cargo.
+func esta_sucia() -> bool:
+	return _sucia
+
+
+## Anota que el estado actual ya esta guardado.
+func marcar_guardada() -> void:
+	_sucia = false
 
 
 ## Repinta las dos capas de escenario desde el documento.

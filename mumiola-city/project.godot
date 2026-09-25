@@ -18,6 +18,8 @@ config/icon="res://icon.svg"
 [autoload]
 
 Consola="*res://autoloads/Consola.gd"
+Servidor="*res://autoloads/Servidor.gd"
+Transicion="*res://escenas/ui/Transicion.tscn"
 ItemDatabase="*res://autoloads/ItemDatabase.gd"
 SkillManager="*res://autoloads/SkillManager.gd"
 InventoryManager="*res://autoloads/InventoryManager.gd"

@@ -20,8 +20,8 @@ func _ready() -> void:
 	if caja == null:
 		print("FALLO: no hay ConsolaUI en el mundo"); get_tree().quit(); return
 
-	_probar_canal()
-	_probar_comandos()
+	await _probar_canal()
+	await _probar_comandos()
 	await _probar_caja(caja)
 	_probar_historial()
 
@@ -43,39 +43,39 @@ func _probar_canal() -> void:
 			"el error trae el mensaje del codigo")
 
 	Consola.limpiar()
-	Consola.enviar("buenas")
+	await Consola.enviar("buenas")
 	h = Consola.historial()
 	_comprobar(h.size() == 1 and h[0].canal == Consola.Canal.CHAT, "sin barra es chat")
 	if h.size() == 1:
 		_comprobar(h[0].autor_nombre == GameManager.nombre_jugador() and h[0].autor_id != &"",
 			"el chat dice quien hablo (%s, %s)" % [h[0].autor_id, h[0].autor_nombre])
-	_comprobar(Consola.enviar("   ") == Errores.Codigo.OK and Consola.historial().size() == 1,
+	_comprobar((await Consola.enviar("   ")) == Errores.Codigo.OK and Consola.historial().size() == 1,
 		"un mensaje en blanco no se manda")
 
 
 func _probar_comandos() -> void:
 	Consola.limpiar()
-	_comprobar(Consola.enviar("/nada_de_nada") == Errores.Codigo.COMANDO_DESCONOCIDO,
+	_comprobar((await Consola.enviar("/nada_de_nada")) == Errores.Codigo.COMANDO_DESCONOCIDO,
 		"un comando que no existe se rechaza")
 	_comprobar(Consola.historial().size() == 1 and Consola.historial()[0].canal == Consola.Canal.ERROR,
 		"y se dice por que")
 
 	Consola.limpiar()
-	_comprobar(Consola.enviar("/dar") == Errores.Codigo.USO_INCORRECTO, "/dar sin argumentos es mal uso")
+	_comprobar((await Consola.enviar("/dar")) == Errores.Codigo.USO_INCORRECTO, "/dar sin argumentos es mal uso")
 	var linea : String = Consola.historial()[0].texto if Consola.historial().size() > 0 else ""
 	_comprobar(linea.contains("/dar <item>"), "el rechazo muestra como se usa (%s)" % linea)
 
 	InventoryManager.vaciar()
-	_comprobar(Errores.ok(Consola.enviar("/DAR silla_madera 2")),
+	_comprobar(Errores.ok(await Consola.enviar("/DAR silla_madera 2")),
 		"/dar funciona, con el nombre en mayusculas")
 	_comprobar(InventoryManager.cantidad_de(&"silla_madera") == 2, "y pone dos sillas en la mochila")
-	_comprobar(Consola.enviar("/dar no_existe") == Errores.Codigo.ITEM_DESCONOCIDO,
+	_comprobar((await Consola.enviar("/dar no_existe")) == Errores.Codigo.ITEM_DESCONOCIDO,
 		"un item que no existe se rechaza")
 	InventoryManager.vaciar()
 
 	var llamadas := [0]
 	Comandos.registrar(&"prueba_temporal", func(_a : PackedStringArray) -> void: llamadas[0] += 1, "x")
-	_comprobar(Errores.ok(Consola.enviar("/prueba_temporal")) and llamadas[0] == 1,
+	_comprobar(Errores.ok(await Consola.enviar("/prueba_temporal")) and llamadas[0] == 1,
 		"un comando que no devuelve nada cuenta como OK")
 	Comandos.quitar(&"prueba_temporal")
 

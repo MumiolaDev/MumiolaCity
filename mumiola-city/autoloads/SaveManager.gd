@@ -3,8 +3,9 @@ extends Node
 ## Guarda y carga la partida. Va ultimo en el orden de autoloads (D9), porque
 ## restaura sobre todos los demas.
 ##
-## Orquesta, no serializa: le pide su estado a cada sala y lo mete en el
-## SaveGame. Agregar un campo a una sala no deberia obligar a tocar este archivo.
+## Orquesta, no serializa: le pide su estado a cada manager y lo mete en el
+## SaveGame. Las salas no pasan por aca: cada una se guarda sola por Servidor,
+## porque son documentos de quien las tenga y no parte de tu partida.
 ##
 ## Escribe JSON y no un .tres, aunque ResourceSaver seria mas corto. Un .tres
 ## cargado desde afuera puede contener rutas de script, y este juego apunta a ser
@@ -20,25 +21,7 @@ signal guardado_completado()
 signal carga_completada()
 
 const RUTA := "user://partida.json"
-const VERSION_ACTUAL := 1
-
-## Donde viven las salas sueltas, una por archivo.
-##
-## Son otra cosa que la partida: la partida es *tu* estado —inventario,
-## habilidades, donde estas—, y una sala guardada es un documento portable que
-## no tiene dueno. Sirve para armar mapas y versionarlos, para compartir una
-## sala, y es lo que un servidor almacenaria (D24).
-const DIR_SALAS := "user://salas"
-
-## Que puede tener el nombre de un archivo de sala. Todo lo demas se descarta.
-const PERMITIDOS := "abcdefghijklmnopqrstuvwxyz0123456789-_"
-
-## Las letras con tilde se pasan a su version pelada antes del filtro, para que
-## "Mi Habitacion" y "Mi Habitación" no terminen en dos archivos distintos.
-const SIN_TILDE := {
-	"á": "a", "é": "e", "í": "i", "ó": "o", "ú": "u", "ü": "u", "ñ": "n",
-}
-
+const VERSION_ACTUAL := 2
 
 ## Devuelve si hay una partida guardada.
 func existe_partida() -> bool:
@@ -51,109 +34,6 @@ func borrar() -> void:
 		DirAccess.remove_absolute(RUTA)
 
 
-## Guarda una sala como archivo suelto, con el nombre que se le pase o el suyo.
-##
-## Devuelve un codigo y no un Error del motor porque esto se le muestra al
-## jugador: "no se pudo guardar" y "ese nombre no sirve" son cosas distintas que
-## tiene que poder leer.
-func guardar_sala(sala : RoomController, nombre : String = "") -> Errores.Codigo:
-	if sala == null:
-		return Errores.Codigo.NO_TIENE_ITEM
-
-	var archivo_nombre := _nombre_archivo(nombre if nombre != "" else sala.nombre_sala)
-	if archivo_nombre == "":
-		return Errores.Codigo.NOMBRE_INVALIDO
-
-	DirAccess.make_dir_recursive_absolute(DIR_SALAS)
-	var ruta := "%s/%s.json" % [DIR_SALAS, archivo_nombre]
-
-	var archivo := FileAccess.open(ruta, FileAccess.WRITE)
-	if archivo == null:
-		push_error("SaveManager: no se pudo escribir %s (%d)."
-			% [ruta, FileAccess.get_open_error()])
-		return Errores.Codigo.NO_SE_PUDO_ESCRIBIR
-
-	archivo.store_string(JSON.stringify(sala.to_dict(), "\t"))
-	archivo.close()
-
-	# Comprobar que el archivo aparecio en vez de confiar en que no hubo error.
-	# Es la misma leccion que dejo el importador, que reporto 52 guardados y
-	# escribio uno.
-	if not FileAccess.file_exists(ruta):
-		push_error("SaveManager: se escribio %s sin error pero el archivo no existe." % ruta)
-		return Errores.Codigo.NO_SE_PUDO_ESCRIBIR
-
-	guardado_completado.emit()
-	return Errores.Codigo.OK
-
-
-## Carga una sala guardada sobre una sala viva, reemplazando lo que tuviera.
-func cargar_sala(sala : RoomController, nombre : String) -> Errores.Codigo:
-	if sala == null:
-		return Errores.Codigo.NO_TIENE_ITEM
-
-	var archivo_nombre := _nombre_archivo(nombre)
-	if archivo_nombre == "":
-		return Errores.Codigo.NOMBRE_INVALIDO
-
-	var ruta := "%s/%s.json" % [DIR_SALAS, archivo_nombre]
-	if not FileAccess.file_exists(ruta):
-		return Errores.Codigo.ARCHIVO_NO_EXISTE
-
-	var archivo := FileAccess.open(ruta, FileAccess.READ)
-	if archivo == null:
-		return Errores.Codigo.ARCHIVO_NO_EXISTE
-
-	var crudo = JSON.parse_string(archivo.get_as_text())
-	archivo.close()
-	if not (crudo is Dictionary):
-		push_error("SaveManager: %s no es un documento de sala valido." % ruta)
-		return Errores.Codigo.ARCHIVO_CORRUPTO
-
-	var codigo := sala.from_dict(crudo)
-	if Errores.ok(codigo):
-		carga_completada.emit()
-	return codigo
-
-
-## Devuelve los nombres de archivo de las salas guardadas, ordenados.
-func salas_guardadas() -> Array[String]:
-	var salida : Array[String] = []
-	var dir := DirAccess.open(DIR_SALAS)
-	if dir == null:
-		return salida
-	for archivo in dir.get_files():
-		if archivo.ends_with(".json"):
-			salida.append(archivo.trim_suffix(".json"))
-	salida.sort()
-	return salida
-
-
-## Devuelve si existe una sala guardada con ese nombre.
-func existe_sala(nombre : String) -> bool:
-	var archivo_nombre := _nombre_archivo(nombre)
-	return archivo_nombre != "" and FileAccess.file_exists("%s/%s.json" % [DIR_SALAS, archivo_nombre])
-
-
-## Convierte un nombre visible en un nombre de archivo seguro.
-##
-## "Mi Sala Linda" -> "mi_sala_linda". Devuelve vacio si no queda nada utilizable.
-##
-## No es cosmetica: un nombre de sala lo escribe una persona y algun dia va a
-## llegar de la red. Sin filtrar, un nombre con "../" escribiria fuera de la
-## carpeta de salas, que es la clase de agujero que conviene no abrir nunca —
-## menos todavia en un juego que apunta a compartir salas entre jugadores.
-func _nombre_archivo(nombre : String) -> String:
-	var limpio := ""
-	for caracter in nombre.strip_edges().to_lower():
-		var c : String = SIN_TILDE.get(caracter, caracter)
-		if c in PERMITIDOS:
-			limpio += c
-		elif c == " ":
-			limpio += "_"
-	return limpio.substr(0, 64)
-
-
 ## Guarda el estado actual. Devuelve OK, o el error de escritura.
 func guardar() -> Error:
 	var partida := SaveGame.new()
@@ -162,7 +42,7 @@ func guardar() -> Error:
 
 	var sala := GameManager.sala_actual()
 	if sala != null:
-		partida.sala_actual = sala.scene_file_path
+		partida.sala_actual = String(sala.id_sala)
 
 	var jugador := GameManager.jugador_actual()
 	if jugador != null and sala != null:
@@ -171,10 +51,9 @@ func guardar() -> Error:
 	partida.inventario = InventoryManager.to_dict()
 	partida.habilidades = SkillManager.to_dict()
 
-	# Se guardan todas las salas y no solo la actual: los muebles de tu casa
-	# siguen ahi mientras estas en la plaza.
-	for otra in GameManager.salas():
-		partida.salas[otra.scene_file_path] = otra.to_dict()
+	# La sala donde estas se guarda aparte, como documento. Las demas ya se
+	# guardaron al dejarlas.
+	await GameManager.guardar_si_cambio()
 
 	var archivo := FileAccess.open(RUTA, FileAccess.WRITE)
 	if archivo == null:
@@ -204,7 +83,7 @@ func cargar() -> Error:
 
 	var partida := SaveGame.new()
 	partida.from_dict(_migrar(crudo))
-	_aplicar(partida)
+	await _aplicar(partida)
 	carga_completada.emit()
 	return OK
 
@@ -217,6 +96,12 @@ func cargar() -> Error:
 ## sobre la mesa.
 func _migrar(datos : Dictionary) -> Dictionary:
 	var version := int(datos.get("version_formato", 1))
+	if version < 2:
+		# La 1 identificaba la sala por la ruta de su escena, que ya no existe, y
+		# guardaba las salas adentro de la partida. Lo segundo se pierde: eran
+		# las dos salas fijas, que ahora son documentos propios.
+		datos["sala_actual"] = ""
+		datos.erase("salas")
 	if version > VERSION_ACTUAL:
 		push_warning(
 			"SaveManager: el guardado es de la version %d y esta build entiende hasta la %d. "
@@ -227,27 +112,18 @@ func _migrar(datos : Dictionary) -> Dictionary:
 
 ## Vuelca el estado leido sobre el mundo vivo.
 func _aplicar(partida : SaveGame) -> void:
-	# El inventario primero: si una sala guardada trae un mueble cuyo item ya no
-	# existe, conviene que el jugador tenga su mochila intacta igual.
 	InventoryManager.from_dict(partida.inventario)
 	SkillManager.from_dict(partida.habilidades)
 
-	for sala in GameManager.salas():
-		if not partida.salas.has(sala.scene_file_path):
-			continue
-		var codigo := sala.from_dict(partida.salas[sala.scene_file_path])
-		if not Errores.ok(codigo):
-			push_warning("SaveManager: no se pudo restaurar la sala '%s': %s"
-				% [sala.name, Errores.mensaje(codigo)])
-
-	# La sala se cambia despues de repoblarla, para que el jugador no aparezca en
-	# una habitacion a medio armar.
-	for sala in GameManager.salas():
-		if sala.scene_file_path == partida.sala_actual:
-			GameManager.ir_a_sala(sala)
-			break
+	var destino := StringName(partida.sala_actual) if partida.sala_actual != "" else GameManager.SALA_INICIAL
+	var codigo : Errores.Codigo = await GameManager.ir_a(destino)
+	if codigo == Errores.Codigo.SALA_NO_EXISTE and destino != GameManager.SALA_INICIAL:
+		# La sala donde estabas ya no esta —la borraste, o era de otro—.
+		codigo = await GameManager.ir_a(GameManager.SALA_INICIAL)
+	if not Errores.ok(codigo) and codigo != Errores.Codigo.ES_LA_SALA_ACTUAL:
+		push_warning("SaveManager: no se pudo volver a la sala guardada: %s" % Errores.mensaje(codigo))
 
 	var jugador := GameManager.jugador_actual()
 	var actual := GameManager.sala_actual()
-	if jugador != null and actual != null:
+	if jugador != null and actual != null and actual.id_sala == destino:
 		jugador.ubicar_en_celda(partida.celda_jugador)

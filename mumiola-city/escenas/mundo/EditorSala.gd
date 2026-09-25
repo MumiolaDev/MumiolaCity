@@ -280,35 +280,38 @@ func _pieza_elegida() -> Dictionary:
 	}
 
 
-## Guarda la sala activa como archivo suelto, con su propio nombre.
+## Guarda la sala activa.
 ##
-## Es una accion del editor y no del juego: la partida guarda tu estado, y esto
-## guarda un documento de sala, que no tiene dueno y se puede compartir.
+## Salir del editor y dejar la sala ya guardan solos; esto es para quien quiere
+## asegurarse a mitad de una obra larga.
 func _guardar_sala() -> void:
 	var sala := GameManager.sala_actual()
 	if sala == null:
 		return
-
-	var codigo := SaveManager.guardar_sala(sala)
+	var codigo : Errores.Codigo = await GameManager.guardar_sala_actual()
 	if Errores.ok(codigo):
-		GameManager.avisar("Sala guardada como '%s'." % sala.nombre_sala)
+		GameManager.avisar("Sala '%s' guardada." % sala.nombre_sala)
 	else:
 		GameManager.avisar_error(codigo)
 
 
-## Vuelve a cargar la sala activa desde su archivo.
+## Descarta lo que cambio desde la ultima vez que se guardo.
 ##
-## Pisa lo que haya sin preguntar, porque en un editor con deshacer eso no es
-## destructivo: Ctrl+Z devuelve... salvo que cargar olvida el historial a
-## proposito. Cuando haya interfaz de archivos, aca va la confirmacion.
+## Pregunta antes, porque cargar olvida el historial y ya no hay Ctrl+Z que lo
+## devuelva.
 func _cargar_sala() -> void:
 	var sala := GameManager.sala_actual()
 	if sala == null:
 		return
-
-	var codigo := SaveManager.cargar_sala(sala, sala.nombre_sala)
+	var padre := paleta.get_parent() if paleta != null else get_tree().root
+	var respuesta : Dictionary = await Dialogo.confirmar(padre, "Descartar cambios",
+		"¿Volver a como estaba '%s' la ultima vez que se guardo?" % sala.nombre_sala,
+		"Descartar").respondido
+	if not respuesta.aceptado:
+		return
+	var codigo : Errores.Codigo = await GameManager.recargar_sala_actual()
 	if Errores.ok(codigo):
-		GameManager.avisar("Sala '%s' cargada." % sala.nombre_sala)
+		GameManager.avisar("Sala '%s' como estaba guardada." % sala.nombre_sala)
 	else:
 		GameManager.avisar_error(codigo)
 

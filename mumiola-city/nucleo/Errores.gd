@@ -63,6 +63,7 @@ enum Codigo {
 	SALA_NO_EXISTE = 503,
 	PLANTILLA_NO_EXISTE = 504,
 	ES_LA_SALA_ACTUAL = 505,
+	CAMBIO_EN_CURSO = 506,
 
 	# 6xx — datos y archivos
 	ARCHIVO_NO_EXISTE = 601,
@@ -115,7 +116,8 @@ const MENSAJES := {
 	Codigo.SALA_LLENA: "La sala esta llena.",
 	Codigo.SALA_NO_EXISTE: "Esa sala ya no existe.",
 	Codigo.PLANTILLA_NO_EXISTE: "No hay una forma de sala con ese nombre.",
-	Codigo.ES_LA_SALA_ACTUAL: "No se puede hacer eso con la sala en la que estas.",
+	Codigo.ES_LA_SALA_ACTUAL: "Ya estas en esa sala.",
+	Codigo.CAMBIO_EN_CURSO: "Ya estas yendo a otra sala.",
 
 	Codigo.ARCHIVO_NO_EXISTE: "No encontre ese archivo.",
 	Codigo.ARCHIVO_CORRUPTO: "Ese archivo esta danado y no se pudo leer.",

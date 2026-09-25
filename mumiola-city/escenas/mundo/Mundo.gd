@@ -11,8 +11,8 @@ extends Node3D
 ## Interactuar con un mueble es clic derecho sobre el: abre el menu contextual.
 ## El clic izquierdo sigue siendo caminar.
 ##
-## Teclas: B alterna entre jugar y editar, TAB cambia de sala, Q y E giran el
-## encuadre, G guarda la partida, L la carga. La lista completa, para el
+## Teclas: B alterna entre jugar y editar, Q y E giran el encuadre, G guarda la
+## partida, L la carga. La lista completa, para el
 ## jugador, esta en la ventana de ayuda (F1).
 ##
 ## La camara no esta aca: la rueda, el boton del medio y la tecla Inicio los
@@ -44,23 +44,28 @@ func _ready() -> void:
 	if menu != null:
 		menu.verbo_elegido.connect(_al_elegir_verbo)
 	_registrar_comandos()
+	GameManager.sala_cambiada.connect(_al_cambiar_sala)
 
-	for sala in GameManager.salas():
+	# La pantalla arranca cubierta y la primera sala entra en este mismo cuadro:
+	# con el servidor local, ir_a() no espera nada hasta el fundido de salida.
+	Transicion.cubrir_ya()
+	var codigo : Errores.Codigo = await GameManager.ir_a(GameManager.SALA_INICIAL)
+	if not Errores.ok(codigo):
+		push_error("Mundo: no se pudo entrar a %s: %s" % [GameManager.SALA_INICIAL, Errores.mensaje(codigo)])
+
+
+## Engancha los clics de los muebles de una sala recien cargada.
+func _al_cambiar_sala(sala : RoomController) -> void:
+	if not sala.objeto_colocado.is_connected(_atender_clics_de):
 		sala.objeto_colocado.connect(_atender_clics_de)
-		for obj in sala.objetos():
-			_atender_clics_de(obj)
-
-	if not GameManager.ir_a_indice(0):
-		push_error("Mundo: no hay ninguna RoomController colgando de Salas.")
+	for obj in sala.objetos():
+		_atender_clics_de(obj)
 
 
 func _unhandled_input(evento : InputEvent) -> void:
 	if not (evento is InputEventKey) or not evento.pressed or evento.echo:
 		return
 
-	if evento.keycode == KEY_TAB:
-		GameManager.siguiente_sala()
-		return
 	if evento.keycode == KEY_B:
 		GameManager.alternar_modo()
 		GameManager.avisar("Modo: %s"
@@ -75,11 +80,10 @@ func _unhandled_input(evento : InputEvent) -> void:
 	elif evento.keycode == KEY_E:
 		sala.rotar(1)
 	elif evento.keycode == KEY_G:
-		GameManager.avisar("Partida guardada." if SaveManager.guardar() == OK
-			else "No se pudo guardar.")
+		_cmd_guardar([])
 	elif evento.keycode == KEY_L:
-		GameManager.avisar("Partida cargada." if SaveManager.cargar() == OK
-			else "No hay partida guardada.")
+		var error : Error = await SaveManager.cargar()
+		GameManager.avisar("Partida cargada." if error == OK else "No hay partida guardada.")
 
 
 ## Engancha el clic derecho de un mueble al menu contextual.
@@ -117,6 +121,8 @@ func _registrar_comandos() -> void:
 		"<item> [cantidad]", true)
 	Comandos.registrar(&"editar", _cmd_editar, "Pasa de jugar a editar la sala, y vuelve.")
 	Comandos.registrar(&"guardar", _cmd_guardar, "Guarda la partida.")
+	Comandos.registrar(&"ir", _cmd_ir, "Va a una sala, por su nombre o su id.", "<sala>")
+	Comandos.registrar(&"salas", _cmd_salas, "Lista las salas publicas y las tuyas.")
 
 
 func _cmd_inventario(_args : PackedStringArray) -> Errores.Codigo:
@@ -155,7 +161,33 @@ func _cmd_editar(_args : PackedStringArray) -> Errores.Codigo:
 
 
 func _cmd_guardar(_args : PackedStringArray) -> Errores.Codigo:
-	if SaveManager.guardar() != OK:
+	if (await SaveManager.guardar()) != OK:
 		return Errores.Codigo.NO_SE_PUDO_ESCRIBIR
 	GameManager.avisar("Partida guardada.")
+	return Errores.Codigo.OK
+
+
+func _cmd_ir(args : PackedStringArray) -> Errores.Codigo:
+	if args.is_empty():
+		return Errores.Codigo.USO_INCORRECTO
+	var buscado := " ".join(args).to_lower()
+	var salas : Array[Dictionary] = await Servidor.listar_salas_publicas()
+	salas.append_array(await Servidor.listar_salas_de(GameManager.perfil_id()))
+	for s in salas:
+		if s.id == buscado or s.nombre.to_lower() == buscado:
+			return await GameManager.ir_a(StringName(s.id))
+	return Errores.Codigo.SALA_NO_EXISTE
+
+
+func _cmd_salas(_args : PackedStringArray) -> Errores.Codigo:
+	var lineas : Array[String] = ["Salas publicas:"]
+	for s in await Servidor.listar_salas_publicas():
+		lineas.append("  %s  (%s)" % [s.nombre, s.id])
+	lineas.append("Tus salas:")
+	var propias : Array[Dictionary] = await Servidor.listar_salas_de(GameManager.perfil_id())
+	if propias.is_empty():
+		lineas.append("  ninguna todavia")
+	for s in propias:
+		lineas.append("  %s  (%s)" % [s.nombre, s.id])
+	GameManager.avisar("\n".join(lineas))
 	return Errores.Codigo.OK

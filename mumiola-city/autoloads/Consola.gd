@@ -80,7 +80,7 @@ func enviar(texto : String) -> Errores.Codigo:
 		return Errores.Codigo.OK
 
 	if not texto.begins_with("/"):
-		return GameManager.decir(texto)
+		return await GameManager.decir(texto)
 
 	var linea := texto.substr(1)
 	var codigo := Comandos.ejecutar(linea)

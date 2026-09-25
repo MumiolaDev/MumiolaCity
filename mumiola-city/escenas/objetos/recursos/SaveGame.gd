@@ -7,6 +7,10 @@ extends Resource
 ## lo lea trabajen contra campos con nombre y tipo. La conversion a diccionario
 ## ocurre solo al borde, en SaveManager.
 ##
+## Las salas tampoco estan: desde la version 2 cada una se guarda sola, como
+## documento, por Servidor. La partida es tu estado; una sala es de quien la
+## tenga, y la visitan otros.
+##
 ## Lo que deliberadamente no esta: quien esta sentado, los buffs activos, y en
 ## general todo lo que vive en WorldObject.estado_runtime. Es estado de sesion y
 ## no tiene sentido que siga siendo cierto manana (D3).
@@ -14,20 +18,17 @@ extends Resource
 ## Sube cuando cambia el esquema. Cuesta una linea hoy y es la diferencia entre
 ## poder migrar los guardados y tener que borrarlos, lo cual va a pasar: hay
 ## siete decisiones de arquitectura todavia abiertas.
-@export var version_formato : int = 1
+@export var version_formato : int = 2
 @export var timestamp_guardado : int = 0
 
-## Ruta al .tscn de la sala donde estaba el jugador.
+## Id de la sala donde estaba el jugador.
 ##
-## La ruta y no el indice: el orden de los nodos cambia al agregar una sala, y un
-## guardado no puede depender de eso.
+## Hasta la version 1 era la ruta del .tscn de la sala. Dejo de servir cuando las
+## salas pasaron a ser documentos que crea el jugador y que no tienen escena.
 @export var sala_actual : String = ""
 ## En que celda estaba parado, no en que posicion de mundo. La celda es el dato
 ## real; la posicion es su consecuencia y depende de altura_piso y del cell_size.
 @export var celda_jugador : Vector2i = Vector2i.ZERO
-
-## Ruta de sala -> lo que to_dict() de esa sala devolvio.
-@export var salas : Dictionary = {}
 
 ## Lo que el jugador lleva encima, tal como lo devuelve InventoryManager.
 @export var inventario : Dictionary = {}
@@ -46,7 +47,6 @@ func to_dict() -> Dictionary:
 		"timestamp_guardado": timestamp_guardado,
 		"sala_actual": sala_actual,
 		"celda_jugador": [celda_jugador.x, celda_jugador.y],
-		"salas": salas,
 		"inventario": inventario,
 		"habilidades": habilidades,
 	}
@@ -66,6 +66,5 @@ func from_dict(d : Dictionary) -> void:
 	if celda.size() == 2:
 		celda_jugador = Vector2i(int(celda[0]), int(celda[1]))
 
-	salas = d.get("salas", {})
 	inventario = d.get("inventario", {})
 	habilidades = d.get("habilidades", {})

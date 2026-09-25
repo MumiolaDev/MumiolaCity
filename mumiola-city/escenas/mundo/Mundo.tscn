@@ -1,8 +1,6 @@
 [gd_scene format=3 uid="uid://b26wf7mcjwgw2"]
 
 [ext_resource type="Script" uid="uid://c1p8u4lpyf37w" path="res://escenas/mundo/Mundo.gd" id="1_mundo"]
-[ext_resource type="PackedScene" uid="uid://qyoa1b7ws12f" path="res://escenas/mundo/salas/SalaComun.tscn" id="2_comun"]
-[ext_resource type="PackedScene" path="res://escenas/mundo/salas/SalaPrivada.tscn" id="3_priv"]
 [ext_resource type="PackedScene" uid="uid://bm4tsb3ny2ow4" path="res://escenas/personaje/PersonajeControlador.tscn" id="4_pers"]
 [ext_resource type="PackedScene" path="res://escenas/ui/ContextMenuUI.tscn" id="5_menu"]
 [ext_resource type="PackedScene" path="res://escenas/ui/HUD.tscn" id="5_v0tkt"]
@@ -17,10 +15,6 @@ script = ExtResource("1_mundo")
 [node name="PersonajeControlador" parent="." unique_id=1013498012 instance=ExtResource("4_pers")]
 
 [node name="Salas" type="Node3D" parent="." unique_id=2058956931]
-
-[node name="SalaComun" parent="Salas" unique_id=685002195 instance=ExtResource("2_comun")]
-
-[node name="SalaPrivada" parent="Salas" unique_id=1579742836 instance=ExtResource("3_priv")]
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1276531538]
 
