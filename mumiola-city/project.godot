@@ -17,6 +17,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+Consola="*res://autoloads/Consola.gd"
 ItemDatabase="*res://autoloads/ItemDatabase.gd"
 SkillManager="*res://autoloads/SkillManager.gd"
 InventoryManager="*res://autoloads/InventoryManager.gd"

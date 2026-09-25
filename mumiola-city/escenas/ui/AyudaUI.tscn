@@ -1,0 +1,9 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://escenas/ui/AyudaUI.gd" id="1_ayuda"]
+
+[node name="AyudaUI" type="PanelContainer"]
+visible = false
+offset_right = 520.0
+offset_bottom = 440.0
+script = ExtResource("1_ayuda")

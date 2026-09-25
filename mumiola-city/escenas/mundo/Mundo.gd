@@ -1,7 +1,7 @@
 extends Node3D
 
 ## La escena del mundo: le dice a GameManager donde viven las salas, cablea la
-## interfaz y ofrece los atajos de prueba.
+## interfaz y registra los comandos que necesitan un mundo.
 ##
 ## Ya no decide nada sobre salas ni jugador: eso vive en GameManager, que
 ## sobrevive a los cambios de escena y no depende de la forma del arbol. Lo que
@@ -11,26 +11,21 @@ extends Node3D
 ## Interactuar con un mueble es clic derecho sobre el: abre el menu contextual.
 ## El clic izquierdo sigue siendo caminar.
 ##
-## Teclas de prueba, todas provisionales.
-##
-## Mundo:   B alterna entre jugar y editar, TAB cambia de sala, Q y E giran el
-##          encuadre, G guarda la partida, L la carga.
+## Teclas: B alterna entre jugar y editar, TAB cambia de sala, Q y E giran el
+## encuadre, G guarda la partida, L la carga. La lista completa, para el
+## jugador, esta en la ventana de ayuda (F1).
 ##
 ## La camara no esta aca: la rueda, el boton del medio y la tecla Inicio los
 ## atiende RoomController, porque sirven igual jugando que editando y porque la
 ## unica sala que recibe input es la activa.
-## Economia: I lista el inventario, K muestra el nivel de Cocina, 1 corta un
-##          tomate y 2 cocina carne.
 ##
-## Las de economia existen porque todavia no hay forma de craftear desde el
-## mundo: el verbo que abre el crafteo es uno de los seis que el importador
-## reporta sin comportamiento. Son andamio para poder juzgar como se siente la
-## progresion antes de construirle el mundo encima.
+## Colocar, retirar, girar y elegir tampoco: se los llevo EditorSala, que es
+## donde tienen sentido. Q y E si se quedan: girar el encuadre es de mirar, no
+## de editar.
 ##
-## Colocar, retirar, girar y elegir ya no estan aca: se los llevo EditorSala, que
-## es donde tienen sentido. En modo juego no se coloca nada y no hay vista previa
-## siguiendo al puntero — un fantasma sobre muebles que no se pueden mover solo
-## distrae. Q y E si se quedan: girar el encuadre es de mirar, no de editar.
+## Los atajos de economia (I, K, 1, 2) y el equipo de prueba se fueron con la
+## economia. Lo que seguia sirviendo de ellos quedo como comando de la consola:
+## /inv lista la mochila y /dar pone algo en ella.
 
 @onready var contenedor_salas : Node3D = $Salas
 @onready var menu : ContextMenuUI = $UI/ContextMenuUI
@@ -48,15 +43,12 @@ func _ready() -> void:
 	# funcion, no rompe el juego.
 	if menu != null:
 		menu.verbo_elegido.connect(_al_elegir_verbo)
-	GameManager.mostrar_ayuda("B jugar/editar   TAB cambiar de sala   Q/E girar   rueda: zoom   boton del medio: desplazar   Inicio: encuadrar\nG guardar partida   L cargar   I inventario   K habilidad   1 cortar tomate   2 cocinar carne\nJugando: clic izquierdo camina, clic derecho abre el menu.   Editando: clic coloca, derecho quita, R gira, Ctrl+Z deshace, Ctrl+S guarda la sala")
+	_registrar_comandos()
 
 	for sala in GameManager.salas():
 		sala.objeto_colocado.connect(_atender_clics_de)
 		for obj in sala.objetos():
 			_atender_clics_de(obj)
-
-	RecipeManager.crafteo_terminado.connect(_al_terminar_crafteo)
-	_dar_equipo_de_prueba()
 
 	if not GameManager.ir_a_indice(0):
 		push_error("Mundo: no hay ninguna RoomController colgando de Salas.")
@@ -85,14 +77,6 @@ func _unhandled_input(evento : InputEvent) -> void:
 	elif evento.keycode == KEY_G:
 		GameManager.avisar("Partida guardada." if SaveManager.guardar() == OK
 			else "No se pudo guardar.")
-	elif evento.keycode == KEY_I:
-		_mostrar_inventario()
-	elif evento.keycode == KEY_K:
-		_mostrar_habilidad(Habilidades.COCINA)
-	elif evento.keycode == KEY_1:
-		_craftear_de_prueba(&"tomate_rodajas", &"")
-	elif evento.keycode == KEY_2:
-		_craftear_de_prueba(&"carne_cocida", &"estufa")
 	elif evento.keycode == KEY_L:
 		GameManager.avisar("Partida cargada." if SaveManager.cargar() == OK
 			else "No hay partida guardada.")
@@ -125,66 +109,53 @@ func _al_elegir_verbo(verbo : InteractionBehavior, obj : WorldObject, actor : No
 		actor.interactuar_con(obj, verbo)
 
 
-## Le pone al jugador lo minimo para probar la cocina.
-##
-## Provisional: desaparece en cuanto exista una forma de conseguir estas cosas
-## dentro del juego, que es comprarselas al NPC en la fase 2b.
-func _dar_equipo_de_prueba() -> void:
-	InventoryManager.agregar(&"cuchillo", 1)
-	InventoryManager.agregar(&"tabla_cortar", 1)
-	InventoryManager.agregar(&"sarten", 1)
-	InventoryManager.agregar(&"tomate", 10)
-	InventoryManager.agregar(&"carne_cruda", 5)
+## Anota los comandos que son del mundo: los que necesitan una sala o un
+## jugador para tener sentido.
+func _registrar_comandos() -> void:
+	Comandos.registrar(&"inv", _cmd_inventario, "Lista lo que llevas en la mochila.")
+	Comandos.registrar(&"dar", _cmd_dar, "Pone un objeto del catalogo en tu mochila.",
+		"<item> [cantidad]", true)
+	Comandos.registrar(&"editar", _cmd_editar, "Pasa de jugar a editar la sala, y vuelve.")
+	Comandos.registrar(&"guardar", _cmd_guardar, "Guarda la partida.")
 
 
-## Escribe el inventario en el HUD, en una linea.
-func _mostrar_inventario() -> void:
+func _cmd_inventario(_args : PackedStringArray) -> Errores.Codigo:
 	var partes : Array[String] = []
 	for slot in InventoryManager.slots():
 		partes.append(slot.nombre_mostrado())
 
 	if partes.is_empty():
 		GameManager.avisar("La mochila esta vacia.")
-		return
-	GameManager.avisar("%s   (%.1f de %.0f kg)"
-		% ["  ·  ".join(partes), InventoryManager.peso_total(), InventoryManager.PESO_MAXIMO])
+	else:
+		GameManager.avisar("%s   (%.1f de %.0f kg)"
+			% ["  ·  ".join(partes), InventoryManager.peso_total(), InventoryManager.PESO_MAXIMO])
+	return Errores.Codigo.OK
 
 
-## Escribe el nivel y el progreso de una habilidad.
-func _mostrar_habilidad(id : StringName) -> void:
-	var def := SkillManager.definicion(id)
+func _cmd_dar(args : PackedStringArray) -> Errores.Codigo:
+	if args.is_empty():
+		return Errores.Codigo.USO_INCORRECTO
+	var def := ItemDatabase.obtener(StringName(args[0]))
 	if def == null:
-		GameManager.avisar("No hay definicion para %s." % id)
-		return
+		return Errores.Codigo.ITEM_DESCONOCIDO
+	var cantidad := int(args[1]) if args.size() > 1 and args[1].is_valid_int() else 1
+	if cantidad < 1:
+		return Errores.Codigo.USO_INCORRECTO
 
-	var avance := SkillManager.progreso_de(id)
-	var cola := "al maximo" if avance.y <= 0 else "%d / %d para el siguiente" % [avance.x, avance.y]
-	GameManager.avisar("%s: nivel %d   (%d xp, %s)"
-		% [def.nombre_display, SkillManager.nivel_de(id), SkillManager.xp_de(id), cola])
-
-
-## Intenta un crafteo y avisa si no se pudo.
-##
-## La estacion se pasa a mano porque todavia no hay estaciones en el mundo: es
-## como decirle al juego "hace de cuenta que estoy frente a la estufa".
-func _craftear_de_prueba(id : StringName, estacion : StringName) -> void:
-	var def := ItemDatabase.obtener(id)
-	if def == null:
-		GameManager.avisar("No existe '%s' en el catalogo." % id)
-		return
-
-	var codigo := RecipeManager.craftear(def, estacion)
+	var codigo := InventoryManager.agregar(def.id, cantidad)
 	if Errores.ok(codigo):
-		GameManager.avisar("Preparando %s..." % def.nombre)
-	else:
-		GameManager.avisar_error(codigo)
+		GameManager.avisar("Recibiste %s x%d." % [def.nombre, cantidad])
+	return codigo
 
 
-## Avisa que salio de la olla, y si fue lo que se buscaba.
-func _al_terminar_crafteo(resultado_id : StringName, cantidad : int, fallo : bool) -> void:
-	var def := ItemDatabase.obtener(resultado_id)
-	var nombre := String(resultado_id) if def == null else def.nombre
-	if fallo:
-		GameManager.avisar("Se te arruino: %s" % nombre)
-	else:
-		GameManager.avisar("Listo: %s x%d" % [nombre, cantidad])
+func _cmd_editar(_args : PackedStringArray) -> Errores.Codigo:
+	GameManager.alternar_modo()
+	GameManager.avisar("Modo: %s" % ("editando" if GameManager.editando() else "jugando"))
+	return Errores.Codigo.OK
+
+
+func _cmd_guardar(_args : PackedStringArray) -> Errores.Codigo:
+	if SaveManager.guardar() != OK:
+		return Errores.Codigo.NO_SE_PUDO_ESCRIBIR
+	GameManager.avisar("Partida guardada.")
+	return Errores.Codigo.OK

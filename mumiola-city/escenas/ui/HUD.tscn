@@ -1,4 +1,4 @@
-[gd_scene format=3 load_steps=2]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://escenas/ui/HUD.gd" id="1_hud"]
 
@@ -8,63 +8,8 @@ script = ExtResource("1_hud")
 [node name="Sala" type="Label" parent="."]
 offset_left = 16.0
 offset_top = 12.0
-offset_right = 420.0
-offset_bottom = 40.0
-mouse_filter = 2
-theme_override_font_sizes/font_size = 18
-text = ""
-
-[node name="Estado" type="HBoxContainer" parent="."]
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -280.0
-offset_top = 12.0
-offset_right = -16.0
+offset_right = 520.0
 offset_bottom = 44.0
-grow_horizontal = 0
 mouse_filter = 2
-theme_override_constants/separation = 12
-
-[node name="Energia" type="ProgressBar" parent="Estado"]
-custom_minimum_size = Vector2(160, 20)
-layout_mode = 2
-size_flags_vertical = 4
-mouse_filter = 2
-value = 100.0
-
-[node name="Ducados" type="Label" parent="Estado"]
-layout_mode = 2
-size_flags_vertical = 4
-mouse_filter = 2
-text = "0 D"
-
-[node name="Mensaje" type="Label" parent="."]
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 24.0
-offset_top = -180.0
-offset_right = -24.0
-offset_bottom = -100.0
-autowrap_mode = 3
-vertical_alignment = 2
-grow_vertical = 0
-mouse_filter = 2
-theme_override_font_sizes/font_size = 18
-horizontal_alignment = 1
-text = ""
-
-[node name="Ayuda" type="Label" parent="."]
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = -84.0
-offset_right = 620.0
-offset_bottom = -12.0
-grow_vertical = 0
-mouse_filter = 2
-modulate = Color(1, 1, 1, 0.6)
-text = ""
-
-[node name="RelojMensaje" type="Timer" parent="."]
-one_shot = true
+theme_type_variation = &"TextoClaro"
+theme_override_font_sizes/font_size = 22

@@ -23,6 +23,8 @@ extends RefCounted
 ##     3xx   economia
 ##     4xx   habilidades y produccion
 ##     5xx   permisos y salas
+##     6xx   datos, archivos y perfiles
+##     7xx   comandos de la consola
 enum Codigo {
 	OK = 0,
 
@@ -42,6 +44,7 @@ enum Codigo {
 	INVENTARIO_LLENO = 202,
 	NO_TIENE_ITEM = 203,
 	ITEM_EN_USO = 204,
+	ITEM_DESCONOCIDO = 205,
 
 	# 3xx — economia
 	SALDO_INSUFICIENTE = 301,
@@ -57,6 +60,9 @@ enum Codigo {
 	# 5xx — permisos y salas
 	SIN_PERMISO = 501,
 	SALA_LLENA = 502,
+	SALA_NO_EXISTE = 503,
+	PLANTILLA_NO_EXISTE = 504,
+	ES_LA_SALA_ACTUAL = 505,
 
 	# 6xx — datos y archivos
 	ARCHIVO_NO_EXISTE = 601,
@@ -64,6 +70,12 @@ enum Codigo {
 	FORMATO_DESCONOCIDO = 603,
 	NO_SE_PUDO_ESCRIBIR = 604,
 	NOMBRE_INVALIDO = 605,
+	NOMBRE_EN_USO = 606,
+	PERFIL_NO_EXISTE = 607,
+
+	# 7xx — comandos de la consola
+	COMANDO_DESCONOCIDO = 701,
+	USO_INCORRECTO = 702,
 }
 
 ## Texto que se le muestra al jugador para cada codigo.
@@ -88,6 +100,7 @@ const MENSAJES := {
 	Codigo.INVENTARIO_LLENO: "No te entra nada mas en el inventario.",
 	Codigo.NO_TIENE_ITEM: "No tenes ese objeto.",
 	Codigo.ITEM_EN_USO: "Alguien lo esta usando.",
+	Codigo.ITEM_DESCONOCIDO: "No existe un objeto con ese nombre.",
 
 	Codigo.SALDO_INSUFICIENTE: "No te alcanza.",
 	Codigo.PRECIO_INVALIDO: "Ese precio no es valido.",
@@ -100,12 +113,20 @@ const MENSAJES := {
 
 	Codigo.SIN_PERMISO: "No tenes permiso para hacer eso aca.",
 	Codigo.SALA_LLENA: "La sala esta llena.",
+	Codigo.SALA_NO_EXISTE: "Esa sala ya no existe.",
+	Codigo.PLANTILLA_NO_EXISTE: "No hay una forma de sala con ese nombre.",
+	Codigo.ES_LA_SALA_ACTUAL: "No se puede hacer eso con la sala en la que estas.",
 
 	Codigo.ARCHIVO_NO_EXISTE: "No encontre ese archivo.",
 	Codigo.ARCHIVO_CORRUPTO: "Ese archivo esta danado y no se pudo leer.",
 	Codigo.FORMATO_DESCONOCIDO: "Eso es de una version mas nueva del juego.",
 	Codigo.NO_SE_PUDO_ESCRIBIR: "No se pudo guardar el archivo.",
-	Codigo.NOMBRE_INVALIDO: "Ese nombre no sirve para un archivo.",
+	Codigo.NOMBRE_INVALIDO: "Ese nombre no sirve. Usa letras, numeros y espacios.",
+	Codigo.NOMBRE_EN_USO: "Ya hay uno con ese nombre.",
+	Codigo.PERFIL_NO_EXISTE: "Ese perfil ya no existe.",
+
+	Codigo.COMANDO_DESCONOCIDO: "No conozco ese comando. Proba /ayuda.",
+	Codigo.USO_INCORRECTO: "Asi no se usa ese comando.",
 }
 
 
