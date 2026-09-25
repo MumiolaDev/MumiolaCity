@@ -1,12 +1,12 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://dnra6pxp2by3g"]
 
-[ext_resource type="PackedScene" uid="uid://bwpqkwhovufer" path="res://escenas/objetos/generadas/frasco.tscn" id="1_e5jth"]
-[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_e8upk"]
+[ext_resource type="PackedScene" uid="uid://bwpqkwhovufer" path="res://escenas/objetos/generadas/frasco.tscn" id="1_e8upk"]
 [ext_resource type="Texture2D" uid="uid://byix1eiu32q0w" path="res://arte/iconos/frasco.png" id="2_nbbl4"]
-[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_nbbl4"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="3_v6iaj"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="4_jqn2j"]
 
 [resource]
-script = ExtResource("3_nbbl4")
+script = ExtResource("4_jqn2j")
 id = &"frasco"
 nombre = "Frasco"
 descripcion = "Decorativo de estanteria."
@@ -16,4 +16,4 @@ stack_maximo = 1
 valor_base = 18
 rotable = true
 icono = ExtResource("2_nbbl4")
-escena_mundo = ExtResource("1_e5jth")
+escena_mundo = ExtResource("1_e8upk")

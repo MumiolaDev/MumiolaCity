@@ -1,30 +1,30 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://b67qvhhvmd2vv"]
 
-[ext_resource type="PackedScene" uid="uid://cauw3wr3vjgoo" path="res://escenas/objetos/generadas/estante.tscn" id="1_y7kbb"]
-[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_ttscu"]
+[ext_resource type="PackedScene" uid="uid://cauw3wr3vjgoo" path="res://escenas/objetos/generadas/estante.tscn" id="1_ttscu"]
 [ext_resource type="Texture2D" uid="uid://bulsqp5x6v4k5" path="res://arte/iconos/estante.png" id="2_vufta"]
-[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_vufta"]
-[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_d1hi7"]
-[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_kbpa4"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="3_d1hi7"]
+[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="4_kbpa4"]
+[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="5_abmky"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="6_38y60"]
 
 [sub_resource type="Resource" id="Resource_ttscu"]
-script = ExtResource("3_vufta")
+script = ExtResource("4_kbpa4")
 id = &"tabla_madera"
 cantidad = 5
 
 [sub_resource type="Resource" id="Resource_vufta"]
-script = ExtResource("3_vufta")
+script = ExtResource("4_kbpa4")
 id = &"serrucho"
 consume = false
 
 [sub_resource type="Resource" id="Resource_d1hi7"]
-script = ExtResource("3_vufta")
+script = ExtResource("4_kbpa4")
 id = &"martillo"
 consume = false
 
 [sub_resource type="Resource" id="Resource_kbpa4"]
-script = ExtResource("4_d1hi7")
-insumos = Array[ExtResource("3_vufta")]([SubResource("Resource_ttscu"), SubResource("Resource_vufta"), SubResource("Resource_d1hi7")])
+script = ExtResource("5_abmky")
+insumos = Array[ExtResource("4_kbpa4")]([SubResource("Resource_ttscu"), SubResource("Resource_vufta"), SubResource("Resource_d1hi7")])
 habilidad = &"carpinteria"
 nivel_requerido = 3
 xp_otorgada = 18
@@ -32,7 +32,7 @@ tiempo_crafteo_seg = 10.0
 estacion = &"banco_carpintero"
 
 [resource]
-script = ExtResource("5_kbpa4")
+script = ExtResource("6_38y60")
 id = &"estante"
 nombre = "Estante"
 descripcion = "Mueble del taller. Se coloca en tu sala."
@@ -44,4 +44,4 @@ comprable = false
 receta = SubResource("Resource_kbpa4")
 rotable = true
 icono = ExtResource("2_vufta")
-escena_mundo = ExtResource("1_y7kbb")
+escena_mundo = ExtResource("1_ttscu")

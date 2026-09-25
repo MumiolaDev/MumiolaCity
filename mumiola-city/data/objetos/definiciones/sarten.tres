@@ -1,12 +1,12 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://buo4hi84tqihd"]
 
-[ext_resource type="PackedScene" uid="uid://cvx7dypcjdpgf" path="res://escenas/objetos/generadas/sarten.tscn" id="1_44ed4"]
-[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_c4wjn"]
+[ext_resource type="PackedScene" uid="uid://cvx7dypcjdpgf" path="res://escenas/objetos/generadas/sarten.tscn" id="1_c4wjn"]
 [ext_resource type="Texture2D" uid="uid://rd58y3cj8f61" path="res://arte/iconos/sarten.png" id="2_cevgm"]
-[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_cevgm"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="3_b66xd"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="4_scxkt"]
 
 [resource]
-script = ExtResource("3_cevgm")
+script = ExtResource("4_scxkt")
 id = &"sarten"
 nombre = "Sarten"
 descripcion = "Requerida para freir."
@@ -18,4 +18,4 @@ valor_base = 40
 tamano_grilla = Vector2i(1, 2)
 rotable = true
 icono = ExtResource("2_cevgm")
-escena_mundo = ExtResource("1_44ed4")
+escena_mundo = ExtResource("1_c4wjn")

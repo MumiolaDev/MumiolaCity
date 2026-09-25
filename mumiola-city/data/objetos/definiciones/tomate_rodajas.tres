@@ -1,35 +1,35 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://bbow7cisqp0ae"]
 
-[ext_resource type="PackedScene" uid="uid://se6gfqn4b0md" path="res://escenas/objetos/generadas/tomate_rodajas.tscn" id="1_pd5ly"]
+[ext_resource type="PackedScene" uid="uid://se6gfqn4b0md" path="res://escenas/objetos/generadas/tomate_rodajas.tscn" id="1_q06ee"]
 [ext_resource type="Texture2D" uid="uid://fxcdgfy5d26k" path="res://arte/iconos/tomate_rodajas.png" id="2_hvcvk"]
-[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_q06ee"]
-[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_hvcvk"]
-[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_80jr2"]
-[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_el8vq"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="3_80jr2"]
+[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="4_el8vq"]
+[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="5_i5yhw"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="6_baetu"]
 
 [sub_resource type="Resource" id="Resource_q06ee"]
-script = ExtResource("3_hvcvk")
+script = ExtResource("4_el8vq")
 id = &"tomate"
 
 [sub_resource type="Resource" id="Resource_hvcvk"]
-script = ExtResource("3_hvcvk")
+script = ExtResource("4_el8vq")
 id = &"cuchillo"
 consume = false
 
 [sub_resource type="Resource" id="Resource_80jr2"]
-script = ExtResource("3_hvcvk")
+script = ExtResource("4_el8vq")
 id = &"tabla_cortar"
 consume = false
 
 [sub_resource type="Resource" id="Resource_el8vq"]
-script = ExtResource("4_80jr2")
-insumos = Array[ExtResource("3_hvcvk")]([SubResource("Resource_q06ee"), SubResource("Resource_hvcvk"), SubResource("Resource_80jr2")])
+script = ExtResource("5_i5yhw")
+insumos = Array[ExtResource("4_el8vq")]([SubResource("Resource_q06ee"), SubResource("Resource_hvcvk"), SubResource("Resource_80jr2")])
 habilidad = &"cocina"
 xp_otorgada = 4
 tiempo_crafteo_seg = 3.0
 
 [resource]
-script = ExtResource("5_el8vq")
+script = ExtResource("6_baetu")
 id = &"tomate_rodajas"
 nombre = "Tomate en rodajas"
 categoria = "intermedio"
@@ -39,4 +39,4 @@ comprable = false
 receta = SubResource("Resource_el8vq")
 rotable = true
 icono = ExtResource("2_hvcvk")
-escena_mundo = ExtResource("1_pd5ly")
+escena_mundo = ExtResource("1_q06ee")

@@ -1,25 +1,25 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://dc7sic6rmoktt"]
 
-[ext_resource type="PackedScene" uid="uid://coopvpskpy7ky" path="res://escenas/objetos/generadas/papa_pure.tscn" id="1_0rmxt"]
-[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_dvmgj"]
+[ext_resource type="PackedScene" uid="uid://coopvpskpy7ky" path="res://escenas/objetos/generadas/papa_pure.tscn" id="1_dvmgj"]
 [ext_resource type="Texture2D" uid="uid://cud7crhgnbq1k" path="res://arte/iconos/papa_pure.png" id="2_xhawv"]
-[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_xhawv"]
-[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_ywtx0"]
-[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_t3s4d"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="3_ywtx0"]
+[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="4_t3s4d"]
+[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="5_o3aya"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="6_gxdsx"]
 
 [sub_resource type="Resource" id="Resource_dvmgj"]
-script = ExtResource("3_xhawv")
+script = ExtResource("4_t3s4d")
 id = &"papa"
 cantidad = 2
 
 [sub_resource type="Resource" id="Resource_xhawv"]
-script = ExtResource("3_xhawv")
+script = ExtResource("4_t3s4d")
 id = &"olla"
 consume = false
 
 [sub_resource type="Resource" id="Resource_ywtx0"]
-script = ExtResource("4_ywtx0")
-insumos = Array[ExtResource("3_xhawv")]([SubResource("Resource_dvmgj"), SubResource("Resource_xhawv")])
+script = ExtResource("5_o3aya")
+insumos = Array[ExtResource("4_t3s4d")]([SubResource("Resource_dvmgj"), SubResource("Resource_xhawv")])
 habilidad = &"cocina"
 nivel_requerido = 3
 xp_otorgada = 10
@@ -27,7 +27,7 @@ tiempo_crafteo_seg = 8.0
 estacion = &"estufa"
 
 [resource]
-script = ExtResource("5_t3s4d")
+script = ExtResource("6_gxdsx")
 id = &"papa_pure"
 nombre = "Pure de papa"
 categoria = "intermedio"
@@ -37,4 +37,4 @@ comprable = false
 receta = SubResource("Resource_ywtx0")
 rotable = true
 icono = ExtResource("2_xhawv")
-escena_mundo = ExtResource("1_0rmxt")
+escena_mundo = ExtResource("1_dvmgj")

@@ -1,12 +1,12 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://dr41aqfusa15"]
 
-[ext_resource type="PackedScene" uid="uid://bxcpdvv3x13i5" path="res://escenas/objetos/generadas/queso.tscn" id="1_8eh8k"]
-[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_ae25l"]
+[ext_resource type="PackedScene" uid="uid://bxcpdvv3x13i5" path="res://escenas/objetos/generadas/queso.tscn" id="1_ae25l"]
 [ext_resource type="Texture2D" uid="uid://d22fnwm47337h" path="res://arte/iconos/queso.png" id="2_bspjs"]
-[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_bspjs"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="3_avp1n"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="4_wwvk6"]
 
 [resource]
-script = ExtResource("3_bspjs")
+script = ExtResource("4_wwvk6")
 id = &"queso"
 nombre = "Queso"
 descripcion = "Insumo lacteo. Todavia no se craftea."
@@ -15,4 +15,4 @@ peso = 0.2
 valor_base = 9
 rotable = true
 icono = ExtResource("2_bspjs")
-escena_mundo = ExtResource("1_8eh8k")
+escena_mundo = ExtResource("1_ae25l")

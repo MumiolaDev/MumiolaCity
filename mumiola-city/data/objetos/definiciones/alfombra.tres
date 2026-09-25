@@ -1,12 +1,13 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://yqoc2mylir65"]
 
-[ext_resource type="PackedScene" uid="uid://b6vlfjc0gym71" path="res://escenas/objetos/generadas/alfombra.tscn" id="1_8w3v4"]
-[ext_resource type="Texture2D" uid="uid://b07qei2hbugf" path="res://arte/iconos/alfombra.png" id="2_8l6k4"]
-[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_vwt8w"]
-[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_8l6k4"]
+[ext_resource type="PackedScene" uid="uid://b6vlfjc0gym71" path="res://escenas/objetos/generadas/alfombra.tscn" id="1_8l6k4"]
+[ext_resource type="Texture2D" uid="uid://b07qei2hbugf" path="res://arte/iconos/alfombra.png" id="2_opp35"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="3_e1pqg"]
+[ext_resource type="Resource" path="res://data/objetos/comportamientos/sentarse_piso.tres" id="4_vptk3"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_4hy3t"]
 
 [resource]
-script = ExtResource("3_8l6k4")
+script = ExtResource("5_4hy3t")
 id = &"alfombra"
 nombre = "Alfombra"
 descripcion = "Decoracion. Se pisa: ocupa sus celdas pero no bloquea el paso."
@@ -14,8 +15,9 @@ peso = 2.0
 apilable = false
 stack_maximo = 1
 valor_base = 48
+interacciones = Array[ExtResource("3_e1pqg")]([ExtResource("4_vptk3")])
 tamano_grilla = Vector2i(3, 2)
 bloquea_paso = false
 rotable = true
-icono = ExtResource("2_8l6k4")
-escena_mundo = ExtResource("1_8w3v4")
+icono = ExtResource("2_opp35")
+escena_mundo = ExtResource("1_8l6k4")

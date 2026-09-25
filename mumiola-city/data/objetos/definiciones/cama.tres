@@ -1,30 +1,31 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://ccyecw1yptbht"]
 
-[ext_resource type="PackedScene" uid="uid://d2np8rb5i2qva" path="res://escenas/objetos/generadas/cama.tscn" id="1_kt0jh"]
-[ext_resource type="Texture2D" uid="uid://cv0h6ga6kuqp3" path="res://arte/iconos/cama.png" id="2_4bbbh"]
-[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_f43xd"]
-[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_4bbbh"]
-[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_kbukf"]
-[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_cy7qt"]
+[ext_resource type="PackedScene" uid="uid://d2np8rb5i2qva" path="res://escenas/objetos/generadas/cama.tscn" id="1_4bbbh"]
+[ext_resource type="Texture2D" uid="uid://cv0h6ga6kuqp3" path="res://arte/iconos/cama.png" id="2_kbukf"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="3_cy7qt"]
+[ext_resource type="Resource" path="res://data/objetos/comportamientos/acostarse.tres" id="4_44ghn"]
+[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="5_fgd5u"]
+[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="6_etqla"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="7_4u8yf"]
 
-[sub_resource type="Resource" id="Resource_f43xd"]
-script = ExtResource("3_4bbbh")
+[sub_resource type="Resource" id="Resource_4bbbh"]
+script = ExtResource("5_fgd5u")
 id = &"tabla_madera"
 cantidad = 10
 
-[sub_resource type="Resource" id="Resource_4bbbh"]
-script = ExtResource("3_4bbbh")
+[sub_resource type="Resource" id="Resource_kbukf"]
+script = ExtResource("5_fgd5u")
 id = &"serrucho"
 consume = false
 
-[sub_resource type="Resource" id="Resource_kbukf"]
-script = ExtResource("3_4bbbh")
+[sub_resource type="Resource" id="Resource_cy7qt"]
+script = ExtResource("5_fgd5u")
 id = &"martillo"
 consume = false
 
-[sub_resource type="Resource" id="Resource_cy7qt"]
-script = ExtResource("4_kbukf")
-insumos = Array[ExtResource("3_4bbbh")]([SubResource("Resource_f43xd"), SubResource("Resource_4bbbh"), SubResource("Resource_kbukf")])
+[sub_resource type="Resource" id="Resource_44ghn"]
+script = ExtResource("6_etqla")
+insumos = Array[ExtResource("5_fgd5u")]([SubResource("Resource_4bbbh"), SubResource("Resource_kbukf"), SubResource("Resource_cy7qt")])
 habilidad = &"carpinteria"
 nivel_requerido = 5
 xp_otorgada = 40
@@ -32,7 +33,7 @@ tiempo_crafteo_seg = 20.0
 estacion = &"banco_carpintero"
 
 [resource]
-script = ExtResource("5_cy7qt")
+script = ExtResource("7_4u8yf")
 id = &"cama"
 nombre = "Cama"
 descripcion = "Mueble del taller. Se coloca en tu sala."
@@ -41,8 +42,9 @@ apilable = false
 stack_maximo = 1
 valor_base = 150
 comprable = false
-receta = SubResource("Resource_cy7qt")
+interacciones = Array[ExtResource("3_cy7qt")]([ExtResource("4_44ghn")])
+receta = SubResource("Resource_44ghn")
 tamano_grilla = Vector2i(2, 3)
 rotable = true
-icono = ExtResource("2_4bbbh")
-escena_mundo = ExtResource("1_kt0jh")
+icono = ExtResource("2_kbukf")
+escena_mundo = ExtResource("1_4bbbh")

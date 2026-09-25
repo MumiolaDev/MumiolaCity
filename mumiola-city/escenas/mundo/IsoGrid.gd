@@ -663,4 +663,3 @@ func _validar_piezas(grid_map : GridMap, capa : StringName) -> void:
 				+ "asi que ocupa varias celdas. Se tienen en cuenta igual, pero conviene "
 				+ "saberlo: una pieza asi no se puede pintar pegada a cualquier cosa."
 			)
-

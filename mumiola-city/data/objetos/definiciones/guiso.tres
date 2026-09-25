@@ -1,41 +1,41 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://c7m8bm3k28vyu"]
 
-[ext_resource type="PackedScene" uid="uid://dojt6ve28xeix" path="res://escenas/objetos/generadas/guiso.tscn" id="1_n6fmj"]
+[ext_resource type="PackedScene" uid="uid://dojt6ve28xeix" path="res://escenas/objetos/generadas/guiso.tscn" id="1_obxa6"]
 [ext_resource type="Texture2D" uid="uid://m44v3sucyh0n" path="res://arte/iconos/guiso.png" id="2_8sxai"]
-[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_obxa6"]
-[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_8sxai"]
-[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_1g1hl"]
-[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_rkkp5"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="3_1g1hl"]
+[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="4_rkkp5"]
+[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="5_n6ptb"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="6_p74e6"]
 
 [sub_resource type="Resource" id="Resource_obxa6"]
-script = ExtResource("3_8sxai")
+script = ExtResource("4_rkkp5")
 id = &"papa_pure"
 
 [sub_resource type="Resource" id="Resource_8sxai"]
-script = ExtResource("3_8sxai")
+script = ExtResource("4_rkkp5")
 id = &"zanahoria_trozos"
 
 [sub_resource type="Resource" id="Resource_1g1hl"]
-script = ExtResource("3_8sxai")
+script = ExtResource("4_rkkp5")
 id = &"cebolla_aros"
 
 [sub_resource type="Resource" id="Resource_rkkp5"]
-script = ExtResource("3_8sxai")
+script = ExtResource("4_rkkp5")
 id = &"jamon_cocido"
 
 [sub_resource type="Resource" id="Resource_n6ptb"]
-script = ExtResource("3_8sxai")
+script = ExtResource("4_rkkp5")
 id = &"olla"
 consume = false
 
 [sub_resource type="Resource" id="Resource_p74e6"]
-script = ExtResource("3_8sxai")
+script = ExtResource("4_rkkp5")
 id = &"bol"
 consume = false
 
 [sub_resource type="Resource" id="Resource_b5bq7"]
-script = ExtResource("4_1g1hl")
-insumos = Array[ExtResource("3_8sxai")]([SubResource("Resource_obxa6"), SubResource("Resource_8sxai"), SubResource("Resource_1g1hl"), SubResource("Resource_rkkp5"), SubResource("Resource_n6ptb"), SubResource("Resource_p74e6")])
+script = ExtResource("5_n6ptb")
+insumos = Array[ExtResource("4_rkkp5")]([SubResource("Resource_obxa6"), SubResource("Resource_8sxai"), SubResource("Resource_1g1hl"), SubResource("Resource_rkkp5"), SubResource("Resource_n6ptb"), SubResource("Resource_p74e6")])
 habilidad = &"cocina"
 nivel_requerido = 6
 xp_otorgada = 40
@@ -43,7 +43,7 @@ tiempo_crafteo_seg = 20.0
 estacion = &"estufa"
 
 [resource]
-script = ExtResource("5_rkkp5")
+script = ExtResource("6_p74e6")
 id = &"guiso"
 nombre = "Guiso"
 descripcion = "Plato terminado. Se sirve en bol."
@@ -56,4 +56,4 @@ comprable = false
 receta = SubResource("Resource_b5bq7")
 rotable = true
 icono = ExtResource("2_8sxai")
-escena_mundo = ExtResource("1_n6fmj")
+escena_mundo = ExtResource("1_obxa6")

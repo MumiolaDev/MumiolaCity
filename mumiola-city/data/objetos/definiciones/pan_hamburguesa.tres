@@ -1,12 +1,12 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://bttgwm70h7ps4"]
 
-[ext_resource type="PackedScene" uid="uid://biag3xab0y4fj" path="res://escenas/objetos/generadas/pan_hamburguesa.tscn" id="1_smh3v"]
-[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_3x21t"]
+[ext_resource type="PackedScene" uid="uid://biag3xab0y4fj" path="res://escenas/objetos/generadas/pan_hamburguesa.tscn" id="1_3x21t"]
 [ext_resource type="Texture2D" uid="uid://cfcd487ua451e" path="res://arte/iconos/pan_hamburguesa.png" id="2_12wms"]
-[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_12wms"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="3_hc2eu"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="4_b1aeu"]
 
 [resource]
-script = ExtResource("3_12wms")
+script = ExtResource("4_b1aeu")
 id = &"pan_hamburguesa"
 nombre = "Pan de hamburguesa"
 descripcion = "Insumo de panaderia. Todavia no se craftea."
@@ -15,4 +15,4 @@ peso = 0.2
 valor_base = 5
 rotable = true
 icono = ExtResource("2_12wms")
-escena_mundo = ExtResource("1_smh3v")
+escena_mundo = ExtResource("1_3x21t")

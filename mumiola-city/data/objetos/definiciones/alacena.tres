@@ -1,30 +1,30 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://bnrv43pwwy3eg"]
 
-[ext_resource type="PackedScene" uid="uid://dx5004qsdrawg" path="res://escenas/objetos/generadas/alacena.tscn" id="1_iomry"]
-[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_klu0e"]
+[ext_resource type="PackedScene" uid="uid://dx5004qsdrawg" path="res://escenas/objetos/generadas/alacena.tscn" id="1_klu0e"]
 [ext_resource type="Texture2D" uid="uid://bcl4eut4kb8o2" path="res://arte/iconos/alacena.png" id="2_m6hjh"]
-[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_m6hjh"]
-[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_shuiw"]
-[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_ssot3"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="3_shuiw"]
+[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="4_ssot3"]
+[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="5_4t3o4"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="6_77732"]
 
 [sub_resource type="Resource" id="Resource_klu0e"]
-script = ExtResource("3_m6hjh")
+script = ExtResource("4_ssot3")
 id = &"tabla_madera"
 cantidad = 8
 
 [sub_resource type="Resource" id="Resource_m6hjh"]
-script = ExtResource("3_m6hjh")
+script = ExtResource("4_ssot3")
 id = &"serrucho"
 consume = false
 
 [sub_resource type="Resource" id="Resource_shuiw"]
-script = ExtResource("3_m6hjh")
+script = ExtResource("4_ssot3")
 id = &"martillo"
 consume = false
 
 [sub_resource type="Resource" id="Resource_ssot3"]
-script = ExtResource("4_shuiw")
-insumos = Array[ExtResource("3_m6hjh")]([SubResource("Resource_klu0e"), SubResource("Resource_m6hjh"), SubResource("Resource_shuiw")])
+script = ExtResource("5_4t3o4")
+insumos = Array[ExtResource("4_ssot3")]([SubResource("Resource_klu0e"), SubResource("Resource_m6hjh"), SubResource("Resource_shuiw")])
 habilidad = &"carpinteria"
 nivel_requerido = 4
 xp_otorgada = 30
@@ -32,7 +32,7 @@ tiempo_crafteo_seg = 15.0
 estacion = &"banco_carpintero"
 
 [resource]
-script = ExtResource("5_ssot3")
+script = ExtResource("6_77732")
 id = &"alacena"
 nombre = "Alacena"
 descripcion = "Mueble del taller. Se coloca en tu sala."
@@ -44,4 +44,4 @@ comprable = false
 receta = SubResource("Resource_ssot3")
 rotable = true
 icono = ExtResource("2_m6hjh")
-escena_mundo = ExtResource("1_iomry")
+escena_mundo = ExtResource("1_klu0e")

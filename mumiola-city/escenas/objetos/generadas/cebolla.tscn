@@ -6,12 +6,12 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_ataq2"]
 size = Vector3(0.9, 1, 0.9)
 
-[node name="Cebolla" type="Area3D" unique_id=1234299651]
+[node name="Cebolla" type="Area3D" unique_id=1111656089]
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("1_ataq2")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1300925289]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=2026410921]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("BoxShape3D_ataq2")
 

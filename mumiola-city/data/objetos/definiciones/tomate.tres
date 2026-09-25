@@ -1,26 +1,26 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://b0edw7qcsegce"]
 
-[ext_resource type="PackedScene" uid="uid://c7lqteqc7mfb2" path="res://escenas/objetos/generadas/tomate.tscn" id="1_oap1v"]
+[ext_resource type="PackedScene" uid="uid://c7lqteqc7mfb2" path="res://escenas/objetos/generadas/tomate.tscn" id="1_uv1h1"]
 [ext_resource type="Texture2D" uid="uid://dwbjnrjofl54o" path="res://arte/iconos/tomate.png" id="2_fhtby"]
-[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_uv1h1"]
-[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_fhtby"]
-[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_yc5le"]
-[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_n5tsd"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="3_yc5le"]
+[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="4_n5tsd"]
+[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="5_a1hp3"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="6_s4iux"]
 
 [sub_resource type="Resource" id="Resource_uv1h1"]
-script = ExtResource("3_fhtby")
+script = ExtResource("4_n5tsd")
 id = &"semilla_tomate"
 
 [sub_resource type="Resource" id="Resource_fhtby"]
-script = ExtResource("4_yc5le")
-insumos = Array[ExtResource("3_fhtby")]([SubResource("Resource_uv1h1")])
+script = ExtResource("5_a1hp3")
+insumos = Array[ExtResource("4_n5tsd")]([SubResource("Resource_uv1h1")])
 habilidad = &"agricultura"
 xp_otorgada = 6
 tiempo_crafteo_seg = 120.0
 estacion = &"parcela"
 
 [resource]
-script = ExtResource("5_n5tsd")
+script = ExtResource("6_s4iux")
 id = &"tomate"
 nombre = "Tomate"
 descripcion = "Cosechada en la parcela. Se puede cortar o dejar a la vista."
@@ -31,4 +31,4 @@ comprable = false
 receta = SubResource("Resource_fhtby")
 rotable = true
 icono = ExtResource("2_fhtby")
-escena_mundo = ExtResource("1_oap1v")
+escena_mundo = ExtResource("1_uv1h1")

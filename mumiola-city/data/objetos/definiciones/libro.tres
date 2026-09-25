@@ -1,12 +1,12 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://beaqt0tikow2o"]
 
-[ext_resource type="PackedScene" uid="uid://dj7cpmq4e8s7h" path="res://escenas/objetos/generadas/libro.tscn" id="1_n4517"]
-[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_jy2x5"]
+[ext_resource type="PackedScene" uid="uid://dj7cpmq4e8s7h" path="res://escenas/objetos/generadas/libro.tscn" id="1_jy2x5"]
 [ext_resource type="Texture2D" uid="uid://bh3dm66kbbmbv" path="res://arte/iconos/libro.png" id="2_os2po"]
-[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_os2po"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="3_1jo41"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="4_djev3"]
 
 [resource]
-script = ExtResource("3_os2po")
+script = ExtResource("4_djev3")
 id = &"libro"
 nombre = "Libro"
 descripcion = "Decoracion. Se compra al NPC."
@@ -16,4 +16,4 @@ stack_maximo = 1
 valor_base = 22
 rotable = true
 icono = ExtResource("2_os2po")
-escena_mundo = ExtResource("1_n4517")
+escena_mundo = ExtResource("1_jy2x5")

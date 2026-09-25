@@ -1,12 +1,12 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://cadv6lduwl4hn"]
 
-[ext_resource type="PackedScene" uid="uid://bjekn243gmnr7" path="res://escenas/objetos/generadas/lampara_mesa.tscn" id="1_yt16y"]
+[ext_resource type="PackedScene" uid="uid://bjekn243gmnr7" path="res://escenas/objetos/generadas/lampara_mesa.tscn" id="1_ihvfs"]
 [ext_resource type="Texture2D" uid="uid://dhpypfkax4h6l" path="res://arte/iconos/lampara_mesa.png" id="2_b1g02"]
-[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_ihvfs"]
-[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="3_b1g02"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="3_vtd42"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="4_adsf8"]
 
 [resource]
-script = ExtResource("3_b1g02")
+script = ExtResource("4_adsf8")
 id = &"lampara_mesa"
 nombre = "Lampara de mesa"
 descripcion = "Decoracion. Se compra al NPC."
@@ -16,4 +16,4 @@ stack_maximo = 1
 valor_base = 62
 rotable = true
 icono = ExtResource("2_b1g02")
-escena_mundo = ExtResource("1_yt16y")
+escena_mundo = ExtResource("1_ihvfs")

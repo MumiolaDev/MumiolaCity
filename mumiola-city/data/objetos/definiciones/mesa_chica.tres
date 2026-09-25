@@ -1,30 +1,30 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://cj2b0imo3nox1"]
 
-[ext_resource type="PackedScene" uid="uid://cosbga3op0ak2" path="res://escenas/objetos/generadas/mesa_chica.tscn" id="1_ehtwy"]
+[ext_resource type="PackedScene" uid="uid://cosbga3op0ak2" path="res://escenas/objetos/generadas/mesa_chica.tscn" id="1_jot17"]
 [ext_resource type="Texture2D" uid="uid://dwtqdmq0v4c7x" path="res://arte/iconos/mesa_chica.png" id="2_0avaq"]
-[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_jot17"]
-[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_0avaq"]
-[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_ykc6q"]
-[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_qigod"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="3_ykc6q"]
+[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="4_qigod"]
+[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="5_laoc5"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="6_pylxy"]
 
 [sub_resource type="Resource" id="Resource_jot17"]
-script = ExtResource("3_0avaq")
+script = ExtResource("4_qigod")
 id = &"tabla_madera"
 cantidad = 4
 
 [sub_resource type="Resource" id="Resource_0avaq"]
-script = ExtResource("3_0avaq")
+script = ExtResource("4_qigod")
 id = &"serrucho"
 consume = false
 
 [sub_resource type="Resource" id="Resource_ykc6q"]
-script = ExtResource("3_0avaq")
+script = ExtResource("4_qigod")
 id = &"martillo"
 consume = false
 
 [sub_resource type="Resource" id="Resource_qigod"]
-script = ExtResource("4_ykc6q")
-insumos = Array[ExtResource("3_0avaq")]([SubResource("Resource_jot17"), SubResource("Resource_0avaq"), SubResource("Resource_ykc6q")])
+script = ExtResource("5_laoc5")
+insumos = Array[ExtResource("4_qigod")]([SubResource("Resource_jot17"), SubResource("Resource_0avaq"), SubResource("Resource_ykc6q")])
 habilidad = &"carpinteria"
 nivel_requerido = 2
 xp_otorgada = 14
@@ -32,7 +32,7 @@ tiempo_crafteo_seg = 8.0
 estacion = &"banco_carpintero"
 
 [resource]
-script = ExtResource("5_qigod")
+script = ExtResource("6_pylxy")
 id = &"mesa_chica"
 nombre = "Mesa chica"
 descripcion = "Mueble del taller. Se coloca en tu sala."
@@ -44,4 +44,4 @@ comprable = false
 receta = SubResource("Resource_qigod")
 rotable = true
 icono = ExtResource("2_0avaq")
-escena_mundo = ExtResource("1_ehtwy")
+escena_mundo = ExtResource("1_jot17")

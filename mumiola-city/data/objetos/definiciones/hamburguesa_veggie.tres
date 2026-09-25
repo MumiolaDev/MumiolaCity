@@ -1,47 +1,47 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://bgdcq5o8c5vgq"]
 
-[ext_resource type="PackedScene" uid="uid://c8shf3744x8e" path="res://escenas/objetos/generadas/hamburguesa_veggie.tscn" id="1_dp8w4"]
-[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="2_hyfp8"]
+[ext_resource type="PackedScene" uid="uid://c8shf3744x8e" path="res://escenas/objetos/generadas/hamburguesa_veggie.tscn" id="1_hyfp8"]
 [ext_resource type="Texture2D" uid="uid://be2l4xi5e33nn" path="res://arte/iconos/hamburguesa_veggie.png" id="2_noj1o"]
-[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="3_noj1o"]
-[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="4_exbes"]
-[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="5_fjuwj"]
+[ext_resource type="Script" uid="uid://bmgexy1gyr7qn" path="res://escenas/objetos/interacciones/InteractionBehavior.gd" id="3_exbes"]
+[ext_resource type="Script" uid="uid://cg0xpnvf4gm72" path="res://escenas/objetos/recursos/InsumoReceta.gd" id="4_fjuwj"]
+[ext_resource type="Script" uid="uid://dblyoreheeb4l" path="res://escenas/objetos/recursos/RecipeDefinition.gd" id="5_fnpy0"]
+[ext_resource type="Script" uid="uid://ucjb4r6yufb" path="res://escenas/objetos/recursos/ItemDefinition.gd" id="6_sdpgp"]
 
 [sub_resource type="Resource" id="Resource_hyfp8"]
-script = ExtResource("3_noj1o")
+script = ExtResource("4_fjuwj")
 id = &"pan_hamburguesa"
 
 [sub_resource type="Resource" id="Resource_noj1o"]
-script = ExtResource("3_noj1o")
+script = ExtResource("4_fjuwj")
 id = &"papa_pure"
 
 [sub_resource type="Resource" id="Resource_exbes"]
-script = ExtResource("3_noj1o")
+script = ExtResource("4_fjuwj")
 id = &"tomate_rodajas"
 
 [sub_resource type="Resource" id="Resource_fjuwj"]
-script = ExtResource("3_noj1o")
+script = ExtResource("4_fjuwj")
 id = &"lechuga_picada"
 
 [sub_resource type="Resource" id="Resource_fnpy0"]
-script = ExtResource("3_noj1o")
+script = ExtResource("4_fjuwj")
 id = &"queso_fetas"
 
 [sub_resource type="Resource" id="Resource_sdpgp"]
-script = ExtResource("3_noj1o")
+script = ExtResource("4_fjuwj")
 id = &"plato"
 consume = false
 
 [sub_resource type="Resource" id="Resource_mjhdp"]
-script = ExtResource("4_exbes")
-insumos = Array[ExtResource("3_noj1o")]([SubResource("Resource_hyfp8"), SubResource("Resource_noj1o"), SubResource("Resource_exbes"), SubResource("Resource_fjuwj"), SubResource("Resource_fnpy0"), SubResource("Resource_sdpgp")])
+script = ExtResource("5_fnpy0")
+insumos = Array[ExtResource("4_fjuwj")]([SubResource("Resource_hyfp8"), SubResource("Resource_noj1o"), SubResource("Resource_exbes"), SubResource("Resource_fjuwj"), SubResource("Resource_fnpy0"), SubResource("Resource_sdpgp")])
 habilidad = &"cocina"
 nivel_requerido = 4
 xp_otorgada = 24
 tiempo_crafteo_seg = 12.0
 
 [resource]
-script = ExtResource("5_fjuwj")
+script = ExtResource("6_sdpgp")
 id = &"hamburguesa_veggie"
 nombre = "Hamburguesa vegetariana"
 descripcion = "Plato terminado sin carne comprada: el mas rentable si tenes huerta."
@@ -54,4 +54,4 @@ comprable = false
 receta = SubResource("Resource_mjhdp")
 rotable = true
 icono = ExtResource("2_noj1o")
-escena_mundo = ExtResource("1_dp8w4")
+escena_mundo = ExtResource("1_hyfp8")
