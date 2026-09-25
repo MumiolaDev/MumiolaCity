@@ -61,11 +61,17 @@ var _actores : Dictionary = {}
 var _jugador : PersonajeControlador = null
 var _contenedor : Node = null
 var _sala_actual : RoomController = null
-## Quien esta jugando: el id y el nombre del perfil. Hasta que haya perfiles es
-## uno de desarrollo; el id es tambien el id de actor del jugador y el duenio de
-## sus salas, asi que es el mismo que usa el servidor para darle permisos.
-var _perfil_id : StringName = &"dev"
+## Quien esta jugando: el id y el nombre del perfil. El id es tambien el id de
+## actor del jugador y el duenio de sus salas, asi que es el mismo que usa el
+## servidor para darle permisos.
+##
+## Sin sesion —el mundo corrido directo con F6, o los tests— se juega con un
+## perfil de desarrollo que no existe en disco y nunca se guarda.
+const PERFIL_DEV := &"dev"
+var _perfil_id : StringName = PERFIL_DEV
 var _nombre_jugador : String = "Jugador"
+## El perfil tal como llego del servidor al iniciar sesion, o vacio.
+var _perfil : Dictionary = {}
 ## Si hay un cambio de sala en curso. Un segundo pedido mientras tanto se
 ## rechaza: dos cargas cruzadas dejarian al jugador en la que termine ultima.
 var _cambiando : bool = false
@@ -162,7 +168,11 @@ func cambiando_de_sala() -> bool:
 ##  3. Mudar al jugador, que se levanta de donde estuviera sentado.
 ##  4. Recien ahi guardar y liberar la vieja.
 ##  5. Descubrir.
-func ir_a(id : StringName) -> Errores.Codigo:
+##
+## celda es donde aparecer; sin ella, en la entrada. La pone aca y no quien
+## llama despues, porque el fundido de salida ya deja clickear: un jugador que
+## camina mientras se abre el telon no puede ser teletransportado al terminar.
+func ir_a(id : StringName, celda : Vector2i = IsoGrid.SIN_CELDA) -> Errores.Codigo:
 	if _cambiando:
 		return Errores.Codigo.CAMBIO_EN_CURSO
 	var anterior := sala_actual()
@@ -205,6 +215,8 @@ func ir_a(id : StringName) -> Errores.Codigo:
 	var jugador := jugador_actual()
 	if jugador != null:
 		jugador.entrar_en(sala)
+		if celda != IsoGrid.SIN_CELDA:
+			jugador.ubicar_en_celda(celda)
 
 	if anterior != null:
 		await _guardar_si_cambio(anterior)
@@ -266,6 +278,34 @@ func guardar_si_cambio() -> void:
 ## Devuelve el id del perfil que esta jugando.
 func perfil_id() -> StringName:
 	return _perfil_id
+
+
+## Empieza a jugar con un perfil, tal como lo devolvio Servidor.iniciar_sesion().
+##
+## Se llama antes de cargar el mundo: el jugador se anota con este id en su
+## _ready(), y cambiarlo despues dejaria al nodo con la identidad vieja.
+func iniciar_sesion(perfil : Dictionary) -> void:
+	_perfil = perfil
+	_perfil_id = StringName(str(perfil.get("perfil_id", PERFIL_DEV)))
+	_nombre_jugador = str(perfil.get("nombre", "Jugador"))
+
+
+## Vuelve al perfil de desarrollo. Lo llama quien vuelve al menu de inicio.
+func cerrar_sesion() -> void:
+	_perfil = {}
+	_perfil_id = PERFIL_DEV
+	_nombre_jugador = "Jugador"
+	_modo = Modo.JUGANDO
+
+
+## Devuelve si se esta jugando con un perfil de verdad.
+func hay_sesion() -> bool:
+	return not _perfil.is_empty()
+
+
+## Devuelve el perfil con el que se inicio sesion, o vacio.
+func perfil() -> Dictionary:
+	return _perfil
 
 
 ## Cerrar la ventana guarda lo que haya cambiado en la sala. Lo demas del

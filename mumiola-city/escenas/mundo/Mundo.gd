@@ -11,8 +11,7 @@ extends Node3D
 ## Interactuar con un mueble es clic derecho sobre el: abre el menu contextual.
 ## El clic izquierdo sigue siendo caminar.
 ##
-## Teclas: B alterna entre jugar y editar, Q y E giran el encuadre, G guarda la
-## partida, L la carga. La lista completa, para el
+## Teclas: B alterna entre jugar y editar, Q y E giran el encuadre, G guarda. La lista completa, para el
 ## jugador, esta en la ventana de ayuda (F1).
 ##
 ## La camara no esta aca: la rueda, el boton del medio y la tecla Inicio los
@@ -29,6 +28,8 @@ extends Node3D
 
 @onready var contenedor_salas : Node3D = $Salas
 @onready var menu : ContextMenuUI = $UI/ContextMenuUI
+@onready var barra : BarraJuego = get_node_or_null(^"UI/BarraJuego")
+@onready var menu_pausa : MenuPausa = get_node_or_null(^"UI/MenuPausa")
 
 
 func _ready() -> void:
@@ -43,15 +44,20 @@ func _ready() -> void:
 	# funcion, no rompe el juego.
 	if menu != null:
 		menu.verbo_elegido.connect(_al_elegir_verbo)
+	if barra != null and menu_pausa != null:
+		barra.menu_pedido.connect(menu_pausa.abrir)
 	_registrar_comandos()
 	GameManager.sala_cambiada.connect(_al_cambiar_sala)
 
-	# La pantalla arranca cubierta y la primera sala entra en este mismo cuadro:
-	# con el servidor local, ir_a() no espera nada hasta el fundido de salida.
+	# La pantalla arranca cubierta —viniendo del menu ya lo esta— y la primera
+	# sala entra en este mismo cuadro: con el servidor local, ir_a() no espera
+	# nada hasta el fundido de salida.
 	Transicion.cubrir_ya()
-	var codigo : Errores.Codigo = await GameManager.ir_a(GameManager.SALA_INICIAL)
+	var codigo : Errores.Codigo = await SaveManager.entrar_al_mundo()
 	if not Errores.ok(codigo):
-		push_error("Mundo: no se pudo entrar a %s: %s" % [GameManager.SALA_INICIAL, Errores.mensaje(codigo)])
+		push_error("Mundo: no se pudo entrar al mundo: %s" % Errores.mensaje(codigo))
+	elif GameManager.hay_sesion():
+		GameManager.avisar("Hola, %s. Enter para hablar, F1 para la ayuda." % GameManager.nombre_jugador())
 
 
 ## Engancha los clics de los muebles de una sala recien cargada.
@@ -79,9 +85,6 @@ func _unhandled_input(evento : InputEvent) -> void:
 		sala.rotar(1)
 	elif evento.keycode == KEY_G:
 		_cmd_guardar([])
-	elif evento.keycode == KEY_L:
-		var error : Error = await SaveManager.cargar()
-		GameManager.avisar("Partida cargada." if error == OK else "No hay partida guardada.")
 
 
 ## Engancha el clic derecho de un mueble al menu contextual.
@@ -118,7 +121,7 @@ func _registrar_comandos() -> void:
 	Comandos.registrar(&"dar", _cmd_dar, "Pone un objeto del catalogo en tu mochila.",
 		"<item> [cantidad]", true)
 	Comandos.registrar(&"editar", _cmd_editar, "Pasa de jugar a editar la sala, y vuelve.")
-	Comandos.registrar(&"guardar", _cmd_guardar, "Guarda la partida.")
+	Comandos.registrar(&"guardar", _cmd_guardar, "Guarda tu perfil y la sala.")
 	Comandos.registrar(&"ir", _cmd_ir, "Va a una sala, por su nombre o su id.", "<sala>")
 	Comandos.registrar(&"salas", _cmd_salas, "Lista las salas publicas y las tuyas.")
 
@@ -162,10 +165,11 @@ func _cmd_editar(_args : PackedStringArray) -> Errores.Codigo:
 
 
 func _cmd_guardar(_args : PackedStringArray) -> Errores.Codigo:
-	if (await SaveManager.guardar()) != OK:
-		return Errores.Codigo.NO_SE_PUDO_ESCRIBIR
-	GameManager.avisar("Partida guardada.")
-	return Errores.Codigo.OK
+	var codigo : Errores.Codigo = await SaveManager.guardar_todo()
+	if Errores.ok(codigo):
+		GameManager.avisar("Guardado." if GameManager.hay_sesion()
+			else "Sala guardada. Sin perfil no hay nada mas que guardar.")
+	return codigo
 
 
 func _cmd_ir(args : PackedStringArray) -> Errores.Codigo:

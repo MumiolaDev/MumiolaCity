@@ -10,6 +10,8 @@
 [ext_resource type="PackedScene" path="res://escenas/ui/AyudaUI.tscn" id="9_ayuda"]
 [ext_resource type="PackedScene" path="res://escenas/ui/NavegadorUI.tscn" id="10_nav"]
 [ext_resource type="PackedScene" path="res://escenas/ui/BarraJuego.tscn" id="11_barra"]
+[ext_resource type="PackedScene" path="res://escenas/ui/MenuPausa.tscn" id="12_pausa"]
+[ext_resource type="PackedScene" path="res://escenas/ui/OpcionesUI.tscn" id="13_opciones"]
 
 [node name="Mundo" type="Node3D" unique_id=1075680758]
 script = ExtResource("1_mundo")
@@ -35,6 +37,11 @@ ayuda = NodePath("../AyudaUI")
 [node name="NavegadorUI" parent="UI" instance=ExtResource("10_nav")]
 
 [node name="AyudaUI" parent="UI" instance=ExtResource("9_ayuda")]
+
+[node name="MenuPausa" parent="UI" node_paths=PackedStringArray("opciones") instance=ExtResource("12_pausa")]
+opciones = NodePath("../OpcionesUI")
+
+[node name="OpcionesUI" parent="UI" instance=ExtResource("13_opciones")]
 
 [node name="EditorSala" type="Node" parent="." node_paths=PackedStringArray("paleta")]
 script = ExtResource("7_editor")

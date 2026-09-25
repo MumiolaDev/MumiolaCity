@@ -15,6 +15,8 @@ class_name ServidorLocal
 ##     res://data/salas/plantillas/<id>.json  formas para crear salas nuevas
 ##     user://salas/<id>.json                 salas de jugadores, y las publicas
 ##                                            editadas en este equipo
+##     user://perfiles/<id>.json              los perfiles: quien sos, que llevas
+##                                            y donde te quedaste
 ##
 ## Una publica editada se guarda en user:// y esa copia gana al cargarla. Asi el
 ## editor de salas sigue sirviendo para armar mapas sin escribir dentro de res://,
@@ -23,12 +25,19 @@ class_name ServidorLocal
 const DIR_PUBLICAS := "res://data/salas/publicas"
 const DIR_PLANTILLAS := "res://data/salas/plantillas"
 const DIR_SALAS := "user://salas"
+const DIR_PERFILES := "user://perfiles"
 
 ## Lo que puede tener un id. Todo lo que llega de afuera se comprueba contra
 ## esto antes de usarlo para armar una ruta: un id "../algo" escribiria fuera de
 ## la carpeta de salas, y con red ese id lo manda otro.
 const CARACTERES_ID := "abcdefghijklmnopqrstuvwxyz0123456789_"
 const LARGO_MAXIMO_NOMBRE := 40
+## El nombre de un perfil es mas corto y mas estricto que el de una sala: es el
+## que aparece sobre la cabeza y en el chat de todos.
+const LARGO_MINIMO_JUGADOR := 3
+const LARGO_MAXIMO_JUGADOR := 20
+## La forma de la casa que recibe cada perfil nuevo.
+const PLANTILLA_CASA := &"cuadrada_chica"
 
 
 # --- Salas: leer ----------------------------------------------------------------
@@ -172,6 +181,106 @@ func borrar_sala(id : StringName, actor_id : StringName) -> Errores.Codigo:
 	return Errores.Codigo.OK
 
 
+# --- Perfiles -------------------------------------------------------------------
+
+
+## Devuelve un resumen de cada perfil, del usado mas recientemente al mas viejo.
+## {id, nombre, ultima_vez}
+func listar_perfiles() -> Array[Dictionary]:
+	var salida : Array[Dictionary] = []
+	for id in _ids_en(DIR_PERFILES):
+		var doc := _leer_json("%s/%s.json" % [DIR_PERFILES, id])
+		if doc.is_empty():
+			continue
+		salida.append({
+			"id": String(id),
+			"nombre": str(doc.get("nombre", "")),
+			"ultima_vez": int(doc.get("timestamp_guardado", 0)),
+		})
+	salida.sort_custom(func(a : Dictionary, b : Dictionary) -> bool:
+		return a.ultima_vez > b.ultima_vez)
+	return salida
+
+
+## Crea un perfil nuevo, con su casa. {"codigo", "id"}
+##
+## La casa la da el servidor y no el cliente: con red, es el servidor el que
+## decide que recibe una cuenta nueva.
+func crear_perfil(nombre : String) -> Dictionary:
+	nombre = _limpiar_nombre(nombre)
+	if not _nombre_de_jugador_valido(nombre):
+		return {"codigo": Errores.Codigo.NOMBRE_INVALIDO, "id": &""}
+	for existente in listar_perfiles():
+		if existente.nombre.to_lower() == nombre.to_lower():
+			return {"codigo": Errores.Codigo.NOMBRE_EN_USO, "id": &""}
+
+	var id := _id_nuevo_con(&"p_", DIR_PERFILES)
+	var casa := crear_sala("Casa de %s" % nombre, PLANTILLA_CASA, id)
+	if not Errores.ok(casa.codigo):
+		return {"codigo": casa.codigo, "id": &""}
+	var entrada : Array = _leer_json("%s/%s.json" % [DIR_SALAS, casa.id]).get("entrada", [0, 0])
+
+	var perfil := SaveGame.new()
+	perfil.perfil_id = String(id)
+	perfil.nombre = nombre
+	perfil.creado = int(Time.get_unix_time_from_system())
+	perfil.timestamp_guardado = perfil.creado
+	perfil.sala_actual = String(casa.id)
+	perfil.celda_jugador = Vector2i(int(entrada[0]), int(entrada[1]))
+	var codigo := _escribir_en(DIR_PERFILES, id, perfil.to_dict())
+	return {"codigo": codigo, "id": id if Errores.ok(codigo) else &""}
+
+
+## El perfil completo. {"codigo", "doc"}
+func obtener_perfil(id : StringName) -> Dictionary:
+	if not _id_valido(id) or not FileAccess.file_exists("%s/%s.json" % [DIR_PERFILES, id]):
+		return {"codigo": Errores.Codigo.PERFIL_NO_EXISTE, "doc": {}}
+	var doc := _leer_json("%s/%s.json" % [DIR_PERFILES, id])
+	if doc.is_empty():
+		return {"codigo": Errores.Codigo.ARCHIVO_CORRUPTO, "doc": {}}
+	doc["perfil_id"] = String(id)
+	return {"codigo": Errores.Codigo.OK, "doc": doc}
+
+
+## Guarda un perfil. Solo lo puede guardar su duenio, que con un solo jugador
+## local es siempre el caso; la comprobacion esta para cuando no lo sea.
+func guardar_perfil(doc : Dictionary, actor_id : StringName) -> Errores.Codigo:
+	var id := StringName(str(doc.get("perfil_id", "")))
+	if not _id_valido(id) or not FileAccess.file_exists("%s/%s.json" % [DIR_PERFILES, id]):
+		return Errores.Codigo.PERFIL_NO_EXISTE
+	if id != actor_id:
+		return Errores.Codigo.NO_ES_TUYO
+	return _escribir_en(DIR_PERFILES, id, doc)
+
+
+## Borra un perfil y todas sus salas.
+func borrar_perfil(id : StringName) -> Errores.Codigo:
+	if not _id_valido(id) or not FileAccess.file_exists("%s/%s.json" % [DIR_PERFILES, id]):
+		return Errores.Codigo.PERFIL_NO_EXISTE
+	for sala in listar_salas_de(id):
+		borrar_sala(StringName(sala.id), id)
+	if DirAccess.remove_absolute("%s/%s.json" % [DIR_PERFILES, id]) != OK:
+		return Errores.Codigo.NO_SE_PUDO_ESCRIBIR
+	return Errores.Codigo.OK
+
+
+## Un nombre de jugador: entre 3 y 20 caracteres, letras, numeros, espacios,
+## guion y guion bajo. Mas estricto que el de una sala porque va en el chat de
+## todos, y un nombre hecho de simbolos es una forma de molestar.
+func _nombre_de_jugador_valido(nombre : String) -> bool:
+	if nombre.length() < LARGO_MINIMO_JUGADOR or nombre.length() > LARGO_MAXIMO_JUGADOR:
+		return false
+	var letras := 0
+	for c in nombre:
+		var codigo := c.unicode_at(0)
+		var es_letra := c.to_lower() != c.to_upper() or (codigo >= 48 and codigo <= 57)
+		if es_letra:
+			letras += 1
+		elif not (c in " _-"):
+			return false
+	return letras >= LARGO_MINIMO_JUGADOR
+
+
 # --- Reglas ---------------------------------------------------------------------
 
 
@@ -216,13 +325,18 @@ func _limpiar_nombre(nombre : String) -> String:
 
 
 func _id_nuevo() -> StringName:
+	return _id_nuevo_con(&"s_", DIR_SALAS)
+
+
+## Un id al azar con un prefijo que dice que es: "s_" sala, "p_" perfil.
+func _id_nuevo_con(prefijo : StringName, dir_ruta : String) -> StringName:
 	var cripto := Crypto.new()
 	for intento in 8:
-		var id := StringName("s_" + cripto.generate_random_bytes(6).hex_encode())
-		if _ruta_de(id) == "":
+		var id := StringName(prefijo + cripto.generate_random_bytes(6).hex_encode())
+		if not FileAccess.file_exists("%s/%s.json" % [dir_ruta, id]) and _ruta_de(id) == "":
 			return id
 	push_error("ServidorLocal: ocho ids al azar ya existian. Eso no deberia pasar nunca.")
-	return StringName("s_%d" % Time.get_ticks_usec())
+	return StringName("%s%d" % [prefijo, Time.get_ticks_usec()])
 
 
 # --- Disco ----------------------------------------------------------------------
@@ -264,8 +378,12 @@ func _leer_json(ruta : String) -> Dictionary:
 
 
 func _escribir(id : StringName, doc : Dictionary) -> Errores.Codigo:
-	DirAccess.make_dir_recursive_absolute(DIR_SALAS)
-	var ruta := "%s/%s.json" % [DIR_SALAS, id]
+	return _escribir_en(DIR_SALAS, id, doc)
+
+
+func _escribir_en(dir_ruta : String, id : StringName, doc : Dictionary) -> Errores.Codigo:
+	DirAccess.make_dir_recursive_absolute(dir_ruta)
+	var ruta := "%s/%s.json" % [dir_ruta, id]
 	var archivo := FileAccess.open(ruta, FileAccess.WRITE)
 	if archivo == null:
 		push_error("ServidorLocal: no se pudo escribir %s (%d)." % [ruta, FileAccess.get_open_error()])

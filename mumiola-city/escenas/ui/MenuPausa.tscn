@@ -1,0 +1,64 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://escenas/ui/MenuPausa.gd" id="1_pausa"]
+
+[node name="MenuPausa" type="Control"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_pausa")
+
+[node name="Velo" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.45)
+
+[node name="Centro" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Centro"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+
+[node name="Botones" type="VBoxContainer" parent="Centro/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Titulo" type="Label" parent="Centro/Panel/Botones"]
+layout_mode = 2
+theme_type_variation = &"Titulo"
+text = "Menu"
+horizontal_alignment = 1
+
+[node name="Continuar" type="Button" parent="Centro/Panel/Botones"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Seguir jugando"
+
+[node name="Opciones" type="Button" parent="Centro/Panel/Botones"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Opciones"
+
+[node name="Volver" type="Button" parent="Centro/Panel/Botones"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Guardar y volver al inicio"
+
+[node name="Salir" type="Button" parent="Centro/Panel/Botones"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Guardar y salir"

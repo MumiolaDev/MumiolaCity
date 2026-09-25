@@ -1,0 +1,139 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://escenas/menu/MenuInicio.gd" id="1_menu"]
+[ext_resource type="PackedScene" path="res://escenas/ui/OpcionesUI.tscn" id="2_op"]
+
+[node name="MenuInicio" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="Fondo" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.23, 0.29, 1)
+
+[node name="Centro" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Columna" type="VBoxContainer" parent="Centro"]
+custom_minimum_size = Vector2(440, 0)
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Titulo" type="Label" parent="Centro/Columna"]
+layout_mode = 2
+theme_type_variation = &"TextoClaro"
+theme_override_font_sizes/font_size = 56
+text = "MumiolaCity"
+horizontal_alignment = 1
+
+[node name="Subtitulo" type="Label" parent="Centro/Columna"]
+layout_mode = 2
+theme_type_variation = &"TextoClaro"
+text = "Elegi con quien jugar"
+horizontal_alignment = 1
+
+[node name="Panel" type="PanelContainer" parent="Centro/Columna"]
+layout_mode = 2
+
+[node name="Hoja" type="VBoxContainer" parent="Centro/Columna/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Perfiles" type="ItemList" parent="Centro/Columna/Panel/Hoja"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+
+[node name="Acciones" type="HBoxContainer" parent="Centro/Columna/Panel/Hoja"]
+layout_mode = 2
+alignment = 2
+theme_override_constants/separation = 8
+
+[node name="Borrar" type="Button" parent="Centro/Columna/Panel/Hoja/Acciones"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Borrar"
+
+[node name="Entrar" type="Button" parent="Centro/Columna/Panel/Hoja/Acciones"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Entrar"
+
+[node name="Separador" type="HSeparator" parent="Centro/Columna/Panel/Hoja"]
+layout_mode = 2
+
+[node name="Nuevo" type="Label" parent="Centro/Columna/Panel/Hoja"]
+layout_mode = 2
+text = "Perfil nuevo"
+
+[node name="Crear" type="HBoxContainer" parent="Centro/Columna/Panel/Hoja"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Nombre" type="LineEdit" parent="Centro/Columna/Panel/Hoja/Crear"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Tu nombre"
+max_length = 20
+
+[node name="Crear" type="Button" parent="Centro/Columna/Panel/Hoja/Crear"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Crear y entrar"
+
+[node name="Aviso" type="Label" parent="Centro/Columna/Panel/Hoja"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.18, 0.12, 1)
+autowrap_mode = 3
+
+[node name="Abajo" type="HBoxContainer" parent="Centro/Columna"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="OpcionesBoton" type="Button" parent="Centro/Columna/Abajo"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Opciones"
+
+[node name="Salir" type="Button" parent="Centro/Columna/Abajo"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Salir"
+
+[node name="Version" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -400.0
+offset_top = -40.0
+offset_right = -16.0
+offset_bottom = -12.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_type_variation = &"TextoClaro"
+horizontal_alignment = 2
+
+[node name="OpcionesUI" parent="." instance=ExtResource("2_op")]
+unique_name_in_owner = true

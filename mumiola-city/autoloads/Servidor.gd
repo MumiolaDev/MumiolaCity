@@ -1,7 +1,7 @@
 extends Node
 
-## El unico lugar por donde pasa lo que manana vive en un servidor: las salas,
-## los perfiles y el chat.
+## El unico lugar por donde pasa lo que manana vive en un servidor: los
+## perfiles, las salas y el chat.
 ##
 ## Es la costura de la red, en el mismo sentido que las cinco de la fase 3: nada
 ## de red ahora, pero el lugar por donde entra ya esta hecho. La interfaz y
@@ -69,6 +69,31 @@ func renombrar_sala(id : StringName, nombre : String, actor_id : StringName) -> 
 ## Borra una sala.
 func borrar_sala(id : StringName, actor_id : StringName) -> Errores.Codigo:
 	return await _backend.borrar_sala(id, actor_id)
+
+
+## Los perfiles de este equipo, del usado mas recientemente al mas viejo.
+func listar_perfiles() -> Array[Dictionary]:
+	return await _backend.listar_perfiles()
+
+
+## Crea un perfil nuevo, con su casa: {"codigo", "id"}.
+func crear_perfil(nombre : String) -> Dictionary:
+	return await _backend.crear_perfil(nombre)
+
+
+## Entra con un perfil: {"codigo", "doc"}. Con red, aca va la autenticacion.
+func iniciar_sesion(id : StringName) -> Dictionary:
+	return await _backend.obtener_perfil(id)
+
+
+## Guarda el perfil de quien esta jugando.
+func guardar_perfil(doc : Dictionary, actor_id : StringName) -> Errores.Codigo:
+	return await _backend.guardar_perfil(doc, actor_id)
+
+
+## Borra un perfil con todas sus salas.
+func borrar_perfil(id : StringName) -> Errores.Codigo:
+	return await _backend.borrar_perfil(id)
 
 
 ## Dice algo en una sala. La respuesta llega por chat_recibido, a todos los que

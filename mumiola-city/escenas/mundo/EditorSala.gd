@@ -78,8 +78,21 @@ func _unhandled_input(evento : InputEvent) -> void:
 		_guardar_sala()
 	elif tecla.keycode == KEY_O and tecla.ctrl_pressed:
 		_cargar_sala()
-	elif tecla.keycode == KEY_ESCAPE and paleta != null:
-		paleta.limpiar()
+
+
+## Esc suelta lo que hay elegido en la paleta, si hay algo. Si no, deja pasar la
+## tecla: la siguiente en la fila es la que cierra ventanas o abre el menu.
+##
+## Va en _unhandled_key_input y no con el resto de las teclas porque tiene que
+## ganarle al menu de Esc, que escucha ahi mismo; el editor esta despues en el
+## arbol, asi que la recibe primero.
+func _unhandled_key_input(evento : InputEvent) -> void:
+	if not GameManager.editando() or paleta == null:
+		return
+	if evento is InputEventKey and evento.pressed and not evento.echo and evento.keycode == KEY_ESCAPE:
+		if paleta.clase() != RoomBuilderUI.Clase.NADA:
+			paleta.limpiar()
+			get_viewport().set_input_as_handled()
 
 
 ## Gira lo que se va a colocar un cuarto de vuelta.
