@@ -4,6 +4,9 @@ class_name BarraJuego
 ## La barra de abajo, como la de Habbo: los botones de todo lo que tiene
 ## ventana, mas editar la sala.
 ##
+## Mochila y Yo abren la misma ventana, la del personaje, cada uno en su
+## pestana.
+##
 ## Cada boton hace lo mismo que su atajo de teclado, asi que nada queda
 ## escondido detras de una tecla que hay que saber. Las ventanas se le pasan
 ## por @export y cualquiera puede faltar: su boton se apaga y el resto anda.
@@ -18,26 +21,29 @@ signal menu_pedido()
 
 @export var navegador : Ventana
 @export var ayuda : Ventana
-## El inventario, cuando exista. Mientras falte, el boton queda apagado.
-@export var inventario : Ventana
+## La ventana del personaje: la mochila y el perfil.
+@export var inventario : InventoryUI
 
 @onready var _salas : Button = %Salas
 @onready var _editar : Button = %Editar
 @onready var _guardar : Button = %Guardar
 @onready var _mochila : Button = %Mochila
+@onready var _yo : Button = %Yo
 @onready var _ayuda : Button = %Ayuda
 @onready var _menu : Button = %Menu
 
 
 func _ready() -> void:
-	for b in [_salas, _editar, _guardar, _mochila, _ayuda, _menu]:
+	for b in [_salas, _editar, _guardar, _mochila, _yo, _ayuda, _menu]:
 		b.focus_mode = Control.FOCUS_NONE
 
 	_conectar_ventana(_salas, navegador)
 	_conectar_ventana(_ayuda, ayuda)
-	_conectar_ventana(_mochila, inventario)
-	if inventario == null:
-		_mochila.tooltip_text = "La mochila todavia no tiene ventana. Mientras tanto: /inv"
+	_mochila.disabled = inventario == null
+	_yo.disabled = inventario == null
+	if inventario != null:
+		_mochila.pressed.connect(inventario.alternar_en.bind(InventoryUI.Pestana.MOCHILA))
+		_yo.pressed.connect(inventario.alternar_en.bind(InventoryUI.Pestana.PERFIL))
 
 	_editar.toggle_mode = true
 	_editar.toggled.connect(_al_apretar_editar)

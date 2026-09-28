@@ -39,7 +39,14 @@ text = "Guardar"
 [node name="Mochila" type="Button" parent="Botones"]
 unique_name_in_owner = true
 layout_mode = 2
+tooltip_text = "Mochila (I)"
 text = "Mochila"
+
+[node name="Yo" type="Button" parent="Botones"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Tu perfil"
+text = "Yo"
 
 [node name="Ayuda" type="Button" parent="Botones"]
 unique_name_in_owner = true

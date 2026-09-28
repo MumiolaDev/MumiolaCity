@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" path="res://escenas/ui/BarraJuego.tscn" id="11_barra"]
 [ext_resource type="PackedScene" path="res://escenas/ui/MenuPausa.tscn" id="12_pausa"]
 [ext_resource type="PackedScene" path="res://escenas/ui/OpcionesUI.tscn" id="13_opciones"]
+[ext_resource type="PackedScene" path="res://escenas/ui/InventoryUI.tscn" id="14_inv"]
 
 [node name="Mundo" type="Node3D" unique_id=1075680758]
 script = ExtResource("1_mundo")
@@ -30,13 +31,16 @@ script = ExtResource("1_mundo")
 
 [node name="ConsolaUI" parent="UI" instance=ExtResource("8_consola")]
 
-[node name="BarraJuego" parent="UI" node_paths=PackedStringArray("navegador", "ayuda") instance=ExtResource("11_barra")]
+[node name="BarraJuego" parent="UI" node_paths=PackedStringArray("navegador", "ayuda", "inventario") instance=ExtResource("11_barra")]
 navegador = NodePath("../NavegadorUI")
 ayuda = NodePath("../AyudaUI")
+inventario = NodePath("../InventoryUI")
 
 [node name="NavegadorUI" parent="UI" instance=ExtResource("10_nav")]
 
 [node name="AyudaUI" parent="UI" instance=ExtResource("9_ayuda")]
+
+[node name="InventoryUI" parent="UI" instance=ExtResource("14_inv")]
 
 [node name="MenuPausa" parent="UI" node_paths=PackedStringArray("opciones") instance=ExtResource("12_pausa")]
 opciones = NodePath("../OpcionesUI")
