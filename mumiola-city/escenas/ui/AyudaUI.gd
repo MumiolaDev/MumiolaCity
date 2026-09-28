@@ -14,6 +14,12 @@ const CONTROLES := [
 		["Clic izquierdo", "caminar hasta ahi"],
 		["Clic derecho sobre algo", "ver que se puede hacer con eso"],
 	]],
+	["Mochila", [
+		["I", "abrir y cerrar la mochila"],
+		["Doble clic o Colocar", "poner en la sala lo elegido"],
+		["Clic / R / Esc", "dejarlo, girarlo, o no ponerlo"],
+		["Arrastrar una casilla", "ordenar la mochila"],
+	]],
 	["Camara", [
 		["Rueda", "acercar y alejar"],
 		["Boton del medio", "arrastrar la vista"],

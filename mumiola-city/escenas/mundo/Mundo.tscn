@@ -13,6 +13,7 @@
 [ext_resource type="PackedScene" path="res://escenas/ui/MenuPausa.tscn" id="12_pausa"]
 [ext_resource type="PackedScene" path="res://escenas/ui/OpcionesUI.tscn" id="13_opciones"]
 [ext_resource type="PackedScene" path="res://escenas/ui/InventoryUI.tscn" id="14_inv"]
+[ext_resource type="Script" path="res://escenas/mundo/ColocadorJuego.gd" id="15_colocador"]
 
 [node name="Mundo" type="Node3D" unique_id=1075680758]
 script = ExtResource("1_mundo")
@@ -50,3 +51,6 @@ opciones = NodePath("../OpcionesUI")
 [node name="EditorSala" type="Node" parent="." node_paths=PackedStringArray("paleta")]
 script = ExtResource("7_editor")
 paleta = NodePath("../UI/RoomBuilderUI")
+
+[node name="ColocadorJuego" type="Node" parent="."]
+script = ExtResource("15_colocador")

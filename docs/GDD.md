@@ -3,7 +3,7 @@
 **Versión:** 0.5 (de MVP económico a sandbox-simulador; la economía queda archivada)
 **Fecha:** 2026-09-25
 **Motor:** Godot 4.7
-**Fase actual:** Fase 4 — la interfaz y el flujo, terminada. Sigue la fase 5, la interacción fina.
+**Fase actual:** Fase 5 — la interacción fina, en curso: la mochila con ventana y colocar desde ella ya están.
 
 > **El giro del 25 de septiembre.** El objetivo dejó de ser un bucle económico y pasó a ser **un sandbox lo más interactuable posible**, con el grano fino de Project Zomboid y pensado para el rol como lo era Habbo, donde los jugadores roleaban aun con muy pocas opciones. La idea es implementar primero la mayor cantidad de interacciones y sistemas parecidos a los de un mundo real, y diseñar **después** las mecánicas de juego alrededor de ellos; el simulador tendría que servir además para cosas que no son un juego. Buena parte de este documento describe la economía de jugadores del diseño original (§2 a §5): se conserva como referencia de hacia dónde podría crecer, pero **no guía el trabajo actual**. El pilar que sí guía es el 6, *el rol es del jugador*. Los managers de economía ya escritos (`RecipeManager`, `SkillManager`) quedan en el código, archivados, sin interfaz ni atajos.
 
@@ -288,7 +288,7 @@ El editor además **le sirve al desarrollador**: armar una sala pintando celdas 
 | 2a | Catálogo, inventario, habilidades y crafteo, sin interfaz | hecha (la economía quedó archivada) |
 | 3 | **El editor de sala**: colocar y quitar muebles con vista previa, pintar suelo y paredes, deshacer, guardar y cargar | hecha |
 | 4 | **La interfaz y el flujo**: menú de inicio con perfiles, navegador de salas, crear y guardar salas, transición entre salas, consola de chat, tema visual sobre el pack Flat | hecha |
-| 5 | **La interacción fina**: la mochila con ventana y colocar desde ella jugando, apoyar cosas sobre otras (D25), abrir y guardar, encender y apagar, un estado genérico por objeto, acciones con duración, objetos en la mano | siguiente |
+| 5 | **La interacción fina**: la mochila con ventana y colocar desde ella jugando, apoyar cosas sobre otras (D25), abrir y guardar, encender y apagar, un estado genérico por objeto, acciones con duración, objetos en la mano | en curso (la mochila, hecha) |
 | 6 | **Social y rol**: burbujas de chat, nombres sobre la cabeza, emotes, `/me`, poses libres | |
 | 7 | **Estilo visual**: pulido del tema, iluminación, filtro retro/pixel (el mundo en su propio `SubViewport` y la interfaz fuera) | |
 | 8 | **Red**: un servidor autoritativo reemplaza a `ServidorLocal`; se replican las operaciones de sala (D23), el chat y la sesión (costura 5) | |

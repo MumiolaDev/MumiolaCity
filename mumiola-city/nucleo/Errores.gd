@@ -38,6 +38,7 @@ enum Codigo {
 	NO_ES_SUPERFICIE = 107,
 	SUPERFICIE_LLENA = 108,
 	NO_SE_APILA = 109,
+	NO_COLOCABLE = 110,
 
 	# 2xx — inventario y propiedad
 	NO_ES_TUYO = 201,
@@ -65,6 +66,7 @@ enum Codigo {
 	ES_LA_SALA_ACTUAL = 505,
 	CAMBIO_EN_CURSO = 506,
 	SALA_EN_USO = 507,
+	EDITANDO = 508,
 
 	# 6xx — datos y archivos
 	ARCHIVO_NO_EXISTE = 601,
@@ -97,6 +99,7 @@ const MENSAJES := {
 	Codigo.NO_ES_SUPERFICIE: "Ahi no se puede apoyar nada.",
 	Codigo.SUPERFICIE_LLENA: "No queda lugar encima.",
 	Codigo.NO_SE_APILA: "Eso no se puede apoyar encima de otra cosa.",
+	Codigo.NO_COLOCABLE: "Eso no se puede poner en el piso.",
 
 	Codigo.NO_ES_TUYO: "Eso no es tuyo.",
 	Codigo.INVENTARIO_LLENO: "No te entra nada mas en el inventario.",
@@ -120,6 +123,7 @@ const MENSAJES := {
 	Codigo.ES_LA_SALA_ACTUAL: "Ya estas en esa sala.",
 	Codigo.CAMBIO_EN_CURSO: "Ya estas yendo a otra sala.",
 	Codigo.SALA_EN_USO: "Sali de la sala antes de hacer eso.",
+	Codigo.EDITANDO: "Termina de editar la sala primero.",
 
 	Codigo.ARCHIVO_NO_EXISTE: "No encontre ese archivo.",
 	Codigo.ARCHIVO_CORRUPTO: "Ese archivo esta danado y no se pudo leer.",

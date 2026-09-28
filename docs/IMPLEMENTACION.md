@@ -8,7 +8,7 @@
 
 ---
 
-## Dónde estamos (25 de septiembre de 2026)
+## Dónde estamos (27 de septiembre de 2026)
 
 | Fase | Estado |
 |---|---|
@@ -17,7 +17,7 @@
 | 2a — Economía sin interfaz | terminada, 114 comprobaciones; **archivada** con el giro a sandbox |
 | 3 — El editor de sala | terminada, criterio cumplido |
 | 4 — La interfaz y el flujo | **terminada**, en cinco etapas (U1–U5), criterio cumplido |
-| 5 — La interacción fina | siguiente. Ya hechos, de la vieja fase 4: `PoseBehavior` y `LevantarBehavior` |
+| 5 — La interacción fina | **en curso**. Hecho: la mochila con ventana y colocar desde ella (I1–I3), y de la vieja fase 4, `PoseBehavior` y `LevantarBehavior` |
 | 6 — Social y rol · 7 — Estilo visual · 8 — Red | pendientes; la red, con las seis costuras ya puestas |
 
 **Qué trajo la fase 4**, por etapa:
@@ -28,13 +28,18 @@
 - **U4 — El navegador.** `NavegadorUI` (públicas, mis salas, crear desde forma) y `BarraJuego`. `puede_editar()` aplica la regla real.
 - **U5 — Perfiles.** `MenuInicio` es la escena principal; cada perfil trae su casa y guarda dónde te quedaste. `MenuPausa` (Esc) y `OpcionesUI`.
 
+**Lo que va de la fase 5**, por etapa:
+
+- **I1 — `Contenedor`.** Un lugar finito donde se guardan cosas, por casillas y por peso, con **casillas de posición fija**: sacar algo deja un hueco y no corre a las demás, lo que entra llena el primer hueco, y `mover()` muda, junta pilas o intercambia. La mochila es un `Contenedor` y `InventoryManager` es su dueño, con la API de antes delegando. El guardado anota la casilla de cada cosa; un perfil viejo, sin casillas, se lee de corrido.
+- **I2 — La ventana del personaje.** `VistaContenedor` muestra **cualquier** `Contenedor` —la mochila hoy, una alacena mañana— con sus huecos, la cuenta de casillas, el peso y el detalle de lo elegido, y arrastrar una casilla sobre otra la mueve. `InventoryUI` tiene dos pestañas: la mochila y un perfil general (`VistaPerfil`). En la barra, Mochila (I) y Yo.
+- **I3 — Colocar desde la mochila jugando.** `ColocadorJuego`: se elige en la mochila (Colocar o doble clic), el fantasma sigue al puntero, clic deja, R gira, Esc o clic derecho sueltan. Pasa por `aplicar()` sin entrar al historial del editor, como levantar; saca de la mochila solo si la sala acepta, y si no, devuelve a la misma casilla. Solo jugando y en una sala que se puede editar; códigos nuevos `NO_COLOCABLE` (110) y `EDITANDO` (508).
+
 **Lo que sigue, en la fase 5**, en orden:
 
-1. **`InventoryUI` y colocar desde la mochila jugando.** Hoy levantar un mueble lo manda a la mochila y no hay forma de volver a ponerlo sin el editor. Es lo que cierra el círculo del verbo que ya existe.
-2. **`SuperficieBehavior`** (D25, decidida): apoyar cosas sobre mesas y estantes. Le da sentido a los 33 ítems chicos que hoy no tienen verbo.
-3. **Un estado genérico por instancia** en `ItemInstance` —abierto, encendido, lleno, sucio— y sobre él `ContenedorBehavior` (`abrir`) y `AlternarBehavior` (`encender`), para que un verbo nuevo sea datos.
-4. **Acciones con duración** (una barra de progreso sobre el avatar) y **objetos en la mano** (enganche al hueso, D20).
-5. Los verbos pendientes del catálogo: `servir` y `vaciar` en el plato y el bol.
+1. **`SuperficieBehavior`** (D25, decidida): apoyar cosas sobre mesas y estantes. Le da sentido a los 33 ítems chicos que hoy no tienen verbo.
+2. **Un estado genérico por instancia** en `ItemInstance` —abierto, encendido, lleno, sucio— y sobre él `ContenedorBehavior` (`abrir`) y `AlternarBehavior` (`encender`), para que un verbo nuevo sea datos. `ContenedorBehavior` se apoya en lo de I1 y I2: el mueble tiene un `Contenedor`, abrirlo muestra una `VistaContenedor`, y arrastrar entre dos vistas es lo que falta (hoy `_can_drop_data()` rechaza lo que viene de otro contenedor, a propósito). Colocar hoy recrea la instancia desde el estado que lleva la operación, así que lo que ese estado genérico agregue tiene que viajar en `OperacionSala.estado`.
+3. **Acciones con duración** (una barra de progreso sobre el avatar) y **objetos en la mano** (enganche al hueso, D20).
+4. Los verbos pendientes del catálogo: `servir` y `vaciar` en el plato y el bol.
 
 ---
 
@@ -42,7 +47,7 @@
 
 **Los tests sí se versionan, y viven en `mumiola-city/escenas/test/`.** La convención de la sección 1 —escenas de verificación local fuera del repo— valía cuando el único test dependía de cómo estuviera pintada la sala de prueba de cada máquina. Dejó de valer en cuanto hubo reglas que comprobar y no solo conversiones que mirar.
 
-Cada test es un `Node` con un script que se cuelga de `Mundo` y reporta por consola, terminando en una línea `NOMBRE: todo ok` o `NOMBRE: N fallos`. Son veintiuno: `test_camara`, `test_clic_menu`, `test_consola`, `test_documento`, `test_economia`, `test_editor`, `test_fantasma_pieza`, `test_huella_objeto`, `test_huellas`, `test_ir_a_sala`, `test_levantar`, `test_menu_posicion`, `test_mirar`, `test_navegador`, `test_ocupar_bloquear`, `test_perfiles`, `test_poses`, `test_rotacion`, `test_salida_pose`, `test_servidor` y `test_ventana`. `test_perfiles` recorre dos cambios de escena, así que se muda a la raíz del árbol al empezar.
+Cada test es un `Node` con un script que se cuelga de `Mundo` y reporta por consola, terminando en una línea `NOMBRE: todo ok` o `NOMBRE: N fallos`. Son veinticuatro: `test_camara`, `test_clic_menu`, `test_colocar_mochila`, `test_consola`, `test_contenedor`, `test_documento`, `test_economia`, `test_editor`, `test_fantasma_pieza`, `test_huella_objeto`, `test_huellas`, `test_inventario_ui`, `test_ir_a_sala`, `test_levantar`, `test_menu_posicion`, `test_mirar`, `test_navegador`, `test_ocupar_bloquear`, `test_perfiles`, `test_poses`, `test_rotacion`, `test_salida_pose`, `test_servidor` y `test_ventana`. `test_perfiles` recorre dos cambios de escena, así que se muda a la raíz del árbol al empezar.
 
 **`test_huellas` tiene tres fallos que vienen de antes de la fase 4** (ya estaban en `837cbd2`): `espacio_puerta` no bloquea su propia celda y la huella no gira con la pieza. Están sin investigar.
 
@@ -50,11 +55,12 @@ Cada test es un `Node` con un script que se cuelga de `Mundo` y reporta por cons
 
 **Muestrario del tema:** `escenas/test/muestra_tema.tscn` pone un control de cada tipo en pantalla. Con `-- --captura=<ruta.png>` guarda una captura y se cierra, que es como se revisa el tema después de regenerarlo.
 
-**Tres cosas que se aprendieron escribiéndolos**, y que se pagan caro si se olvidan:
+**Cuatro cosas que se aprendieron escribiéndolos**, y que se pagan caro si se olvidan:
 
 1. **Una prueba que pasa no siempre prueba lo que decís.** El primer arreglo de «cancelar el menú no debe mandar a caminar» pasó su test y seguía roto en el juego: el test cerraba el menú a mano antes de clickear, y en el juego `_unhandled_input` llega **antes** que `popup_hide`. Verificaba una secuencia que no ocurre nunca.
 2. **Esperar por reloj y no por cuadros.** `Lie_Down` dura 3.00 s justos y la ventana corría a ~100 fps, así que contar 300 cuadros se quedaba corto por milésimas y medía al personaje a mitad de la transición. Todas las esperas de animación usan `Time.get_ticks_msec()`.
 3. **Un clic perdido sobre la ventana saca al personaje de la pose.** Los tests que miden poses llaman a `set_process_unhandled_input(false)` sobre el jugador.
+4. **Un clic simulado va en coordenadas del viewport.** `get_viewport().push_input(evento)` toma la posición como de la ventana y la estira al viewport; en headless no miden lo mismo (el viewport sale de 1280×1280), así que el clic caía fuera de la sala sin ningún error. Con `push_input(evento, true)` la posición es la de `unproject_position()`. Y cuando se prueba que un clic *no* hace algo —que colocar no manda a caminar—, se prueba también el contraste: que sin colocar, el mismo clic sí lo hace.
 
 **Para verificar sin tocar el proyecto abierto:** se copia `mumiola-city/` a un directorio aparte y se corre Godot en headless ahí. Editar `project.godot` desde afuera mientras el editor está abierto es una carrera (**D9**). Para lo que hay que ver —encuadres, poses, alturas— se corre una ventana real fuera de pantalla (`--position 6000,6000`) y se miran los PNG.
 

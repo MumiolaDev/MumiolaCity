@@ -58,7 +58,7 @@ Antes de escribir un sistema, hay que revisar si el motor ya lo resuelve — y s
 | 21 | `ContenedorBehavior` | Resource | Recurso | `InteractionBehavior` | 5 |
 | 22 | `ModifierStack` | Nodo | Componente | `Node` | — (sin buffs ni energia en el MVP) |
 | 23 | `EconomyManager` (básico) | Autoload | Autoload | `Node` | archivada |
-| 24 | `InventoryUI` | UI | Escena | `Control` | 5 |
+| 24 | `InventoryUI` | UI | Escena | `Ventana` | 5 (hecho) |
 | 25 | `SkillsPanelUI` (sin ranking) | UI | Escena | `Control` | archivada |
 | 26 | `CraftingUI` | UI | Escena | `Control` | archivada |
 | 27 | `CraftingStation` | Nodo/Escena | Escena | `WorldObject` | archivada |
@@ -87,6 +87,9 @@ Antes de escribir un sistema, hay que revisar si el motor ya lo resuelve — y s
 | 49 | `MenuPausa` | UI | Escena | `Control` | 4 |
 | 50 | `OpcionesUI` | UI | Escena | `Ventana` | 4 |
 | 51 | `ConstructorTema` (+ `GenerarTema`) | Herramienta | `EditorScript` | `RefCounted` | 4 |
+| 52 | `Contenedor` | Datos | Global (`class_name`) | `RefCounted` | 5 (hecho) |
+| 53 | `VistaContenedor` (+ `VistaPerfil`) | UI | Componente | `VBoxContainer` | 5 (hecho) |
+| 54 | `ColocadorJuego` | Nodo | Componente | `Node` | 5 (hecho) |
 | — | Ranking/leaderboard, resto de §3.4, capa de red | — | — | — | 8 (red) |
 
 ### Las clases que esta tabla no detalla
@@ -377,7 +380,7 @@ Que el juego se pueda **abrir, entrar y recorrer** sin tocar el editor de Godot 
 **Función:** la caja de abajo a la izquierda, con filtros por canal, historial con flechas y el texto de las personas escapado, para que nadie meta BBCode en la pantalla de otro. La ayuda (F1) reemplaza al texto crudo que había en pantalla; su pestaña de comandos se lee del registro.
 
 ### 46. `NavegadorUI` · 47. `BarraJuego` — UI · **hecho**
-**Función:** el navegador (N): salas públicas, las tuyas —ir, renombrar, borrar— y crear una desde una forma, con la miniatura dibujada desde la estructura. La barra de abajo: Salas, Editar, Guardar, Mochila, Ayuda, Menú; cada botón hace lo mismo que su tecla. Editar se apaga en una sala ajena.
+**Función:** el navegador (N): salas públicas, las tuyas —ir, renombrar, borrar— y crear una desde una forma, con la miniatura dibujada desde la estructura. La barra de abajo: Salas, Editar, Guardar, Mochila, Yo, Ayuda, Menú; cada botón hace lo mismo que su tecla. Mochila y Yo abren la ventana del personaje, cada uno en su pestaña (fase 5). Editar se apaga en una sala ajena.
 
 ### 48. `MenuInicio` · 49. `MenuPausa` · 50. `OpcionesUI` — UI · **hecho**
 **Función:** la escena principal: elegir perfil, crear uno —que entra directo y trae su casa—, borrar, opciones, salir. El menú de Esc no pausa nada, porque en línea el tiempo de los demás no se detiene: seguir, opciones, guardar y volver al inicio, guardar y salir. Las opciones —pantalla completa, volumen, depuración— son del equipo y no del perfil, y van a `user://opciones.cfg`.
@@ -389,7 +392,28 @@ Que el juego se pueda **abrir, entrar y recorrer** sin tocar el editor de Godot 
 
 ## Fase 5 — La interacción fina
 
-Que agregar una interacción sea **datos, no código**. **Listo cuando** recorrés una sala amueblada y casi todo lo que clickeás hace algo. Antes de los verbos nuevos, lo que cierra el círculo del que ya existe: **`InventoryUI` y colocar desde la mochila jugando**, porque hoy levantar un mueble lo manda a la mochila y no hay vuelta sin el editor.
+Que agregar una interacción sea **datos, no código**. **Listo cuando** recorrés una sala amueblada y casi todo lo que clickeás hace algo. Antes de los verbos nuevos, lo que cierra el círculo del que ya existe: **`InventoryUI` y colocar desde la mochila jugando** —hecho, fichas 52, 53, 24 y 54—, porque levantar un mueble lo mandaba a la mochila y no había vuelta sin el editor.
+
+### 52. `Contenedor` — Datos · `extends RefCounted` · **hecho**
+**Función:** un lugar finito donde se guardan cosas: la mochila hoy, una alacena o una heladera mañana. Finito por casillas y, si `peso_maximo` no es cero, por peso; un rechazo no deja nada a medias.
+**Casillas de posición fija** (decidido por el usuario): cada cosa queda donde la dejaste, sacar algo deja un hueco y lo que entra llena el primer hueco. `mover(desde, hasta)` muda a un hueco, junta pilas del mismo ítem hasta el tope o intercambia. Las casillas guardan `InventorySlot`, así que **D1** sigue igual: pila o unidad con estado. Lo que llega como instancia sin estado propio —un tomate levantado del piso— se apila con los demás en vez de ocupar una casilla aparte.
+**Funciones clave:** `agregar(id, cantidad)`, `agregar_en(id, cantidad, casilla)`, `agregar_instancia(inst, casilla = -1)`, `sacar_unidad(casilla) -> ItemInstance`, `mover(desde, hasta)`, `hay_lugar_para(def)`, `to_dict()`/`from_dict()`. La casilla preferida es lo que permite devolver algo al lugar exacto de donde salió.
+**`InventoryManager`** pasó a ser el dueño de una mochila que es un `Contenedor` (`InventoryManager.mochila`) y conserva su API de antes delegando, porque la usa medio juego. El guardado del inventario anota `casilla` por entrada; un perfil de antes, sin ese campo, se lee de corrido.
+
+### 53. `VistaContenedor` + `VistaPerfil` — Componentes UI · **hecho**
+**Función:** `VistaContenedor` muestra **cualquier** `Contenedor`: todas sus casillas con los huecos, cuántas se usan, el peso contra el máximo (sin barra si no hay límite) y el detalle de la elegida. Se entera sola por `Contenedor.cambiado`. No sabe qué se hace con lo que muestra: avisa `casilla_elegida`, `casilla_activada` (doble clic) y `eleccion_cambiada`, y quien la contiene decide. Lo único que hace por su cuenta es ordenar: arrastrar una casilla sobre otra llama a `mover()`.
+**Godot nativo:** `GridContainer` dentro de un `ScrollContainer`, y la API de drag & drop de `Control` en la casilla (una clase interna). Lo de otro contenedor todavía no se suelta: pasar cosas de uno a otro llega con `ContenedorBehavior`, y entra por `_can_drop_data()`.
+`VistaPerfil` recibe un diccionario ya armado —nombre, desde cuándo, dónde está, cuántas salas, qué lleva— y no lo va a buscar, así que el día que clickear a otro jugador muestre el suyo es la misma vista con los datos que mande el servidor.
+
+### 24. `InventoryUI` — UI · Escena propia · `extends Ventana` · **hecho**
+**Función:** la ventana del personaje, con dos pestañas (decidido por el usuario, al estilo de Project Zomboid): **Mochila**, una `VistaContenedor` sobre `InventoryManager.mochila` más el botón Colocar, y **Perfil**, una `VistaPerfil` que se arma cada vez que se mira. I abre y cierra la mochila; en la barra, Mochila y Yo abren cada uno su pestaña, y con la ventana abierta en la otra cambian de pestaña en vez de cerrar. La ventana mide lo que la pestaña más grande, así no salta al cambiar.
+**Colocar** se prende según `ColocadorJuego.motivo_para_colocar()`, la misma regla que usa el gesto, y cuando está apagado el tooltip dice por qué. El botón o el doble clic emiten `colocar_pedido`; `Mundo` lo conecta con el colocador.
+
+### 54. `ColocadorJuego` — Nodo · Componente de `Mundo` · **hecho**
+**Función:** pone en la sala algo de la mochila, jugando. El gesto es el de Habbo: el fantasma de `IndicadorCelda` sigue al puntero, clic izquierdo deja, R gira, Esc o clic derecho sueltan; se coloca una vez y termina. Va después del personaje en el árbol, así que ve el clic primero y el personaje no sale caminando hacia donde se puso la cosa.
+**Es primo de `EditorSala` y no parte de él:** el editor construye con el catálogo y tiene deshacer; esto mueve lo que el jugador tiene. Pasa por `RoomController.aplicar()` con `registrar = false`, como levantar, y por el mismo motivo.
+**El orden es el de levantar al revés:** preguntar si entra (`motivo_bloqueo`) → sacar de la mochila → aplicar → si la sala rechaza igual, devolver a la **misma casilla**. La operación lleva el estado y no la instancia, porque es lo que viaja por la red: el plato llega servido aunque la sala arme una instancia nueva.
+**Sigue lo que coloca por su casilla viva y no por su número:** reordenar la mochila mientras se coloca no lo pierde, y si la cosa desaparece de la mochila, se suelta sola. Entrar al editor o irse de la sala también sueltan.
 
 ### 34. `PoseBehavior` — Resource · Recurso, sin escena · `extends InteractionBehavior` · **hecho**
 **Función:** generaliza el viejo `SentarseBehavior`. `sentarse`, `sentarse_piso` y `acostarse` son tres `.tres` del mismo script.
@@ -425,11 +449,6 @@ Que agregar una interacción sea **datos, no código**. **Listo cuando** recorr�
 ### 38. `AbrirCrafteoBehavior` y las estaciones (antes 27, `CraftingStation`) · **archivado con la economía**
 **Función:** estufa, fregadero, banco y tabla como `WorldObject` con este verbo. Acá se enchufa `RecipeManager`, ya escrito y probado, y desaparece la mentira de la tecla `2` del arnés de `Mundo.gd`, que hoy pasa la estación a mano.
 **Godot nativo:** no hace falta una clase `CraftingStation`: un `WorldObject` con un verbo más en su lista `interacciones` alcanza, y así una estación se define en `items.json` en vez de en una escena.
-
-### 24. `InventoryUI` — UI · Escena propia · `extends Control`
-**Función:** muestra el contenido de `InventoryManager`, permite arrastrar/soltar y equipar.
-**Godot nativo:** `GridContainer` para la grilla de slots, y sobre todo la **API nativa de drag & drop de `Control`** (`_get_drag_data()`, `_can_drop_data()`, `_drop_data()`) — no hay que implementar el arrastre a mano.
-**Funciones clave:** `refrescar() -> void`, `_get_drag_data(pos: Vector2) -> Variant`, `_drop_data(pos: Vector2, data: Variant) -> void`.
 
 ### 26. `CraftingUI` — UI · Escena propia · `extends Control` · **archivado con la economía**
 **Función:** lista de recetas disponibles según `RecipeDefinition` y nivel del jugador.

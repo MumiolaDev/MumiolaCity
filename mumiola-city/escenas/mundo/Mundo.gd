@@ -30,6 +30,8 @@ extends Node3D
 @onready var menu : ContextMenuUI = $UI/ContextMenuUI
 @onready var barra : BarraJuego = get_node_or_null(^"UI/BarraJuego")
 @onready var menu_pausa : MenuPausa = get_node_or_null(^"UI/MenuPausa")
+@onready var inventario : InventoryUI = get_node_or_null(^"UI/InventoryUI")
+@onready var colocador : ColocadorJuego = get_node_or_null(^"ColocadorJuego")
 
 
 func _ready() -> void:
@@ -46,6 +48,8 @@ func _ready() -> void:
 		menu.verbo_elegido.connect(_al_elegir_verbo)
 	if barra != null and menu_pausa != null:
 		barra.menu_pedido.connect(menu_pausa.abrir)
+	if inventario != null and colocador != null:
+		inventario.colocar_pedido.connect(_al_pedir_colocar)
 	_registrar_comandos()
 	GameManager.sala_cambiada.connect(_al_cambiar_sala)
 
@@ -58,6 +62,13 @@ func _ready() -> void:
 		push_error("Mundo: no se pudo entrar al mundo: %s" % Errores.mensaje(codigo))
 	elif GameManager.hay_sesion():
 		GameManager.avisar("Hola, %s. Enter para hablar, F1 para la ayuda." % GameManager.nombre_jugador())
+
+
+## Empieza a colocar lo que se eligio en la mochila.
+func _al_pedir_colocar(indice : int) -> void:
+	var codigo := colocador.empezar(indice)
+	if not Errores.ok(codigo):
+		GameManager.avisar_error(codigo)
 
 
 ## Engancha los clics de los muebles de una sala recien cargada.

@@ -23,6 +23,9 @@ class_name VistaContenedor
 
 ## Se eligio una casilla con algo adentro, con un clic.
 signal casilla_elegida(indice : int)
+## Cambio la eleccion, por lo que sea: un clic, o que lo elegido se fue. Lleva
+## -1 si no quedo nada elegido. Es la que escucha quien prende botones.
+signal eleccion_cambiada(indice : int)
 ## Se activo una casilla, con doble clic. Quien contiene la vista decide que
 ## significa: desde la mochila, colocar.
 signal casilla_activada(indice : int)
@@ -63,7 +66,9 @@ func mostrar(contenedor_nuevo : Contenedor) -> void:
 	if _contenedor != null and _contenedor.cambiado.is_connected(refrescar):
 		_contenedor.cambiado.disconnect(refrescar)
 	_contenedor = contenedor_nuevo
-	_elegida = -1
+	if _elegida != -1:
+		_elegida = -1
+		eleccion_cambiada.emit(-1)
 	if _contenedor != null:
 		_contenedor.cambiado.connect(refrescar)
 	_armar_casillas()
@@ -101,10 +106,13 @@ func slot_elegido() -> InventorySlot:
 func elegir(indice : int) -> void:
 	if _contenedor == null or _contenedor.casilla(indice) == null:
 		indice = -1
+	var cambio := indice != _elegida
 	_elegida = indice
 	_pintar_eleccion()
 	if indice != -1:
 		casilla_elegida.emit(indice)
+	if cambio:
+		eleccion_cambiada.emit(_elegida)
 
 
 ## Vuelve a dibujar todo desde el contenedor.
@@ -129,9 +137,12 @@ func refrescar() -> void:
 
 	# Si lo elegido se fue —se coloco, se saco, se movio a otra casilla—, la
 	# eleccion se suelta en vez de quedar apuntando a un hueco.
-	if _contenedor.casilla(_elegida) == null:
+	var soltada := _elegida != -1 and _contenedor.casilla(_elegida) == null
+	if soltada:
 		_elegida = -1
 	_pintar_eleccion()
+	if soltada:
+		eleccion_cambiada.emit(-1)
 
 
 func set_columnas(valor : int) -> void:

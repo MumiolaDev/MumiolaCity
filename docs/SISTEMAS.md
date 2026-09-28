@@ -127,7 +127,8 @@ Para cada sistema: de qué es **dueño** (el dato que solo él puede mutar), qu�
 - **Dueño de:** el catálogo de `ItemDefinition` indexado por `id` y por `familia` (`ItemDatabase`), y las pertenencias del jugador (`InventoryManager`).
 - **No le corresponde:** decidir si una receta es válida (eso es `RecipeManager`) ni cuánto vale algo (eso es `EconomyManager` leyendo `valor_base`).
 - **Entra:** `agregar_item` / `quitar_item` desde recolección, crafteo, compra y venta. **Sale:** la señal `inventario_cambiado`, y consultas de disponibilidad.
-- **Invariante que hay que sostener:** peso total ≤ capacidad, y ningún slot con `cantidad > stack_maximo`. Toda mutación pasa por los dos métodos públicos; nadie escribe el array por fuera.
+- **Invariante que hay que sostener:** peso total ≤ capacidad, y ningún slot con `cantidad > stack_maximo`. Toda mutación pasa por los métodos públicos; nadie escribe el array por fuera.
+- **Desde la fase 5 las reglas viven en `Contenedor`**, y la mochila es uno (`InventoryManager.mochila`). Las casillas tienen posición fija: el inventario ya no es una lista que se compacta sino un arreglo de casillas con huecos, y el guardado anota la casilla de cada cosa. Es la misma clase que va a tener un mueble con `ContenedorBehavior`.
 
 ### 3.3 Progresión — `SkillManager` + `SkillDefinition`
 

@@ -5,7 +5,9 @@ class_name InventoryUI
 ##
 ## La mochila es una VistaContenedor sobre InventoryManager.mochila, la misma
 ## vista que va a mostrar una alacena o una heladera. Esta ventana le agrega lo
-## que solo tiene sentido para tu mochila.
+## que solo tiene sentido para tu mochila: Colocar, que pone lo elegido en la
+## sala. El boton, o el doble clic, piden colocar; quien coloca es
+## ColocadorJuego, y el mundo los conecta.
 ##
 ## El perfil es una VistaPerfil con tus datos. Se arma cada vez que se mira, y no
 ## se guarda entre aperturas: la sala donde estas y cuantas tenes cambian, y con
@@ -15,12 +17,16 @@ class_name InventoryUI
 ## pestana; con la ventana abierta en la otra, cambian de pestana en vez de
 ## cerrar.
 
+## Se pidio colocar en la sala lo de una casilla de la mochila.
+signal colocar_pedido(indice : int)
+
 ## Las pestanas, en el orden en que aparecen.
 enum Pestana { MOCHILA, PERFIL }
 
 var _pestanas : TabContainer = null
 var _vista_mochila : VistaContenedor = null
 var _vista_perfil : VistaPerfil = null
+var _boton_colocar : Button = null
 
 
 func _ready() -> void:
@@ -41,9 +47,14 @@ func _ready() -> void:
 	super._ready()
 
 	_vista_mochila.mostrar(InventoryManager.mochila)
+	_vista_mochila.eleccion_cambiada.connect(func(_i : int) -> void: _actualizar_acciones())
+	_vista_mochila.casilla_activada.connect(_pedir_colocar)
+	GameManager.modo_cambiado.connect(func(_m : GameManager.Modo) -> void: _actualizar_acciones())
 	GameManager.sala_cambiada.connect(func(_s : RoomController) -> void:
+		_actualizar_acciones()
 		if visible and pestana() == Pestana.PERFIL:
 			refrescar_perfil())
+	_actualizar_acciones()
 
 
 ## Abre la ventana en la pestana en que estaba.
@@ -118,4 +129,34 @@ func _armar_mochila() -> Control:
 	hoja.add_theme_constant_override(&"separation", 8)
 	_vista_mochila = VistaContenedor.new()
 	hoja.add_child(_vista_mochila)
+
+	var acciones := HBoxContainer.new()
+	acciones.alignment = BoxContainer.ALIGNMENT_END
+	_boton_colocar = Button.new()
+	_boton_colocar.text = "Colocar"
+	_boton_colocar.focus_mode = Control.FOCUS_NONE
+	_boton_colocar.pressed.connect(func() -> void: _pedir_colocar(_vista_mochila.elegida()))
+	acciones.add_child(_boton_colocar)
+	hoja.add_child(acciones)
 	return hoja
+
+
+## Prende Colocar si lo elegido se puede colocar ahora, y si no dice por que.
+##
+## La regla es la de ColocadorJuego, preguntada y no copiada: el boton no puede
+## prometer algo que el gesto despues rechaza.
+func _actualizar_acciones() -> void:
+	var slot := _vista_mochila.slot_elegido()
+	var motivo := ColocadorJuego.motivo_para_colocar(slot)
+	_boton_colocar.disabled = not Errores.ok(motivo)
+	if slot == null:
+		_boton_colocar.tooltip_text = "Elegi algo de la mochila para ponerlo en la sala."
+	elif Errores.ok(motivo):
+		_boton_colocar.tooltip_text = "Poner %s en la sala (doble clic)." % slot.nombre_mostrado()
+	else:
+		_boton_colocar.tooltip_text = Errores.mensaje(motivo)
+
+
+func _pedir_colocar(indice : int) -> void:
+	if Errores.ok(ColocadorJuego.motivo_para_colocar(_vista_mochila.contenedor().casilla(indice))):
+		colocar_pedido.emit(indice)
