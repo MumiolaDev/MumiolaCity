@@ -39,6 +39,7 @@ enum Codigo {
 	SUPERFICIE_LLENA = 108,
 	NO_SE_APILA = 109,
 	NO_COLOCABLE = 110,
+	PIEZA_INEXISTENTE = 111,
 
 	# 2xx — inventario y propiedad
 	NO_ES_TUYO = 201,
@@ -100,6 +101,7 @@ const MENSAJES := {
 	Codigo.SUPERFICIE_LLENA: "No queda lugar encima.",
 	Codigo.NO_SE_APILA: "Eso no se puede apoyar encima de otra cosa.",
 	Codigo.NO_COLOCABLE: "Eso no se puede poner en el piso.",
+	Codigo.PIEZA_INEXISTENTE: "Esa pieza de construccion no existe.",
 
 	Codigo.NO_ES_TUYO: "Eso no es tuyo.",
 	Codigo.INVENTARIO_LLENO: "No te entra nada mas en el inventario.",

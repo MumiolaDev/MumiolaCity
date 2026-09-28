@@ -406,6 +406,10 @@ func pieza_en(capa : StringName, celda : Vector2i) -> Dictionary:
 
 ## Pinta una pieza en una celda. Devuelve si se pudo.
 ##
+## Solo falla si la capa no existe o su biblioteca no tiene esa pieza, y
+## RoomController cuenta con eso para traducir el false a PIEZA_INEXISTENTE. Si
+## se le agrega otro motivo de fallo, tiene que pasar a devolver un codigo.
+##
 ## Recibe el nombre de la pieza y lo resuelve contra la biblioteca de la capa. Es
 ## el primer lugar donde D18 deja de ser una precaucion y se vuelve necesario: el
 ## editor guarda y deshace pintados, y un id no significa lo mismo despues de

@@ -1,34 +1,34 @@
-[gd_resource type="Theme" format=3]
+[gd_resource type="Theme" format=3 uid="uid://b5yvch57l3jsd"]
 
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/Banner03a.png" id="1_ear54"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/Button01a_2.png" id="2_tbewq"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/Button01a_4.png" id="3_4oxh3"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/Button01a_1.png" id="4_wwfa2"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/Button01a_3.png" id="5_yhjss"]
-[ext_resource type="FontFile" path="res://ui/fuentes/VT323-Regular.ttf" id="6_mdwiq"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/InputField01a.png" id="7_h2r80"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/ToggleOn01a.png" id="8_r0bj8"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/ToggleOff01a.png" id="9_eq6vv"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/ToggleOn03a.png" id="10_b350o"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/ToggleOff03a.png" id="11_l0rfq"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/Handle03a.png" id="12_nsj76"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/FrameSlot01b.png" id="13_yft67"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/Handle02a.png" id="14_0e32a"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/Bar06a.png" id="15_j0h4r"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/FrameSlot02a.png" id="16_wh4pp"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/FrameSlot01a.png" id="17_5j0lm"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/FrameSlot03a.png" id="18_4ple0"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/IconDropdown01a.png" id="19_akpub"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/Frame01a.png" id="20_d2jxm"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/Frame02a.png" id="21_adlb6"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/FrameSlot01c.png" id="22_61vey"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/Frame03a.png" id="23_kjxhq"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/Bar01a.png" id="24_58hqa"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/Bar10a.png" id="25_rdm3x"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/InputField02a.png" id="26_1l87w"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/ButtonCheck01a.png" id="27_u7pk0"]
-[ext_resource type="Texture2D" path="res://arte/sprites/UI/flat_x2/ButtonCross01a.png" id="28_vm0x0"]
-[ext_resource type="FontFile" path="res://ui/fuentes/PixelifySans.ttf" id="29_vgo4n"]
+[ext_resource type="Texture2D" uid="uid://d04qhia5vabh0" path="res://arte/sprites/UI/flat_x2/Banner03a.png" id="1_ear54"]
+[ext_resource type="Texture2D" uid="uid://dx0ercle5ywpy" path="res://arte/sprites/UI/flat_x2/Button01a_2.png" id="2_tbewq"]
+[ext_resource type="Texture2D" uid="uid://chxwsoqvlx2fm" path="res://arte/sprites/UI/flat_x2/Button01a_4.png" id="3_4oxh3"]
+[ext_resource type="Texture2D" uid="uid://cp05inqyjp6tf" path="res://arte/sprites/UI/flat_x2/Button01a_1.png" id="4_wwfa2"]
+[ext_resource type="Texture2D" uid="uid://cxwmu0pvg8n8o" path="res://arte/sprites/UI/flat_x2/Button01a_3.png" id="5_yhjss"]
+[ext_resource type="FontFile" uid="uid://cbgaokkibjmju" path="res://ui/fuentes/VT323-Regular.ttf" id="6_mdwiq"]
+[ext_resource type="Texture2D" uid="uid://5xvd3jklhbyo" path="res://arte/sprites/UI/flat_x2/InputField01a.png" id="7_h2r80"]
+[ext_resource type="Texture2D" uid="uid://c6gbgmdqfcxiw" path="res://arte/sprites/UI/flat_x2/ToggleOn01a.png" id="8_r0bj8"]
+[ext_resource type="Texture2D" uid="uid://cd5ip41dwv36j" path="res://arte/sprites/UI/flat_x2/ToggleOff01a.png" id="9_eq6vv"]
+[ext_resource type="Texture2D" uid="uid://co35f1ouvdj7q" path="res://arte/sprites/UI/flat_x2/ToggleOn03a.png" id="10_b350o"]
+[ext_resource type="Texture2D" uid="uid://bnusvags1xtvc" path="res://arte/sprites/UI/flat_x2/ToggleOff03a.png" id="11_l0rfq"]
+[ext_resource type="Texture2D" uid="uid://b0h1fsihgyxsy" path="res://arte/sprites/UI/flat_x2/Handle03a.png" id="12_nsj76"]
+[ext_resource type="Texture2D" uid="uid://dtwu25ebp2orb" path="res://arte/sprites/UI/flat_x2/FrameSlot01b.png" id="13_yft67"]
+[ext_resource type="Texture2D" uid="uid://d3512ufn1feeb" path="res://arte/sprites/UI/flat_x2/Handle02a.png" id="14_0e32a"]
+[ext_resource type="Texture2D" uid="uid://bqxv35pe2mjh8" path="res://arte/sprites/UI/flat_x2/Bar06a.png" id="15_j0h4r"]
+[ext_resource type="Texture2D" uid="uid://dtpy0bafe6vpm" path="res://arte/sprites/UI/flat_x2/FrameSlot02a.png" id="16_wh4pp"]
+[ext_resource type="Texture2D" uid="uid://dpnyyixkosan8" path="res://arte/sprites/UI/flat_x2/FrameSlot01a.png" id="17_5j0lm"]
+[ext_resource type="Texture2D" uid="uid://b6g5flajy35wy" path="res://arte/sprites/UI/flat_x2/FrameSlot03a.png" id="18_4ple0"]
+[ext_resource type="Texture2D" uid="uid://c5dyemqxqfa3x" path="res://arte/sprites/UI/flat_x2/IconDropdown01a.png" id="19_akpub"]
+[ext_resource type="Texture2D" uid="uid://bka8pbqk62ro2" path="res://arte/sprites/UI/flat_x2/Frame01a.png" id="20_d2jxm"]
+[ext_resource type="Texture2D" uid="uid://b5myqhxy3pgu5" path="res://arte/sprites/UI/flat_x2/Frame02a.png" id="21_adlb6"]
+[ext_resource type="Texture2D" uid="uid://bw17fwfqtwqtu" path="res://arte/sprites/UI/flat_x2/FrameSlot01c.png" id="22_61vey"]
+[ext_resource type="Texture2D" uid="uid://btkihbiownv1s" path="res://arte/sprites/UI/flat_x2/Frame03a.png" id="23_kjxhq"]
+[ext_resource type="Texture2D" uid="uid://dfbrncvkyop7j" path="res://arte/sprites/UI/flat_x2/Bar01a.png" id="24_58hqa"]
+[ext_resource type="Texture2D" uid="uid://l2nxaavs2n8i" path="res://arte/sprites/UI/flat_x2/Bar10a.png" id="25_rdm3x"]
+[ext_resource type="Texture2D" uid="uid://bd2moswu4qfd8" path="res://arte/sprites/UI/flat_x2/InputField02a.png" id="26_1l87w"]
+[ext_resource type="Texture2D" uid="uid://bxqw0enxne1yv" path="res://arte/sprites/UI/flat_x2/ButtonCheck01a.png" id="27_u7pk0"]
+[ext_resource type="Texture2D" uid="uid://ojqpl7ul4tki" path="res://arte/sprites/UI/flat_x2/ButtonCross01a.png" id="28_vm0x0"]
+[ext_resource type="FontFile" uid="uid://dldrdhimuto36" path="res://ui/fuentes/PixelifySans.ttf" id="29_vgo4n"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_ear54"]
 content_margin_left = 14.0
@@ -433,6 +433,34 @@ texture_margin_top = 6.0
 texture_margin_right = 6.0
 texture_margin_bottom = 16.0
 
+[sub_resource type="DPITexture" id="DPITexture_ear54"]
+_source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><circle cx=\"8\" cy=\"8\" r=\"6\" fill=\"#fefffe\" fill-opacity=\".75\"/><path fill=\"none\" stroke=\"#1a1a1a\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-opacity=\".65\" stroke-width=\"2\" d=\"m9 5-3 3 3 3\"/></svg>
+"
+
+[sub_resource type="DPITexture" id="DPITexture_tbewq"]
+_source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><circle cx=\"8\" cy=\"8\" r=\"6\" fill=\"#fefffe\"/><path fill=\"none\" stroke=\"#1a1a1a\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"m9 5-3 3 3 3\"/></svg>
+"
+
+[sub_resource type="DPITexture" id="DPITexture_4oxh3"]
+_source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"32\"><path fill=\"#d3d3d3\" d=\"m5 1h6v30h-6z\"/></svg>
+"
+
+[sub_resource type="DPITexture" id="DPITexture_wwfa2"]
+_source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><circle cx=\"8\" cy=\"8\" r=\"6\" fill=\"#fefffe\" fill-opacity=\".75\"/><path fill=\"none\" stroke=\"#1a1a1a\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-opacity=\".65\" stroke-width=\"2\" d=\"m7 5 3 3-3 3\"/></svg>
+"
+
+[sub_resource type="DPITexture" id="DPITexture_yhjss"]
+_source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><circle cx=\"8\" cy=\"8\" r=\"6\" fill=\"#fefffe\"/><path fill=\"none\" stroke=\"#1a1a1a\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"m7 5 3 3-3 3\"/></svg>
+"
+
+[sub_resource type="DPITexture" id="DPITexture_mdwiq"]
+_source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><path fill=\"#b2b2b2\" fill-opacity=\".45\" d=\"M8 0a2 2 0 0 0 0 4 2 2 0 0 0 0-4zm0 6a2 2 0 0 0 0 4 2 2 0 0 0 0-4zm0 6a2 2 0 0 0 0 4 2 2 0 0 0 0-4z\"/></svg>
+"
+
+[sub_resource type="DPITexture" id="DPITexture_h2r80"]
+_source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><path fill=\"#b2b2b2\" fill-opacity=\".65\" d=\"M8 0a2 2 0 0 0 0 4 2 2 0 0 0 0-4zm0 6a2 2 0 0 0 0 4 2 2 0 0 0 0-4zm0 6a2 2 0 0 0 0 4 2 2 0 0 0 0-4z\"/></svg>
+"
+
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_u2j2d"]
 content_margin_left = 8.0
 content_margin_top = 8.0
@@ -445,6 +473,12 @@ texture_margin_right = 6.0
 texture_margin_bottom = 6.0
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_gagox"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_r0bj8"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_e0ieh"]
 
@@ -647,16 +681,35 @@ TabBar/styles/tab_focus = SubResource("StyleBoxEmpty_3605v")
 TabBar/styles/tab_hovered = SubResource("StyleBoxTexture_jfam0")
 TabBar/styles/tab_selected = SubResource("StyleBoxTexture_cjgf3")
 TabBar/styles/tab_unselected = SubResource("StyleBoxTexture_gfhc4")
+TabContainer/colors/drop_mark_color = Color(1, 1, 1, 1)
+TabContainer/colors/font_disabled_color = Color(0.875, 0.875, 0.875, 0.5)
 TabContainer/colors/font_hovered_color = Color(0.16862746, 0.14901961, 0.13333334, 1)
+TabContainer/colors/font_outline_color = Color(0, 0, 0, 1)
 TabContainer/colors/font_selected_color = Color(0.16862746, 0.14901961, 0.13333334, 1)
 TabContainer/colors/font_unselected_color = Color(0.41960785, 0.38431373, 0.34509805, 1)
+TabContainer/colors/icon_disabled_color = Color(1, 1, 1, 1)
+TabContainer/colors/icon_hovered_color = Color(1, 1, 1, 1)
+TabContainer/colors/icon_selected_color = Color(1, 1, 1, 1)
+TabContainer/colors/icon_unselected_color = Color(1, 1, 1, 1)
 TabContainer/constants/h_separation = 2
+TabContainer/constants/icon_max_width = 0
+TabContainer/constants/icon_separation = 4
+TabContainer/constants/outline_size = 0
+TabContainer/constants/side_margin = 8
+TabContainer/icons/decrement = SubResource("DPITexture_ear54")
+TabContainer/icons/decrement_highlight = SubResource("DPITexture_tbewq")
+TabContainer/icons/drop_mark = SubResource("DPITexture_4oxh3")
+TabContainer/icons/increment = SubResource("DPITexture_wwfa2")
+TabContainer/icons/increment_highlight = SubResource("DPITexture_yhjss")
+TabContainer/icons/menu = SubResource("DPITexture_mdwiq")
+TabContainer/icons/menu_highlight = SubResource("DPITexture_h2r80")
 TabContainer/styles/panel = SubResource("StyleBoxTexture_u2j2d")
 TabContainer/styles/tab_disabled = SubResource("StyleBoxTexture_gfhc4")
 TabContainer/styles/tab_focus = SubResource("StyleBoxEmpty_gagox")
 TabContainer/styles/tab_hovered = SubResource("StyleBoxTexture_jfam0")
 TabContainer/styles/tab_selected = SubResource("StyleBoxTexture_cjgf3")
 TabContainer/styles/tab_unselected = SubResource("StyleBoxTexture_gfhc4")
+TabContainer/styles/tabbar_background = SubResource("StyleBoxEmpty_r0bj8")
 TextEdit/colors/font_color = Color(0.16862746, 0.14901961, 0.13333334, 1)
 TextEdit/styles/focus = SubResource("StyleBoxEmpty_e0ieh")
 TextEdit/styles/normal = SubResource("StyleBoxTexture_ui5kq")

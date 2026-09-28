@@ -7,7 +7,8 @@ extends Node
 ##
 ## Cubre lo que el plan marca como automatizable porque son las costuras:
 ## que colocar, pintar, retirar y borrar pasen por aplicar(); que toda operacion
-## tenga inversa y deshacer devuelva la sala a como estaba; que una ranura de
+## tenga inversa y deshacer devuelva la sala a como estaba; que pintar una pieza
+## que la biblioteca no tiene se rechace con PIEZA_INEXISTENTE; que una ranura de
 ## D25 se rechace en vez de aplicarse al piso; y que en modo juego el editor
 ## quede apagado y sin historial.
 
@@ -93,6 +94,26 @@ func _ready() -> void:
 		print("FALLO: deshacer el pintado dejo %s en vez de %s" % [vuelto, pieza_antes]); fallos += 1
 	else:
 		print("pintado deshecho, volvio a %s" % vuelto.get("pieza", "nada"))
+
+	# --- una pieza que la biblioteca no tiene se rechaza por lo que es ---
+	# Antes salia como CELDA_INEXISTENTE, "Ahi no hay piso", que manda a buscar
+	# el problema en la celda cuando lo que falta es la pieza. Tambien cuenta una
+	# pieza de la otra capa: el suelo no esta en la biblioteca de paredes.
+	var rehacer_antes := sala.puede_rehacer()
+	for intento in [[CatalogoPiezas.SUELO, &"suelo_que_no_existe"], [CatalogoPiezas.PAREDES, &"suelo_base"]]:
+		codigo = editor.aplicar(OperacionSala.pintar(intento[0], celda, intento[1]))
+		var quedo : Dictionary = sala.grid.pieza_en(CatalogoPiezas.SUELO, celda)
+		if codigo != Errores.Codigo.PIEZA_INEXISTENTE:
+			print("FALLO: pintar '%s' en %s dio %s" % [intento[1], intento[0], Errores.mensaje(codigo)]); fallos += 1
+		elif quedo.get("pieza", &"") != pieza_antes.get("pieza", &""):
+			print("FALLO: el rechazo igual cambio la celda a %s" % quedo); fallos += 1
+		else:
+			print("pieza '%s' en %s rechazada: %s" % [intento[1], intento[0], Errores.mensaje(codigo)])
+	# Un rechazo no es una rama nueva: lo deshecho se tiene que poder rehacer igual.
+	if sala.puede_rehacer() != rehacer_antes:
+		print("FALLO: un pintado rechazado toco el historial"); fallos += 1
+	if not Errores.MENSAJES.has(Errores.Codigo.PIEZA_INEXISTENTE):
+		print("FALLO: PIEZA_INEXISTENTE no tiene mensaje propio"); fallos += 1
 
 	# --- una ranura no implementada se rechaza, no se aplica al piso (D25) ---
 	codigo = editor.aplicar(OperacionSala.colocar(def.id, celda, 0, {}, 2))

@@ -480,8 +480,10 @@ func _ejecutar(op : OperacionSala) -> Errores.Codigo:
 				else Errores.Codigo.NO_TIENE_ITEM
 
 		OperacionSala.Tipo.PINTAR:
+			# Pintar no pide piso debajo, justamente lo crea: si falla es porque la
+			# pieza no esta en la biblioteca de esa capa.
 			return Errores.Codigo.OK if grid.pintar(op.capa, op.celda, op.pieza, op.orientacion) \
-				else Errores.Codigo.CELDA_INEXISTENTE
+				else Errores.Codigo.PIEZA_INEXISTENTE
 
 		OperacionSala.Tipo.BORRAR:
 			grid.borrar_celda(op.capa, op.celda)

@@ -37,7 +37,7 @@ const PREFIJOS := {
 ## olvida uno de los dos pasos, el arranque lo dice. Quitar un nombre de esta
 ## lista sin despintarlo de las salas tambien.
 const PIEZAS := {
-	SUELO: [&"suelo_base", &"suelo_piedra", &"suelo_tierra", &"cubo_base", &"cubo_grande"],
+	SUELO: [&"suelo_base", &"suelo_piedra", &"suelo_tierra", &"cubo_base", &"cubo_grande", &"suelo_baldosa"],
 	PAREDES: [&"pilar_base", &"pared_base", &"pared_doble_base", &"espacio_puerta",
 		&"ventana_cerrada", &"ventana_abierta"],
 }
